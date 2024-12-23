@@ -18,7 +18,9 @@
        (apply max)))
 
 (defn languages [benchmark]
-  (sort-by benchmark (:languages bd/benchmarks)))
+  (sort-by (fn [lang]
+             (- (benchmark lang) (:start-time lang)))
+           (:languages bd/benchmarks)))
 
 (defn get-viewport
   "Returns a vector of [vw vh] for the current browser window, scaled by the scale parameter.
