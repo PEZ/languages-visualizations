@@ -37,8 +37,8 @@
   (q/image-mode :center)
 
   (let [start-time-line-x (* (q/width) start-time-line-x-%)
-        total-starting-sequence-ticks (* frame-rate 3)
-        total-track-ticks (/ frame-rate 1.5)
+        total-starting-sequence-ticks (* frame-rate 2)
+        total-track-ticks (/ frame-rate 1.2)
         ball-width 40
         half-ball-width (/ ball-width 2)
         start-line-x (+ start-time-line-x half-ball-width 5)
@@ -73,6 +73,7 @@
                               track-ticks (/ total-track-ticks speed)]
                           (merge lang
                                  {:speed speed
+                                  :runs 0
                                   :direction 1
                                   :track-ticks track-ticks
                                   :track-x-per-tick (/ track-length track-ticks)
@@ -96,7 +97,7 @@
            {:t t}
            (when (> t total-starting-sequence-ticks)
              {:race-started true})
-           {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-x track-x-per-tick direction] :as lang}]
+           {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-x track-x-per-tick direction runs] :as lang}]
                                (merge lang
                                       (when-not race-started
                                         (if (> start-time-line-x start-sequence-x)
@@ -105,15 +106,17 @@
                                           {:greeting "Hello, World!"}))
                                       (when race-started
                                         (let [new-x (+ track-x (* track-x-per-tick direction))
-                                              new-direction (if (or (>= new-x finish-line-x)
-                                                                    (<= new-x start-line-x))
+                                              bounce? (or (>= new-x finish-line-x)
+                                                          (<= new-x start-line-x))
+                                              new-direction (if bounce?
                                                               (* -1 direction)
                                                               direction)]
                                           {:track-x new-x
-                                           :direction new-direction}))))
+                                           :direction new-direction
+                                           :runs (if bounce? (inc runs) runs)}))))
                              (:languages state))})))
 
-(defn draw-state! [{:keys [t start-time-line-x width race-started middle-x finish-line-x] :as state}]
+(defn draw-state! [{:keys [t start-time-line-x width race-started middle-x half-ball-width] :as state}]
   (def state state)
   (let [t' (/ t 10)]
     ; clear screen
@@ -122,7 +125,8 @@
     (q/stroke-weight 0)
     (doseq [lang (:languages state)]
       (let [y (:y lang)
-            track-x (:track-x lang)]
+            track-x (:track-x lang)
+            runs (:runs lang)]
         (q/text-style :normal)
         (q/fill 150)
         (q/rect 0 (- y 30) width 20)
@@ -132,7 +136,7 @@
         (q/text-size 14)
         (q/text (:language-name lang) start-time-line-x (- y 20))
         (when race-started
-          (q/text (:benchmark-time-str lang) finish-line-x (- y 20)))
+          (q/text (:benchmark-time-str lang) (- width 5) (- y 20)))
         (q/text-size 12)
         (when (:greeting lang)
           (q/fill "black")
@@ -140,8 +144,10 @@
           (q/text (str "(" (:start-time lang) "ms) ") start-time-line-x (+ y 15)))
         (q/fill (:color lang))
         (q/rect (:start-sequence-x lang) (- y 10) (- start-time-line-x (:start-sequence-x lang)) 20)
-        (q/text-align :right)
         (q/image (:logo-image lang) track-x y 40 40)
+        (q/text-align :left)
+        (q/text-num runs (+ track-x half-ball-width 5) y)
+        (q/text-align :right)
         (q/text-size 20)
         (q/text-style :bold)
         (q/text-align :center)
