@@ -3,19 +3,20 @@
             [quil.core :as q]
             [quil.middleware :as m]))
 
-(def frame-rate 50)
-(def start-line-x-% 0.2)
+(def frame-rate 120)
+(def start-time-line-x-% 0.2)
 
 (def max-start-time (->> bd/benchmarks
                          :languages
                          (map :start-time)
                          (apply max)))
 
-(defn max-time [benchmark]
+(defn benchmark-times [benchmark]
   (->> bd/benchmarks
        :languages
-       (map benchmark)
-       (apply max)))
+       (map (fn [lang]
+              (- (benchmark lang)
+                 (:start-time lang))))))
 
 (defn languages [benchmark]
   (sort-by (fn [lang]
@@ -33,54 +34,86 @@
 (defn setup [benchmark]
   (def benchmark benchmark)
   (q/frame-rate frame-rate)
-
   (q/image-mode :center)
 
-  (let [start-line-x (* (q/width) start-line-x-%)
-        total-starting-sequence-ticks (* frame-rate 3)]
+  (let [start-time-line-x (* (q/width) start-time-line-x-%)
+        total-starting-sequence-ticks (* frame-rate 3)
+        total-track-ticks (/ frame-rate 1.5)
+        ball-width 40
+        half-ball-width (/ ball-width 2)
+        start-line-x (+ start-time-line-x half-ball-width 5)
+        finish-line-x (- (q/width) half-ball-width 5)
+        track-length (- finish-line-x start-line-x)
+        max-time (apply max (benchmark-times benchmark))
+        min-time (apply min (benchmark-times benchmark))]
     {:t 0
-     :width (q/width)
      :benchmark benchmark
+     :width (q/width)
+     :start-time-line-x start-time-line-x
      :start-line-x start-line-x
+     :finish-line-x finish-line-x
+     :track-length track-length
+     :middle-x (/ (q/width) 2)
+     :middle-y (/ (q/height) 2)
+     :ball-width ball-width
+     :half-ball-width half-ball-width
      :race-started false
      :max-start-time max-start-time
      :total-starting-sequence-ticks total-starting-sequence-ticks
-     :max-time (max-time benchmark)
+     :total-track-ticks total-track-ticks
+     :max-time max-time
+     :min-time min-time
+     :start-message "Starting engines!"
+     :race-message "github.com/bddicken/languages"
      :languages (mapv (fn [i {:keys [start-time] :as lang}]
                         (let [starting-sequence-ticks (* (/ start-time max-start-time)
                                                          total-starting-sequence-ticks)
-                              benchmark-time (- (benchmark lang) start-time)]
+                              benchmark-time (- (benchmark lang) start-time)
+                              speed (/ min-time benchmark-time)
+                              track-ticks (/ total-track-ticks speed)]
                           (merge lang
-                                 {:speed (/ (max-time benchmark) (benchmark lang))
+                                 {:speed speed
+                                  :direction 1
+                                  :track-ticks track-ticks
+                                  :track-x-per-tick (/ track-length track-ticks)
+                                  :track-x start-line-x
                                   :starting-sequence-ticks starting-sequence-ticks
-                                  :start-time-x-per-tick (/ start-line-x starting-sequence-ticks)
-                                  :start-time-x 0
+                                  :start-sequence-x-per-tick (/ start-time-line-x starting-sequence-ticks)
+                                  :start-sequence-x 0
                                   :hello-world-shown false
                                   :greeting nil
                                   :benchmark-time (- (benchmark lang) start-time)
                                   :benchmark-time-str (str (.toFixed benchmark-time 1) " ms")
                                   :x 0
-                                  :y (+ 50 (* i 60))
+                                  :y (+ 70 (* i 60))
                                   :logo-image (q/load-image (:logo lang))})))
                       (range)
                       (languages benchmark))}))
 
-(defn update-state [{:keys [race-started start-line-x total-starting-sequence-ticks] :as state}]
+(defn update-state [{:keys [race-started start-time-line-x total-starting-sequence-ticks start-line-x finish-line-x ] :as state}]
   (let [t (inc (:t state))]
     (merge state
            {:t t}
            (when (> t total-starting-sequence-ticks)
              {:race-started true})
-           (when-not race-started
-             {:languages (mapv (fn [{:keys [start-time-x start-time-x-per-tick] :as lang}]
-                                 (merge lang
-                                        (if (> start-line-x start-time-x)
-                                          {:start-time-x (min start-line-x
-                                                              (+ start-time-x start-time-x-per-tick))}
-                                          {:greeting "Hello, World!"})))
-                               (:languages state))}))))
+           {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-x track-x-per-tick direction] :as lang}]
+                               (merge lang
+                                      (when-not race-started
+                                        (if (> start-time-line-x start-sequence-x)
+                                          {:start-sequence-x (min start-time-line-x
+                                                                  (+ start-sequence-x start-sequence-x-per-tick))}
+                                          {:greeting "Hello, World!"}))
+                                      (when race-started
+                                        (let [new-x (+ track-x (* track-x-per-tick direction))
+                                              new-direction (if (or (>= new-x finish-line-x)
+                                                                    (<= new-x start-line-x))
+                                                              (* -1 direction)
+                                                              direction)]
+                                          {:track-x new-x
+                                           :direction new-direction}))))
+                             (:languages state))})))
 
-(defn draw-state! [{:keys [t start-line-x width race-started] :as state}]
+(defn draw-state! [{:keys [t start-time-line-x width race-started middle-x finish-line-x] :as state}]
   (def state state)
   (let [t' (/ t 10)]
     ; clear screen
@@ -88,26 +121,34 @@
     (q/background 235)
     (q/stroke-weight 0)
     (doseq [lang (:languages state)]
-      (let [y (:y lang)]
+      (let [y (:y lang)
+            track-x (:track-x lang)]
+        (q/text-style :normal)
         (q/fill 150)
         (q/rect 0 (- y 30) width 20)
         (q/text-align :right :center)
         (q/fill "white")
         ;(q/text-style :bold)
         (q/text-size 14)
-        (q/text (:language-name lang) start-line-x (- y 20))
+        (q/text (:language-name lang) start-time-line-x (- y 20))
         (when race-started
-          (q/text (:benchmark-time-str lang) (- width 5) (- y 20)))
-        (q/text-style :normal)
+          (q/text (:benchmark-time-str lang) finish-line-x (- y 20)))
         (q/text-size 12)
         (when (:greeting lang)
           (q/fill "black")
-          (q/text (:greeting lang) start-line-x y)
-          (q/text (str "(" (:start-time lang) "ms) ") start-line-x (+ y 15)))
+          (q/text (:greeting lang) start-time-line-x y)
+          (q/text (str "(" (:start-time lang) "ms) ") start-time-line-x (+ y 15)))
         (q/fill (:color lang))
-        (q/rect (:start-time-x lang) (- y 10) (- start-line-x (:start-time-x lang)) 20)
+        (q/rect (:start-sequence-x lang) (- y 10) (- start-time-line-x (:start-sequence-x lang)) 20)
         (q/text-align :right)
-        (q/image (:logo-image lang) (+ 25 start-line-x) y 40 40)))))
+        (q/image (:logo-image lang) track-x y 40 40)
+        (q/text-size 20)
+        (q/text-style :bold)
+        (q/text-align :center)
+        (q/fill "#1b1b1b")
+        (if-not race-started
+          (q/text (:start-message state) middle-x 20)
+          (q/text (:race-message state) middle-x 20))))))
 
 ; this function is called in index.html
 (defn ^:export run-sketch []
