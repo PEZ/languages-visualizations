@@ -29,7 +29,7 @@
   [scale]
   [(* scale (.-innerWidth js/window)) (* scale (.-innerHeight js/window))])
 
-(def dims [(min 800 (- (.-innerWidth js/window) 20)) (+ 80 (* 60 (count (:languages bd/benchmarks))))])
+(def dims [(min 800 (- (.-innerWidth js/window) 20)) (+ 80 (* 50 (count (:languages bd/benchmarks))))])
 
 (defn setup [benchmark]
   (def benchmark benchmark)
@@ -38,7 +38,7 @@
 
   (let [start-time-line-x (* (q/width) start-time-line-x-%)
         total-starting-sequence-ticks (* frame-rate 2)
-        total-track-ticks (/ frame-rate 1.2)
+        total-track-ticks (/ frame-rate 1)
         ball-width 40
         half-ball-width (/ ball-width 2)
         start-line-x (+ start-time-line-x half-ball-width 5)
@@ -65,6 +65,7 @@
      :min-time min-time
      :start-message "Starting engines!"
      :race-message "github.com/bddicken/languages"
+     :greeting-timeout (* frame-rate 2)
      :languages (mapv (fn [i {:keys [start-time] :as lang}]
                         (let [starting-sequence-ticks (* (/ start-time max-start-time)
                                                          total-starting-sequence-ticks)
@@ -86,17 +87,19 @@
                                   :benchmark-time (- (benchmark lang) start-time)
                                   :benchmark-time-str (str (.toFixed benchmark-time 1) " ms")
                                   :x 0
-                                  :y (+ 70 (* i 60))
+                                  :y (+ 70 (* i 50))
                                   :logo-image (q/load-image (:logo lang))})))
                       (range)
                       (languages benchmark))}))
 
-(defn update-state [{:keys [race-started start-time-line-x total-starting-sequence-ticks start-line-x finish-line-x ] :as state}]
+(defn update-state [{:keys [race-started greeting-timeout start-time-line-x total-starting-sequence-ticks start-line-x finish-line-x ] :as state}]
   (let [t (inc (:t state))]
     (merge state
            {:t t}
-           (when (> t total-starting-sequence-ticks)
+           (when (> t (+ total-starting-sequence-ticks (/ frame-rate 10)))
              {:race-started true})
+           (when race-started
+             {:greeting-timeout (max 0 (dec greeting-timeout))})
            {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-x track-x-per-tick direction runs] :as lang}]
                                (merge lang
                                       (when-not race-started
@@ -116,7 +119,7 @@
                                            :runs (if bounce? (inc runs) runs)}))))
                              (:languages state))})))
 
-(defn draw-state! [{:keys [t start-time-line-x width race-started middle-x half-ball-width] :as state}]
+(defn draw-state! [{:keys [t greeting-timeout start-time-line-x width race-started middle-x half-ball-width] :as state}]
   (def state state)
   (let [t' (/ t 10)]
     ; clear screen
@@ -128,30 +131,33 @@
             track-x (:track-x lang)
             runs (:runs lang)]
         (q/text-style :normal)
-        (q/fill 150)
-        (q/rect 0 (- y 30) width 20)
+        (q/fill 100)
+        (q/rect 0 (- y 10) width 20)
         (q/text-align :right :center)
+        (q/fill 40)
+        (q/rect (:start-sequence-x lang) (- y 10) (- start-time-line-x (:start-sequence-x lang)) 20)
         (q/fill "white")
         ;(q/text-style :bold)
         (q/text-size 14)
-        (q/text (:language-name lang) start-time-line-x (- y 20))
+        (q/text (:language-name lang) start-time-line-x y)
         (when race-started
-          (q/text (:benchmark-time-str lang) (- width 5) (- y 20)))
+          (q/text (:benchmark-time-str lang) (- width 5) y))
         (q/text-size 12)
-        (when (:greeting lang)
+        (when (and (> greeting-timeout 0)
+                   (:greeting lang))
           (q/fill "black")
-          (q/text (:greeting lang) start-time-line-x y)
-          (q/text (str "(" (:start-time lang) "ms) ") start-time-line-x (+ y 15)))
-        (q/fill (:color lang))
-        (q/rect (:start-sequence-x lang) (- y 10) (- start-time-line-x (:start-sequence-x lang)) 20)
+          (q/text (:greeting lang) start-time-line-x (- y 20))
+          (q/text-align :left)
+          (q/text (str "(" (:start-time lang) "ms) ") (+ start-time-line-x 5) (- y 20)))
         (q/image (:logo-image lang) track-x y 40 40)
         (q/text-align :left)
+        (q/fill "white")
         (q/text-num runs (+ track-x half-ball-width 5) y)
         (q/text-align :right)
         (q/text-size 20)
         (q/text-style :bold)
         (q/text-align :center)
-        (q/fill "#1b1b1b")
+        (q/fill "black")
         (if-not race-started
           (q/text (:start-message state) middle-x 20)
           (q/text (:race-message state) middle-x 20))))))
