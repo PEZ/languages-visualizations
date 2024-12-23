@@ -63,19 +63,22 @@
                       (range)
                       (languages benchmark))}))
 
-(defn update-state [{:keys [race-started start-line-x] :as state}]
-  (merge state
-         {:t (inc (:t state))}
-         (when-not race-started
-           {:languages (mapv (fn [{:keys [start-time-x start-time-x-per-tick] :as lang}]
-                               (merge lang
-                                      (if (> start-line-x start-time-x)
-                                        {:start-time-x (min start-line-x
-                                                            (+ start-time-x start-time-x-per-tick))}
-                                        {:greeting "Hello, World!"})))
-                             (:languages state))})))
+(defn update-state [{:keys [race-started start-line-x total-starting-sequence-ticks] :as state}]
+  (let [t (inc (:t state))]
+    (merge state
+           {:t t}
+           (when (> t total-starting-sequence-ticks)
+             {:race-started true})
+           (when-not race-started
+             {:languages (mapv (fn [{:keys [start-time-x start-time-x-per-tick] :as lang}]
+                                 (merge lang
+                                        (if (> start-line-x start-time-x)
+                                          {:start-time-x (min start-line-x
+                                                              (+ start-time-x start-time-x-per-tick))}
+                                          {:greeting "Hello, World!"})))
+                               (:languages state))}))))
 
-(defn draw-state! [{:keys [t start-line-x width] :as state}]
+(defn draw-state! [{:keys [t start-line-x width race-started] :as state}]
   (def state state)
   (let [t' (/ t 10)]
     ; clear screen
@@ -91,7 +94,8 @@
         ;(q/text-style :bold)
         (q/text-size 14)
         (q/text (:language-name lang) start-line-x (- y 20))
-        (q/text (:benchmark-time-str lang) (- width 5) (- y 20))
+        (when race-started
+          (q/text (:benchmark-time-str lang) (- width 5) (- y 20)))
         (q/text-style :normal)
         (q/text-size 12)
         (when (:greeting lang)
