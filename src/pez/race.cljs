@@ -1,7 +1,8 @@
 (ns pez.race
   (:require [pez.benchmark-data :as bd]
             [quil.core :as q]
-            [quil.middleware :as m]))
+            [quil.middleware :as m]
+            [replicant.dom :as d]))
 
 (def frame-rate 120)
 (def start-time-line-x-% 0.2)
@@ -162,8 +163,7 @@
           (q/text (:start-message state) middle-x 20)
           (q/text (:race-message state) middle-x 20))))))
 
-; this function is called in index.html
-(defn ^:export run-sketch []
+(defn run-sketch []
   (q/sketch
     :host "race"
     :size dims
@@ -174,14 +174,29 @@
     ;; :key-pressed (u/save-image "export.png")
     :middleware [m/fun-mode]))
 
+(def !state (atom {}))
+
+(defn app [state]
+  [:div
+   "bar"
+   [:div#race]])
+
+(defn render-app! [el state]
+  (d/render el (app state)))
+
+(def app-el
+  (js/document.getElementById "app"))
+
 ;; start is called by init and after code reloading finishes
 (defn ^:dev/after-load start []
-  (js/console.log "start"))
+  (js/console.log "start")
+  (render-app! app-el @!state))
 
 (defn ^:export init! []
   (js/console.log "init")
-  (run-sketch)
-  (start))
+  (start)
+  (render-app! app-el @!state)
+  (run-sketch))
 
 ;; this is called before any code is reloaded
 (defn ^:dev/before-load stop []
