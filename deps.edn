@@ -5,4 +5,5 @@
         binaryage/devtools {:mvn/version "0.9.10"}
         cjohansen/replicant {:git/url "https://github.com/cjohansen/replicant"
                              :git/sha "6309f93d5f4998037ec236fdda9c167abf6046cb"}
+        cjohansen/gadget-inspector {:mvn/version "0.2023.04.12"}
         quil/quil {:mvn/version "4.3.1563"}}}

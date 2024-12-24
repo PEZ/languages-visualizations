@@ -3,9 +3,10 @@
 (def benchmarks
   {:description ""
    :date ""
-   :benchmarks-meta {:loops {:title "1 Billion Loops"}
-                     :fibonacci {:title "Naïve Fibonacci"}
-                     :levenshtein {:title "Levenshtein Distance"}}
+   :benchmarks [:loops :fibonacci :levenshtein]
+   :benchmark-info {:loops {:title "1 Billion Loops"}
+                    :fibonacci {:title "Naïve Fibonacci"}
+                    :levenshtein {:title "Levenshtein Distance"}}
    :languages [{:language-name "C++"
                 :logo "images/cpp.png"
                 :color "blue"

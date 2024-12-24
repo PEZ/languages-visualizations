@@ -1,8 +1,11 @@
 (ns pez.race
-  (:require [pez.benchmark-data :as bd]
-            [quil.core :as q]
-            [quil.middleware :as m]
-            [replicant.dom :as d]))
+  (:require
+   [clojure.walk :as walk]
+   [gadget.inspector :as inspector]
+   [pez.benchmark-data :as bd]
+   [quil.core :as q]
+   [quil.middleware :as m]
+   [replicant.dom :as d]))
 
 (def frame-rate 120)
 (def start-time-line-x-% 0.2)
@@ -49,7 +52,6 @@
         min-time (apply min (benchmark-times benchmark))]
     {:t 0
      :benchmark benchmark
-     :width (q/width)
      :start-time-line-x start-time-line-x
      :start-line-x start-line-x
      :finish-line-x finish-line-x
@@ -93,9 +95,9 @@
                       (range)
                       (languages benchmark))}))
 
-(defn update-state [{:keys [race-started greeting-timeout start-time-line-x total-starting-sequence-ticks start-line-x finish-line-x ] :as state}]
-  (let [t (inc (:t state))]
-    (merge state
+(defn update-state [{:keys [race-started greeting-timeout start-time-line-x total-starting-sequence-ticks start-line-x finish-line-x ] :as draw-state}]
+  (let [t (inc (:t draw-state))]
+    (merge draw-state
            {:t t}
            (when (> t (+ total-starting-sequence-ticks (/ frame-rate 10)))
              {:race-started true})
@@ -118,22 +120,22 @@
                                           {:track-x new-x
                                            :direction new-direction
                                            :runs (if bounce? (inc runs) runs)}))))
-                             (:languages state))})))
+                             (:languages draw-state))})))
 
-(defn draw-state! [{:keys [t greeting-timeout start-time-line-x width race-started middle-x half-ball-width] :as state}]
-  (def state state)
+(defn draw-state! [{:keys [t greeting-timeout start-time-line-x race-started middle-x half-ball-width] :as draw-state}]
+  (def draw-state draw-state)
   (let [t' (/ t 10)]
     ; clear screen
     ;(q/fill 225 225 225)
     (q/background 235)
     (q/stroke-weight 0)
-    (doseq [lang (:languages state)]
+    (doseq [lang (:languages draw-state)]
       (let [y (:y lang)
             track-x (:track-x lang)
             runs (:runs lang)]
         (q/text-style :normal)
         (q/fill 100)
-        (q/rect 0 (- y 10) width 20)
+        (q/rect 0 (- y 10) (q/width) 20)
         (q/text-align :right :center)
         (q/fill 40)
         (q/rect (:start-sequence-x lang) (- y 10) (- start-time-line-x (:start-sequence-x lang)) 20)
@@ -142,7 +144,7 @@
         (q/text-size 14)
         (q/text (:language-name lang) start-time-line-x y)
         (when race-started
-          (q/text (:benchmark-time-str lang) (- width 5) y))
+          (q/text (:benchmark-time-str lang) (- (q/width) 5) y))
         (q/text-size 12)
         (when (and (> greeting-timeout 0)
                    (:greeting lang))
@@ -160,26 +162,68 @@
         (q/text-align :center)
         (q/fill "black")
         (if-not race-started
-          (q/text (:start-message state) middle-x 20)
-          (q/text (:race-message state) middle-x 20))))))
+          (q/text (:start-message draw-state) middle-x 20)
+          (q/text (:race-message draw-state) middle-x 20))))))
 
-(defn run-sketch []
+(defn run-sketch [benchmark]
   (q/sketch
     :host "race"
     :size dims
     :renderer :p2d
-    :setup (fn [] (setup :levenshtein))
+    :setup (fn [] (setup benchmark))
     :update update-state
     :draw draw-state!
     ;; :key-pressed (u/save-image "export.png")
     :middleware [m/fun-mode]))
 
-(def !state (atom {}))
-
 (defn app [state]
+  (def state state)
   [:div
-   "bar"
+   (into [:div]
+         (for [benchmark (:benchmarks bd/benchmarks)]
+           [:label
+            [:input {:type "radio"
+                     :name "benchmark"
+                     :value benchmark
+                     :checked (= benchmark (:benchmark state))
+                     :on {:change [[:app/set-benchmark :event/target.value]]}}]
+            (get-in bd/benchmarks [:benchmark-info benchmark :title])]))
    [:div#race]])
+
+(defonce !state (atom {:benchmark :levenshtein}))
+
+(defn- enrich-action-from-replicant-data [{:replicant/keys [js-event]} actions]
+  (walk/postwalk
+   (fn [x]
+     (if (keyword? x)
+       (cond (= :event/target.value x) (some-> js-event .-target .-value)
+             :else x)
+       x))
+   actions))
+
+(defn- event-handler [replicant-data actions]
+  (let [{:keys [new-state effects]}
+        (reduce (fn [{state :new-state :as acc} action]
+                  (js/console.debug "Triggered action" action)
+                  (let [[action-name & args] (enrich-action-from-replicant-data replicant-data action)
+                        {:keys [new-state effects]} (cond
+                                                      (= :app/set-benchmark action-name) (let [benchmark (keyword (first args))]
+                                                                                           {:new-state (assoc state :benchmark benchmark)
+                                                                                            :effects [[:draw/run-sketch benchmark]]}))]
+                    (cond-> acc
+                      new-state (assoc :new-state new-state)
+                      effects (update :effects into effects))))
+                {:new-state @!state
+                 :effects []}
+                actions)]
+    (when new-state
+      (reset! !state new-state))
+    (when effects
+      (doseq [effect effects]
+        (js/console.debug "Triggered effect" effect)
+        (let [[effect-name & args] effect]
+          (cond
+            (= :draw/run-sketch effect-name) (run-sketch (first args))))))))
 
 (defn render-app! [el state]
   (d/render el (app state)))
@@ -194,9 +238,12 @@
 
 (defn ^:export init! []
   (js/console.log "init")
+  (inspector/inspect "App state" !state)
+  (add-watch !state :update (fn [_k _r _o n]
+                              (render-app! app-el n)))
+  (d/set-dispatch! event-handler)
   (start)
-  (render-app! app-el @!state)
-  (run-sketch))
+  (run-sketch (:benchmark @!state)))
 
 ;; this is called before any code is reloaded
 (defn ^:dev/before-load stop []
