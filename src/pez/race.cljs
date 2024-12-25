@@ -131,7 +131,7 @@
   (let [t' (/ t 10)]
     ; clear screen
     ;(q/fill 225 225 225)
-    (q/background 235)
+    (q/background 245)
     (q/stroke-weight 0)
     (doseq [lang (:languages draw-state)]
       (let [y (:y lang)
@@ -188,17 +188,19 @@
 
 (defn app [state]
   (def state state)
-  [:div
-   (into [:div]
+  [:article
+   [:h1 "Languages"]
+   (into [:section.benchmark-options]
          (for [benchmark (:benchmarks bd/benchmarks)]
-           [:label
-            [:input {:type "radio"
-                     :name "benchmark"
+           [:label.benchmark-label
+            [:input {:type :radio
+                     :name :benchmark
                      :value benchmark
                      :checked (= benchmark (:benchmark state))
                      :on {:change [[:app/set-benchmark :event/target.value]]}}]
             (get-in bd/benchmarks [:benchmark-info benchmark :title])]))
-   [:div#race]])
+   [:section#race]
+   [:a {:href "https://github.com/bddicken/languages"} "github.com/bddicken/languages"]])
 
 (defn- enrich-action-from-replicant-data [{:replicant/keys [js-event]} actions]
   (walk/postwalk
