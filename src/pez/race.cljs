@@ -13,24 +13,51 @@
 (def start-time-line-x-% 0.25)
 
 (def max-start-time (->> bd/benchmarks
-                         :languages
-                         (map :start-time)
+                         vals
+                         (map :hello-world)
                          (apply max)))
 
+(defn active-benchmarks [benchmarks]
+  (sort-by #(.indexOf [:loops :fibonacci :levenshtein] %)
+           (reduce-kv (fn [acc _k v]
+                        (into acc (remove (fn [benchmark]
+                                            (= :hello-world benchmark))
+                                          (keys v))))
+                      #{}
+                      benchmarks)))
+
 (defn benchmark-times [benchmark]
-  (->> bd/benchmarks
-       :languages
-       (map (fn [lang]
-              (- (benchmark lang)
-                 (:start-time lang))))))
+  (mapv -
+        (->> bd/benchmarks
+             vals
+             (map benchmark))
+        (->> bd/benchmarks
+             vals
+             (map :hello-world))))
 
-(defn languages [benchmark]
+(comment
+  (benchmark-times :loops)
+  :rcf)
+
+(defn languages []
+  (mapv (fn [{:keys [language-name] :as lang}]
+          (merge lang
+                 (bd/benchmarks language-name)))
+        bd/languages))
+
+(defn sorted-languages [benchmark]
   (sort-by (fn [lang]
-             (- (benchmark lang) (:start-time lang)))
-           (:languages bd/benchmarks)))
+             (- (benchmark lang)
+                (:hello-world lang)))
+           (filter benchmark (languages))))
 
-(defn dims []
-  [(min 800 (- (.-innerWidth js/window) 20)) (+ 80 (* 50 (count (:languages bd/benchmarks))))])
+(comment
+  (languages)
+  (sorted-languages :levenshtein)
+  :rcf)
+
+(defn dims [benchmark]
+  [(min 800 (- (.-innerWidth js/window) 20)) (+ 80 (* 50 (count (sorted-languages benchmark))))])
 
 (defn arena [width height]
   (let [ball-width 40
@@ -68,12 +95,12 @@
             :max-time max-time
             :min-time min-time
             :start-message "Starting engines!"
-            :race-message (get-in bd/benchmarks [:benchmark-info benchmark :title])
+            :race-message (benchmark bd/benchmark-names)
             :greeting-timeout (* frame-rate 2.5)
-            :languages (mapv (fn [i {:keys [start-time] :as lang}]
-                               (let [starting-sequence-ticks (* (/ start-time max-start-time)
+            :languages (mapv (fn [i {:keys [hello-world] :as lang}]
+                               (let [starting-sequence-ticks (* (/ hello-world max-start-time)
                                                                 total-starting-sequence-ticks)
-                                     benchmark-time (- (benchmark lang) start-time)
+                                     benchmark-time (- (benchmark lang) hello-world)
                                      speed (/ min-time benchmark-time)
                                      track-ticks (/ total-track-ticks speed)]
                                  (merge lang
@@ -88,13 +115,17 @@
                                          :start-sequence-x 0
                                          :hello-world-shown false
                                          :greeting nil
-                                         :benchmark-time (- (benchmark lang) start-time)
+                                         :benchmark-time (- (benchmark lang) hello-world)
                                          :benchmark-time-str (str (.toFixed benchmark-time 1) " ms")
                                          :x 0
                                          :y (+ 70 (* i 50))
                                          :logo-image (q/load-image (:logo lang))})))
                              (range)
-                             (languages benchmark))})))
+                             (sorted-languages benchmark))})))
+
+(comment
+  (setup :loops)
+  :rcf)
 
 (defn update-state [{:keys [race-started greeting-timeout total-starting-sequence-ticks] :as draw-state}]
   (let [arena (arena (q/width) (q/height))
@@ -158,7 +189,7 @@
           (q/text (:greeting lang) start-time-line-x (- y 20))
           (q/text-align :left)
           (q/text-style :normal)
-          (q/text (str "(" (:start-time lang) "ms) ") (+ start-time-line-x 5) (- y 20)))
+          (q/text (str "(" (:hello-world lang) "ms) ") (+ start-time-line-x 5) (- y 20)))
         (q/image (:logo-image lang) track-x y 40 40)
         (q/text-align :left)
         (q/fill "white")
@@ -178,7 +209,7 @@
   (set! quil.sketch/*applet*
         (q/sketch
          :host "race"
-         :size (dims)
+         :size (dims benchmark)
          :renderer :p2d
          :setup (fn [] (setup benchmark))
          :update update-state
@@ -191,14 +222,14 @@
   [:article
    [:h1 "Languages"]
    (into [:section.benchmark-options]
-         (for [benchmark (:benchmarks bd/benchmarks)]
+         (for [benchmark (active-benchmarks bd/benchmarks)]
            [:label.benchmark-label
             [:input {:type :radio
                      :name :benchmark
                      :value benchmark
                      :checked (= benchmark (:benchmark state))
                      :on {:change [[:app/set-benchmark :event/target.value]]}}]
-            (get-in bd/benchmarks [:benchmark-info benchmark :title])]))
+            (benchmark bd/benchmark-names)]))
    [:section#race]
    [:a {:href "https://github.com/bddicken/languages"} "github.com/bddicken/languages"]])
 
@@ -259,7 +290,7 @@
   (add-watch !app-state :update (fn [_k _r _o n]
                               (render-app! app-el n)))
   (js/window.addEventListener "resize" (fn [_e]
-                                         (let [[w h] (dims)]
+                                         (let [[w h] (dims (:benchmark @!app-state))]
                                            (q/resize-sketch w h))))
   (d/set-dispatch! event-handler)
   (start)
