@@ -8,7 +8,7 @@
    [replicant.dom :as d]))
 
 (def frame-rate 180)
-(def start-time-line-x-% 0.2)
+(def start-time-line-x-% 0.25)
 
 (def max-start-time (->> bd/benchmarks
                          :languages
@@ -67,7 +67,7 @@
             :min-time min-time
             :start-message "Starting engines!"
             :race-message "github.com/bddicken/languages"
-            :greeting-timeout (* frame-rate 2)
+            :greeting-timeout (* frame-rate 2.5)
             :languages (mapv (fn [i {:keys [start-time] :as lang}]
                                (let [starting-sequence-ticks (* (/ start-time max-start-time)
                                                                 total-starting-sequence-ticks)
@@ -149,9 +149,9 @@
         (when race-started
           (q/text (:benchmark-time-str lang) (- (q/width) 5) y))
         (q/text-size 12)
-        (when (and (> greeting-timeout 0)
-                   (:greeting lang))
-          (q/fill "black")
+        (when (and (:greeting lang)
+                   (> greeting-timeout 0))
+          (q/fill 0 0 0 (* greeting-timeout greeting-timeout))
           (q/text (:greeting lang) start-time-line-x (- y 20))
           (q/text-align :left)
           (q/text (str "(" (:start-time lang) "ms) ") (+ start-time-line-x 5) (- y 20)))
@@ -208,15 +208,15 @@
    actions))
 
 (defn- action-handler [{state :new-state :as result} replicant-data action]
-  (js/console.debug "Triggered action" action)
-  (let [[action-name & args :as enriched]
-        (enrich-action-from-replicant-data replicant-data action)
+  (when js/goog.DEBUG
+    (js/console.debug "Triggered action" action))
+  (let [[action-name & args :as enriched] (enrich-action-from-replicant-data replicant-data action)
         _ (js/console.debug "Enriched action" enriched)
-        {:keys [new-state effects]}
-        (cond
-          (= :app/set-benchmark action-name) (let [benchmark (keyword (first args))]
-                                               {:new-state (assoc state :benchmark benchmark)
-                                                :effects [[:draw/run-sketch benchmark]]}))]
+        {:keys [new-state effects]} (cond
+                                      (= :app/set-benchmark action-name)
+                                      (let [benchmark (keyword (first args))]
+                                        {:new-state (assoc state :benchmark benchmark)
+                                         :effects [[:draw/run-sketch benchmark]]}))]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -231,7 +231,8 @@
       (reset! !state new-state))
     (when effects
       (doseq [effect effects]
-        (js/console.debug "Triggered effect" effect)
+        (when js/goog.DEBUG
+          (js/console.debug "Triggered effect" effect))
         (let [[effect-name & args] effect]
           (cond
             (= :console/log effect-name) (apply js/console.log args)
