@@ -7,6 +7,8 @@
    [quil.middleware :as m]
    [replicant.dom :as d]))
 
+(defonce !app-state (atom {:benchmark :loops}))
+
 (def frame-rate 180)
 (def start-time-line-x-% 0.25)
 
@@ -66,7 +68,7 @@
             :max-time max-time
             :min-time min-time
             :start-message "Starting engines!"
-            :race-message "github.com/bddicken/languages"
+            :race-message (get-in bd/benchmarks [:benchmark-info benchmark :title])
             :greeting-timeout (* frame-rate 2.5)
             :languages (mapv (fn [i {:keys [start-time] :as lang}]
                                (let [starting-sequence-ticks (* (/ start-time max-start-time)
@@ -152,8 +154,10 @@
         (when (and (:greeting lang)
                    (> greeting-timeout 0))
           (q/fill 0 0 0 (* greeting-timeout greeting-timeout))
+          (q/text-style :bold)
           (q/text (:greeting lang) start-time-line-x (- y 20))
           (q/text-align :left)
+          (q/text-style :normal)
           (q/text (str "(" (:start-time lang) "ms) ") (+ start-time-line-x 5) (- y 20)))
         (q/image (:logo-image lang) track-x y 40 40)
         (q/text-align :left)
@@ -196,8 +200,6 @@
             (get-in bd/benchmarks [:benchmark-info benchmark :title])]))
    [:div#race]])
 
-(defonce !state (atom {:benchmark :levenshtein}))
-
 (defn- enrich-action-from-replicant-data [{:replicant/keys [js-event]} actions]
   (walk/postwalk
    (fn [x]
@@ -224,11 +226,11 @@
 (defn- event-handler [replicant-data actions]
   (let [{:keys [new-state effects]} (reduce (fn [result action]
                                               (action-handler result replicant-data action))
-                                            {:new-state @!state
+                                            {:new-state @!app-state
                                              :effects []}
                                             actions)]
     (when new-state
-      (reset! !state new-state))
+      (reset! !app-state new-state))
     (when effects
       (doseq [effect effects]
         (when js/goog.DEBUG
@@ -247,19 +249,19 @@
 ;; start is called by init and after code reloading finishes
 (defn ^:dev/after-load start []
   (js/console.log "start")
-  (render-app! app-el @!state))
+  (render-app! app-el @!app-state))
 
 (defn ^:export init! []
   (js/console.log "init")
-  (inspector/inspect "App state" !state)
-  (add-watch !state :update (fn [_k _r _o n]
+  (inspector/inspect "App state" !app-state)
+  (add-watch !app-state :update (fn [_k _r _o n]
                               (render-app! app-el n)))
   (js/window.addEventListener "resize" (fn [_e]
                                          (let [[w h] (dims)]
                                            (q/resize-sketch w h))))
   (d/set-dispatch! event-handler)
   (start)
-  (run-sketch (:benchmark @!state)))
+  (run-sketch (:benchmark @!app-state)))
 
 ;; this is called before any code is reloaded
 (defn ^:dev/before-load stop []
