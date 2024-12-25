@@ -44,9 +44,7 @@
      :finish-line-x finish-line-x
      :track-length (- finish-line-x start-line-x)
      :middle-x (/ width 2)
-     :middle-y (/ height 2)
-     }))
-
+     :middle-y (/ height 2)}))
 
 (defn setup [benchmark]
   (q/frame-rate frame-rate)
@@ -172,6 +170,7 @@
 
 (defn run-sketch [benchmark]
   (def benchmark benchmark)
+  ; TODO: Figure out if there's a way to set the current applet with public API
   (set! quil.sketch/*applet*
         (q/sketch
          :host "race"
@@ -208,23 +207,26 @@
        x))
    actions))
 
+(defn- action-handler [{state :new-state :as result} replicant-data action]
+  (js/console.debug "Triggered action" action)
+  (let [[action-name & args :as enriched]
+        (enrich-action-from-replicant-data replicant-data action)
+        _ (js/console.debug "Enriched action" enriched)
+        {:keys [new-state effects]}
+        (cond
+          (= :app/set-benchmark action-name) (let [benchmark (keyword (first args))]
+                                               {:new-state (assoc state :benchmark benchmark)
+                                                :effects [[:draw/run-sketch benchmark]]}))]
+    (cond-> result
+      new-state (assoc :new-state new-state)
+      effects (update :effects into effects))))
+
 (defn- event-handler [replicant-data actions]
-  (let [{:keys [new-state effects]}
-        (reduce (fn [{state :new-state :as acc} action]
-                  (js/console.debug "Triggered action" action)
-                  (let [[action-name & args]
-                        (enrich-action-from-replicant-data replicant-data action)
-                        {:keys [new-state effects]}
-                        (cond
-                          (= :app/set-benchmark action-name) (let [benchmark (keyword (first args))]
-                                                               {:new-state (assoc state :benchmark benchmark)
-                                                                :effects [[:draw/run-sketch benchmark]]}))]
-                    (cond-> acc
-                      new-state (assoc :new-state new-state)
-                      effects (update :effects into effects))))
-                {:new-state @!state
-                 :effects []}
-                actions)]
+  (let [{:keys [new-state effects]} (reduce (fn [result action]
+                                              (action-handler result replicant-data action))
+                                            {:new-state @!state
+                                             :effects []}
+                                            actions)]
     (when new-state
       (reset! !state new-state))
     (when effects
@@ -232,6 +234,7 @@
         (js/console.debug "Triggered effect" effect)
         (let [[effect-name & args] effect]
           (cond
+            (= :console/log effect-name) (apply js/console.log args)
             (= :draw/run-sketch effect-name) (run-sketch (first args))))))))
 
 (defn render-app! [el state]
@@ -256,10 +259,6 @@
   (d/set-dispatch! event-handler)
   (start)
   (run-sketch (:benchmark @!state)))
-
-(comment
-  quil.sketch/*applet*
-  :rcf)
 
 ;; this is called before any code is reloaded
 (defn ^:dev/before-load stop []
