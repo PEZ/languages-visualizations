@@ -11,7 +11,7 @@
 (defonce !app-state (atom {:benchmark :loops}))
 
 (def frame-rate 180)
-(def start-time-line-x-% 0.20)
+(def start-time-line-x-% 0.30)
 
 (defn start-time-key [benchmark]
   (-> benchmark name (str "-hello-world") keyword))
@@ -64,7 +64,7 @@
   :rcf)
 
 (defn dims [benchmark]
-  [(min 640 (- (.-innerWidth js/window) 20)) (+ 80 (* 50 (count (sorted-languages benchmark))))])
+  [(min 640 (- (.-innerWidth js/window) 20)) (+ 80 (* 45 (count (sorted-languages benchmark))))])
 
 (defn arena [width height]
   (let [ball-width 40
@@ -87,7 +87,7 @@
   (q/image-mode :center)
 
   (let [total-starting-sequence-ticks (* frame-rate 2)
-        total-track-ticks (/ frame-rate 1)
+        total-track-ticks (/ frame-rate 2.5)
         arena (arena (q/width) (q/height))
         {:keys [start-time-line-x start-line-x track-length]} arena
         max-time (apply max (benchmark-times benchmark))
@@ -127,7 +127,7 @@
                                          :benchmark-time (- (benchmark lang) hello-world)
                                          :benchmark-time-str (str (.toFixed benchmark-time 1) " ms")
                                          :x 0
-                                         :y (+ 70 (* i 50))
+                                         :y (+ 70 (* i 45))
                                          :logo-image (q/load-image (:logo lang))})))
                              (range)
                              (sorted-languages benchmark))})))
