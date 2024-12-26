@@ -1,48 +1,47 @@
 (ns pez.benchmark-data)
 
-(def languages
-  [{:language :c++
-    :language-name "CPP"
-    :language-file-name "CPP"
-    :logo "images/cpp.png"}
-   {:language :clojure
-    :language-name "Clojure"
-    :language-file-name "Clojure"
-    :logo "images/clojure.png"}
-   {:language :clojure
-    :language-name "Clojure Native"
-    :language-file-name "Clojure_Native"
-    :logo "images/clojure.png"}
-   {:language :java
-    :language-name "Java"
-    :language-file-name "Java"
-    :logo "images/java.png"}
-   {:language :java
-    :language-name "Java GraalVM"
-    :language-file-name "Java_GraalVM"
-    :logo "images/java.png"}
-   {:language :node
-    :language-name "Node"
-    :language-file-name "Node"
-    :logo "images/node.png"}])
-
-(def benchmark-names
-  {:loops "1 Billion Loops"
-   :fibonacci "Naïve Fibonacci"
-   :levenshtein "Levenshtein Distance"})
-
 (def benchmarks
-  {"CPP" {:hello-world 2.4
-          :fibonacci 50.5
-          :loops 240.2
-          :levenshtein 12.2}
-   "Clojure" {:hello-world 240.6
-              :fibonacci 338.2
-              :loops 570.1
-              :levenshtein 257.0}
-   "Java" {:hello-world 40.1
-           :fibonacci 334.2
-           :loops 560.8
-           :levenshtein 56.0}})
+  {"C" {:fibonacci 272.63309733333335,
+        :fibonacci-hello-world 1.9301663333333337,
+        :levenshtein 9.177985999999999,
+        :levenshtein-hello-world 2.328542,
+        :loops 473.6411943333334,
+        :loops-hello-world 2.421097666666667},
+   "CPP" {:fibonacci 288.393736,
+          :fibonacci-hello-world 2.1307083333333336,
+          :levenshtein 9.372250000000001,
+          :levenshtein-hello-world 2.0641523333333334,
+          :loops 474.5205416666667,
+          :loops-hello-world 2.0801943333333335},
+   "Clojure" {:fibonacci 905.0735973333334,
+              :fibonacci-hello-world 328.51220800000004,
+              :levenshtein 363.3546250000001,
+              :levenshtein-hello-world 323.514514,
+              :loops 799.478278,
+              :loops-hello-world 307.91177766666664},
+   "Clojure_Native" {:fibonacci 314.008111,
+                     :fibonacci-hello-world 4.943541333333333,
+                     :levenshtein 19.633610666666666,
+                     :levenshtein-hello-world 5.0738330000000005,
+                     :loops 502.22390300000006,
+                     :loops-hello-world 4.9552363333333345},
+   "Java" {:fibonacci 345.06599966666676,
+           :fibonacci-hello-world 50.76547233333334,
+           :levenshtein 100.53193066666667,
+           :levenshtein-hello-world 50.539861,
+           :loops 530.941486,
+           :loops-hello-world 50.65176400000001},
+   "Java_GraalVM" {:fibonacci 284.81225,
+                   :fibonacci-hello-world 4.224236333333334,
+                   :levenshtein 24.96037466666667,
+                   :levenshtein-hello-world 4.8957776666666675,
+                   :loops 497.2625973333334,
+                   :loops-hello-world 4.161638666666666},
+   "Node" {:fibonacci 885.820653,
+           :fibonacci-hello-world 30.80905566666667,
+           :levenshtein 63.234514000000004,
+           :levenshtein-hello-world 31.135861333333338,
+           :loops 777.1532083333334,
+           :loops-hello-world 30.615264000000003}})
 
 

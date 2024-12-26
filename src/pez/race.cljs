@@ -3,6 +3,7 @@
    [clojure.walk :as walk]
    [gadget.inspector :as inspector]
    [pez.benchmark-data :as bd]
+   [pez.config :as conf]
    [quil.core :as q]
    [quil.middleware :as m]
    [replicant.dom :as d]))
@@ -10,18 +11,23 @@
 (defonce !app-state (atom {:benchmark :loops}))
 
 (def frame-rate 180)
-(def start-time-line-x-% 0.25)
+(def start-time-line-x-% 0.20)
 
-(def max-start-time (->> bd/benchmarks
-                         vals
-                         (map :hello-world)
-                         (apply max)))
+(defn start-time-key [benchmark]
+  (-> benchmark name (str "-hello-world") keyword))
+
+(defn max-start-time [benchmark]
+  (->> bd/benchmarks
+       vals
+       (map (start-time-key benchmark))
+       (apply max)))
 
 (defn active-benchmarks [benchmarks]
   (sort-by #(.indexOf [:loops :fibonacci :levenshtein] %)
            (reduce-kv (fn [acc _k v]
                         (into acc (remove (fn [benchmark]
-                                            (= :hello-world benchmark))
+                                            (println benchmark (.endsWith "-hello-world" (name benchmark)))
+                                            (.endsWith (name benchmark) "-hello-world"))
                                           (keys v))))
                       #{}
                       benchmarks)))
@@ -33,22 +39,23 @@
              (map benchmark))
         (->> bd/benchmarks
              vals
-             (map :hello-world))))
+             (map (start-time-key benchmark)))))
 
 (comment
   (benchmark-times :loops)
+  (benchmark-times :levenshtein)
   :rcf)
 
 (defn languages []
-  (mapv (fn [{:keys [language-name] :as lang}]
+  (mapv (fn [{:keys [language-file-name] :as lang}]
           (merge lang
-                 (bd/benchmarks language-name)))
-        bd/languages))
+                 (bd/benchmarks language-file-name)))
+        conf/languages))
 
 (defn sorted-languages [benchmark]
   (sort-by (fn [lang]
              (- (benchmark lang)
-                (:hello-world lang)))
+                (get lang (start-time-key benchmark))))
            (filter benchmark (languages))))
 
 (comment
@@ -57,12 +64,12 @@
   :rcf)
 
 (defn dims [benchmark]
-  [(min 800 (- (.-innerWidth js/window) 20)) (+ 80 (* 50 (count (sorted-languages benchmark))))])
+  [(min 640 (- (.-innerWidth js/window) 20)) (+ 80 (* 50 (count (sorted-languages benchmark))))])
 
 (defn arena [width height]
   (let [ball-width 40
         half-ball-width (/ ball-width 2)
-        start-time-line-x (* width start-time-line-x-%)
+        start-time-line-x (max 100 (* width start-time-line-x-%))
         start-line-x (+ start-time-line-x half-ball-width 5)
         finish-line-x (- width half-ball-width 5)]
     {:width width
@@ -89,22 +96,24 @@
            {:t 0
             :benchmark benchmark
             :race-started false
-            :max-start-time max-start-time
+            :max-start-time (max-start-time benchmark)
             :total-starting-sequence-ticks total-starting-sequence-ticks
             :total-track-ticks total-track-ticks
             :max-time max-time
             :min-time min-time
             :start-message "Starting engines!"
-            :race-message (benchmark bd/benchmark-names)
+            :race-message (benchmark conf/benchmark-names)
             :greeting-timeout (* frame-rate 2.5)
-            :languages (mapv (fn [i {:keys [hello-world] :as lang}]
-                               (let [starting-sequence-ticks (* (/ hello-world max-start-time)
+            :languages (mapv (fn [i lang]
+                               (let [hello-world (get lang (start-time-key benchmark))
+                                     starting-sequence-ticks (* (/ hello-world (max-start-time benchmark))
                                                                 total-starting-sequence-ticks)
                                      benchmark-time (- (benchmark lang) hello-world)
                                      speed (/ min-time benchmark-time)
                                      track-ticks (/ total-track-ticks speed)]
                                  (merge lang
                                         {:speed speed
+                                         :hello-world (str (.toFixed hello-world 1) " ms")
                                          :runs 0
                                          :direction 1
                                          :track-ticks track-ticks
@@ -189,7 +198,7 @@
           (q/text (:greeting lang) start-time-line-x (- y 20))
           (q/text-align :left)
           (q/text-style :normal)
-          (q/text (str "(" (:hello-world lang) "ms) ") (+ start-time-line-x 5) (- y 20)))
+          (q/text (str "(" (:hello-world lang) ") ") (+ start-time-line-x 5) (- y 20)))
         (q/image (:logo-image lang) track-x y 40 40)
         (q/text-align :left)
         (q/fill "white")
@@ -229,7 +238,7 @@
                      :value benchmark
                      :checked (= benchmark (:benchmark state))
                      :on {:change [[:app/set-benchmark :event/target.value]]}}]
-            (benchmark bd/benchmark-names)]))
+            (benchmark conf/benchmark-names)]))
    [:section#race]
    [:a {:href "https://github.com/bddicken/languages"} "github.com/bddicken/languages"]])
 
