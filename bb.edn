@@ -1,0 +1,6 @@
+{:paths ["scripts"]
+ :tasks {:requires ([tasks :as t])
+
+         collect-benchmark-data
+         {:task t/create-benchmark-data!
+          :doc "Collect languages benchmark data"}}}
