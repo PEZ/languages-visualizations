@@ -25,5 +25,6 @@
 
 (comment
   (get-benchmark-means-from-path "/tmp/languages")
+  (map str (fs/glob "/tmp/languages" "*/*.json"))
   :rcf)
 
