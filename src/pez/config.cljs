@@ -95,19 +95,19 @@
     :language :java
     :language-file-name "Java"}
    {:language :java
-    :language-name "Java GraalVM"
-    :language-file-name "Java_GraalVM"
+    :language-name "Java Native"
+    :language-file-name "Java_Native"
     :logo "images/java.png"}
    {:language-name "Julia"
     :logo "images/julia.png"
     :color "rgb(64, 99, 216)"
     :language :julia
     :language-file-name "Julia"}
-   {:language-name "Kotlin"
+   {:language-name "Kotlin JVM"
     :logo "images/kotlin.png"
     :color "rgb(177, 36, 234)"
     :language :kotlin
-    :language-file-name "Kotlin"}
+    :language-file-name "Kotlin_JVM"}
    {:language-name "Lisp"
     :logo "images/lisp.png"
     :color "rgb(211, 48, 47)"
@@ -118,11 +118,11 @@
     :color "rgb(0, 0, 128)"
     :language :lua
     :language-file-name "Lua"}
-   {:language-name "Lua JIT"
+   {:language-name "LuaJIT"
     :logo "images/lua.png"
     :color "rgb(0, 0, 128)"
-    :language :luajit
-    :language-file-name "Lua_JIT"}
+    :language :lua
+    :language-file-name "LuaJIT"}
    {:language-name "Nim"
     :logo "images/nim.png"
     :color "rgb(239, 200, 67)"
@@ -151,7 +151,7 @@
    {:language-name "PHP JIT"
     :logo "images/php.png"
     :color "rgb(120, 124, 180)"
-    :language :phpjit
+    :language :php
     :language-file-name "PHP_JIT"}
    {:language-name "Pascal"
     :logo "images/pascal.png"
@@ -181,7 +181,7 @@
    {:language-name "Ruby YJIT"
     :logo "images/ruby.png"
     :color "rgb(215, 48, 22)"
-    :language :rubyyjit
+    :language :ruby
     :language-file-name "Ruby_YJIT"}
    {:language-name "Rust"
     :logo "images/rust.png"
