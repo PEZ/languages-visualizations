@@ -151,22 +151,18 @@
              {:greeting-timeout (max 0 (dec greeting-timeout))})
            {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-x-per-tick] :as lang}]
                                (merge lang
-                                      (when-not race-started
+                                      (if-not race-started
                                         (if (> start-time-line-x start-sequence-x)
                                           {:start-sequence-x (min start-time-line-x
                                                                   (+ start-sequence-x start-sequence-x-per-tick))}
-                                          {:greeting "Hello, World!"}))
-                                      (when race-started
+                                          {:greeting "Hello, World!"})
                                         (let [distance (* track-x-per-tick elapsed-t)
-                                              runs (quot distance (* 2 track-length))
-                                              total-distance (mod distance (* 2 track-length))
-                                              reversed? (> total-distance track-length)
-                                              x (if reversed?
-                                                  (- (* 2 track-length) total-distance)
-                                                  total-distance)]
+                                              loop-distance (mod distance (* 2 track-length))
+                                              x (if (> loop-distance track-length)
+                                                  (- (* 2 track-length) loop-distance)
+                                                  loop-distance)]
                                           {:track-x (+ start-line-x x)
-                                           :direction (if reversed? -1 1)
-                                           :runs runs}))))
+                                           :runs (quot distance (* 2 track-length))}))))
                              (:languages draw-state))})))
 
 (comment
