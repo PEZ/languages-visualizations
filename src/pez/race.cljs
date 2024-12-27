@@ -86,15 +86,12 @@
   (q/image-mode :center)
 
   (let [arena (arena (q/width) (q/height))
-        max-time (apply max (benchmark-times benchmark))
         min-time (apply min (benchmark-times benchmark))]
     (merge arena
            {:t 0
             :benchmark benchmark
             :race-started? false
             :max-start-time (max-start-time benchmark)
-            :max-time max-time
-            :min-time min-time
             :start-message "Starting engines!"
             :race-message (benchmark conf/benchmark-names)
             :languages (mapv (fn [i lang]
@@ -103,12 +100,11 @@
                                      speed (/ min-time benchmark-time)]
                                  (merge lang
                                         {:speed speed
-                                         :hello-world-str (str (.toFixed hello-world 1) " ms")
+                                         :start-time-str (str (.toFixed hello-world 1) " ms")
                                          :start-time hello-world
                                          :runs 0
                                          :track-x start-line-x
                                          :start-sequence-x 0
-                                         :hello-world-shown false
                                          :time-to-stop-greeting greeting-display-ms
                                          :greeting "Hello, World!"
                                          :benchmark-time (- (benchmark lang) hello-world)
@@ -153,37 +149,38 @@
   (q/no-loop)
   :rcf)
 
-(defn draw-state! [{:keys [time-to-stop-greeting race-started?  middle-x] :as draw-state}]
+(defn draw-state! [{:keys [time-to-stop-greeting race-started?
+                           start-message race-message middle-x] :as draw-state}]
   (def draw-state draw-state)
   (q/background 245)
   (q/stroke-weight 0)
-  (doseq [{:keys [startup-progress] :as lang} (:languages draw-state)]
-    (let [y (:y lang)
-          track-x (:track-x lang)
-          runs (:runs lang)]
+  (doseq [lang (:languages draw-state)]
+    (let [{:keys [language-name logo-image y track-x runs
+                  start-sequence-x benchmark-time-str
+                  startup-progress start-time-str greeting]} lang]
       (q/text-style :normal)
       (q/fill 120)
       (q/rect 0 (- y 10) (q/width) 20)
       (q/text-align :right :center)
       (when-not race-started?
         (q/fill 60)
-        (q/rect (:start-sequence-x lang) (- y 10) (- start-time-line-x (:start-sequence-x lang)) 20))
+        (q/rect start-sequence-x (- y 10) (- start-time-line-x start-sequence-x) 20))
       (q/fill "white")
         ;(q/text-style :bold)
       (q/text-size 14)
-      (q/text (:language-name lang) start-time-line-x y)
+      (q/text language-name start-time-line-x y)
       (when race-started?
-        (q/text (:benchmark-time-str lang) (- (q/width) 5) y))
+        (q/text benchmark-time-str (- (q/width) 5) y))
       (q/text-size 12)
       (when (and (> startup-progress 1)
                  (> time-to-stop-greeting 0))
         (q/fill 0 0 0 time-to-stop-greeting)
         (q/text-style :bold)
-        (q/text (:greeting lang) start-time-line-x (- y 20))
+        (q/text greeting start-time-line-x (- y 20))
         (q/text-align :left)
         (q/text-style :normal)
-        (q/text (str "(" (:hello-world-str lang) ") ") (+ start-time-line-x 5) (- y 20)))
-      (q/image (:logo-image lang) track-x y ball-width ball-width)
+        (q/text (str "(" start-time-str ") ") (+ start-time-line-x 5) (- y 20)))
+      (q/image logo-image track-x y ball-width ball-width)
       (q/text-align :left)
       (q/fill "white")
       (q/text-num runs (+ track-x half-ball-width 5) y)
@@ -193,8 +190,8 @@
       (q/text-align :center)
       (q/fill "black")
       (if-not race-started?
-        (q/text (:start-message draw-state) middle-x 20)
-        (q/text (:race-message draw-state) middle-x 20)))))
+        (q/text start-message middle-x 20)
+        (q/text race-message middle-x 20)))))
 
 (defn run-sketch [benchmark]
   (def benchmark benchmark)
