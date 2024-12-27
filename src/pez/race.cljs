@@ -10,8 +10,9 @@
 
 (defonce !app-state (atom {:benchmark :loops}))
 
-(def frame-rate 180)
-(def animation-speed 2.5)
+(def frame-rate 120)
+(def animation-speed 1.5)
+(def drawing-width 700)
 
 ;(def start-time-line-x-% 0.30)
 
@@ -65,7 +66,7 @@
   :rcf)
 
 (defn dims [benchmark]
-  [(min 640 (- (.-innerWidth js/window) 20)) (+ 80 (* 45 (count (sorted-languages benchmark))))])
+  [(min drawing-width (- (.-innerWidth js/window) 20)) (+ 80 (* 45 (count (sorted-languages benchmark))))])
 
 (defn arena [width height]
   (let [ball-width 40
@@ -112,13 +113,11 @@
                                      benchmark-time (- (benchmark lang) hello-world)
                                      speed (/ min-time benchmark-time)
                                      track-ticks (/ total-track-ticks speed)]
-                                 (println (:language-name lang) speed track-ticks (/ track-length track-ticks))
                                  (merge lang
                                         {:speed speed
                                          :hello-world-str (str (.toFixed hello-world 1) " ms")
                                          :runs 0
                                          :track-ticks track-ticks
-                                         :track-x-per-tick (/ track-length track-ticks)
                                          :track-x start-line-x
                                          :starting-sequence-ticks starting-sequence-ticks
                                          :start-sequence-x-per-tick (/ start-time-line-x starting-sequence-ticks)
@@ -149,14 +148,15 @@
              {:race-started true})
            (when race-started
              {:greeting-timeout (max 0 (dec greeting-timeout))})
-           {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-x-per-tick] :as lang}]
+           {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-ticks] :as lang}]
                                (merge lang
                                       (if-not race-started
                                         (if (> start-time-line-x start-sequence-x)
                                           {:start-sequence-x (min start-time-line-x
                                                                   (+ start-sequence-x start-sequence-x-per-tick))}
                                           {:greeting "Hello, World!"})
-                                        (let [distance (* track-x-per-tick elapsed-t)
+                                        (let [track-x-per-tick (/ track-length track-ticks)
+                                              distance (* track-x-per-tick elapsed-t)
                                               loop-distance (mod distance (* 2 track-length))
                                               x (if (> loop-distance track-length)
                                                   (- (* 2 track-length) loop-distance)
@@ -298,9 +298,10 @@
   (inspector/inspect "App state" !app-state)
   (add-watch !app-state :update (fn [_k _r _o n]
                               (render-app! app-el n)))
-  (js/window.addEventListener "resize" (fn [_e]
-                                         (let [[w h] (dims (:benchmark @!app-state))]
-                                           (q/resize-sketch w h))))
+  (js/window.addEventListener "resize"
+                              (fn [_e]
+                                (let [[w h] (dims (:benchmark @!app-state))]
+                                  (q/resize-sketch w h))))
   (d/set-dispatch! event-handler)
   (start)
   (run-sketch (:benchmark @!app-state)))
