@@ -11,7 +11,9 @@
 (defonce !app-state (atom {:benchmark :loops}))
 
 (def frame-rate 180)
-(def start-time-line-x-% 0.30)
+(def animation-speed 2.5)
+
+;(def start-time-line-x-% 0.30)
 
 (defn start-time-key [benchmark]
   (-> benchmark name (str "-hello-world") keyword))
@@ -26,7 +28,6 @@
   (sort-by #(.indexOf [:loops :fibonacci :levenshtein] %)
            (reduce-kv (fn [acc _k v]
                         (into acc (remove (fn [benchmark]
-                                            (println benchmark (.endsWith "-hello-world" (name benchmark)))
                                             (.endsWith (name benchmark) "-hello-world"))
                                           (keys v))))
                       #{}
@@ -69,7 +70,7 @@
 (defn arena [width height]
   (let [ball-width 40
         half-ball-width (/ ball-width 2)
-        start-time-line-x (max 100 (* width start-time-line-x-%))
+        start-time-line-x 140
         start-line-x (+ start-time-line-x half-ball-width 5)
         finish-line-x (- width half-ball-width 5)]
     {:width width
@@ -87,7 +88,7 @@
   (q/image-mode :center)
 
   (let [total-starting-sequence-ticks (* frame-rate 2)
-        total-track-ticks (/ frame-rate 2.5)
+        total-track-ticks (/ frame-rate animation-speed)
         arena (arena (q/width) (q/height))
         {:keys [start-time-line-x start-line-x track-length]} arena
         max-time (apply max (benchmark-times benchmark))
@@ -111,11 +112,11 @@
                                      benchmark-time (- (benchmark lang) hello-world)
                                      speed (/ min-time benchmark-time)
                                      track-ticks (/ total-track-ticks speed)]
+                                 (println (:language-name lang) speed track-ticks (/ track-length track-ticks))
                                  (merge lang
                                         {:speed speed
-                                         :hello-world (str (.toFixed hello-world 1) " ms")
+                                         :hello-world-str (str (.toFixed hello-world 1) " ms")
                                          :runs 0
-                                         :direction 1
                                          :track-ticks track-ticks
                                          :track-x-per-tick (/ track-length track-ticks)
                                          :track-x start-line-x
@@ -136,10 +137,11 @@
   (setup :loops)
   :rcf)
 
-(defn update-state [{:keys [race-started greeting-timeout total-starting-sequence-ticks] :as draw-state}]
+(defn update-state [{:keys [race-started greeting-timeout total-starting-sequence-ticks track-length] :as draw-state}]
   (let [arena (arena (q/width) (q/height))
-        {:keys [start-time-line-x start-line-x finish-line-x]} arena
-        t (inc (:t draw-state))]
+        {:keys [start-time-line-x start-line-x]} arena
+        t (inc (:t draw-state))
+        elapsed-t (- t total-starting-sequence-ticks)]
     (merge draw-state
            arena
            {:t t}
@@ -147,7 +149,7 @@
              {:race-started true})
            (when race-started
              {:greeting-timeout (max 0 (dec greeting-timeout))})
-           {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-x track-x-per-tick direction runs] :as lang}]
+           {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-x-per-tick] :as lang}]
                                (merge lang
                                       (when-not race-started
                                         (if (> start-time-line-x start-sequence-x)
@@ -155,62 +157,64 @@
                                                                   (+ start-sequence-x start-sequence-x-per-tick))}
                                           {:greeting "Hello, World!"}))
                                       (when race-started
-                                        (let [new-x (+ track-x (* track-x-per-tick direction))
-                                              bounce? (or (>= new-x finish-line-x)
-                                                          (<= new-x start-line-x))
-                                              new-direction (if bounce?
-                                                              (* -1 direction)
-                                                              direction)]
-                                          {:track-x (min (max new-x start-line-x) finish-line-x)
-                                           :direction new-direction
-                                           :runs (if bounce? (inc runs) runs)}))))
+                                        (let [distance (* track-x-per-tick elapsed-t)
+                                              runs (quot distance (* 2 track-length))
+                                              total-distance (mod distance (* 2 track-length))
+                                              reversed? (> total-distance track-length)
+                                              x (if reversed?
+                                                  (- (* 2 track-length) total-distance)
+                                                  total-distance)]
+                                          {:track-x (+ start-line-x x)
+                                           :direction (if reversed? -1 1)
+                                           :runs runs}))))
                              (:languages draw-state))})))
+
+(comment
+  (q/no-loop)
+  :rcf)
 
 (defn draw-state! [{:keys [t greeting-timeout start-time-line-x race-started middle-x half-ball-width] :as draw-state}]
   (def draw-state draw-state)
-  (let [t' (/ t 10)]
-    ; clear screen
-    ;(q/fill 225 225 225)
-    (q/background 245)
-    (q/stroke-weight 0)
-    (doseq [lang (:languages draw-state)]
-      (let [y (:y lang)
-            track-x (:track-x lang)
-            runs (:runs lang)]
-        (q/text-style :normal)
-        (q/fill 120)
-        (q/rect 0 (- y 10) (q/width) 20)
-        (q/text-align :right :center)
-        (when-not race-started
-          (q/fill 60)
-          (q/rect (:start-sequence-x lang) (- y 10) (- start-time-line-x (:start-sequence-x lang)) 20))
-        (q/fill "white")
+  (q/background 245)
+  (q/stroke-weight 0)
+  (doseq [lang (:languages draw-state)]
+    (let [y (:y lang)
+          track-x (:track-x lang)
+          runs (:runs lang)]
+      (q/text-style :normal)
+      (q/fill 120)
+      (q/rect 0 (- y 10) (q/width) 20)
+      (q/text-align :right :center)
+      (when-not race-started
+        (q/fill 60)
+        (q/rect (:start-sequence-x lang) (- y 10) (- start-time-line-x (:start-sequence-x lang)) 20))
+      (q/fill "white")
         ;(q/text-style :bold)
-        (q/text-size 14)
-        (q/text (:language-name lang) start-time-line-x y)
-        (when race-started
-          (q/text (:benchmark-time-str lang) (- (q/width) 5) y))
-        (q/text-size 12)
-        (when (and (:greeting lang)
-                   (> greeting-timeout 0))
-          (q/fill 0 0 0 (* greeting-timeout greeting-timeout))
-          (q/text-style :bold)
-          (q/text (:greeting lang) start-time-line-x (- y 20))
-          (q/text-align :left)
-          (q/text-style :normal)
-          (q/text (str "(" (:hello-world lang) ") ") (+ start-time-line-x 5) (- y 20)))
-        (q/image (:logo-image lang) track-x y 40 40)
-        (q/text-align :left)
-        (q/fill "white")
-        (q/text-num runs (+ track-x half-ball-width 5) y)
-        (q/text-align :right)
-        (q/text-size 20)
+      (q/text-size 14)
+      (q/text (:language-name lang) start-time-line-x y)
+      (when race-started
+        (q/text (:benchmark-time-str lang) (- (q/width) 5) y))
+      (q/text-size 12)
+      (when (and (:greeting lang)
+                 (> greeting-timeout 0))
+        (q/fill 0 0 0 (* greeting-timeout greeting-timeout))
         (q/text-style :bold)
-        (q/text-align :center)
-        (q/fill "black")
-        (if-not race-started
-          (q/text (:start-message draw-state) middle-x 20)
-          (q/text (:race-message draw-state) middle-x 20))))))
+        (q/text (:greeting lang) start-time-line-x (- y 20))
+        (q/text-align :left)
+        (q/text-style :normal)
+        (q/text (str "(" (:hello-world-str lang) ") ") (+ start-time-line-x 5) (- y 20)))
+      (q/image (:logo-image lang) track-x y 40 40)
+      (q/text-align :left)
+      (q/fill "white")
+      (q/text-num runs (+ track-x half-ball-width 5) y)
+      (q/text-align :right)
+      (q/text-size 20)
+      (q/text-style :bold)
+      (q/text-align :center)
+      (q/fill "black")
+      (if-not race-started
+        (q/text (:start-message draw-state) middle-x 20)
+        (q/text (:race-message draw-state) middle-x 20)))))
 
 (defn run-sketch [benchmark]
   (def benchmark benchmark)
