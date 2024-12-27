@@ -75,18 +75,20 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Checkout gh-pages
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: gh-pages
+          ref: master
 
       - name: Copy public directory to tag directory
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          mkdir "./$TAG_NAME"
-          cp -r ./{images,index.html,js,style.css} "./$TAG_NAME/"
+          mkdir "public/$TAG_NAME"
+          cp -r public/{images,index.html,js,style.css} "./$TAG_NAME/"
+          tree
 
       - name: Deploy tag to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: public
