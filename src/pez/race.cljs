@@ -249,7 +249,7 @@
 (defn- info-view [state]
   (list
    [:h2 "What's this?"]
-   [:p "This is an visualization of results running the benchmarks setup by Benjamin Dicken's "
+   [:p "This is a visualization of results running the benchmarks setup by Benjamin Dicken's "
     [:a {:href "https://github.com/bddicken/languages"} "Languages"] " project. Visualization source: " [:a {:href "https://github.com/PEZ/languages-visualizations"} "github.com/PEZ/languages-visualizations"]]
    [:p "The selection of languages are a subset of languages that are added to the project, and languages for which I have a working toolchain on my machine. (A Macbook Pro M4.)"]
    [:p "I run the benchmarks like so, for each benchmark:"]
