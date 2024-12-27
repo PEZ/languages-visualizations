@@ -26,4 +26,5 @@ body {
 
 section {
   margin-top: 1rem;
+  max-width: 700px;
 }
