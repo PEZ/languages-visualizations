@@ -11,7 +11,7 @@
 (defonce !app-state (atom {:benchmark :loops}))
 
 (def frame-rate 120)
-(def animation-speed 1.5)
+(def fastest-track-time-ms 600)
 (def drawing-width 700)
 
 ;(def start-time-line-x-% 0.30)
@@ -89,7 +89,6 @@
   (q/image-mode :center)
 
   (let [total-starting-sequence-ticks (* frame-rate 2)
-        total-track-ticks (/ frame-rate animation-speed)
         arena (arena (q/width) (q/height))
         {:keys [start-time-line-x start-line-x track-length]} arena
         max-time (apply max (benchmark-times benchmark))
@@ -100,7 +99,7 @@
             :race-started false
             :max-start-time (max-start-time benchmark)
             :total-starting-sequence-ticks total-starting-sequence-ticks
-            :total-track-ticks total-track-ticks
+            :tracj-length track-length
             :max-time max-time
             :min-time min-time
             :start-message "Starting engines!"
@@ -111,8 +110,9 @@
                                      starting-sequence-ticks (* (/ hello-world (max-start-time benchmark))
                                                                 total-starting-sequence-ticks)
                                      benchmark-time (- (benchmark lang) hello-world)
+                                     frames-per-track (/ (* frame-rate fastest-track-time-ms) 1000)
                                      speed (/ min-time benchmark-time)
-                                     track-ticks (/ total-track-ticks speed)]
+                                     track-ticks (/ frames-per-track speed)]
                                  (merge lang
                                         {:speed speed
                                          :hello-world-str (str (.toFixed hello-world 1) " ms")
