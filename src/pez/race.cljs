@@ -10,8 +10,13 @@
 
 (defonce !app-state (atom {:benchmark :loops}))
 
-(def min-track-time-ms 600)
 (def drawing-width 700)
+(def start-time-line-x 140)
+(def ball-width 40)
+(def half-ball-width (/ ball-width 2))
+(def start-line-x (+ start-time-line-x half-ball-width 5))
+
+(def min-track-time-ms 600)
 
 (def startup-sequence-ms 2000)
 (def greeting-display-ms 4500)
@@ -69,16 +74,8 @@
   [(min drawing-width (- (.-innerWidth js/window) 20)) (+ 80 (* 45 (count (sorted-languages benchmark))))])
 
 (defn arena [width height]
-  (let [ball-width 40
-        half-ball-width (/ ball-width 2)
-        start-time-line-x 140
-        start-line-x (+ start-time-line-x half-ball-width 5)
-        finish-line-x (- width half-ball-width 5)]
+  (let [finish-line-x (- width half-ball-width 5)]
     {:width width
-     :ball-width ball-width
-     :half-ball-width half-ball-width
-     :start-time-line-x start-time-line-x
-     :start-line-x start-line-x
      :finish-line-x finish-line-x
      :track-length (- finish-line-x start-line-x)
      :middle-x (/ width 2)
@@ -89,7 +86,6 @@
   (q/image-mode :center)
 
   (let [arena (arena (q/width) (q/height))
-        {:keys [start-line-x]} arena
         max-time (apply max (benchmark-times benchmark))
         min-time (apply min (benchmark-times benchmark))]
     (merge arena
@@ -114,7 +110,7 @@
                                          :start-sequence-x 0
                                          :hello-world-shown false
                                          :time-to-stop-greeting greeting-display-ms
-                                         :greeting nil
+                                         :greeting "Hello, World!"
                                          :benchmark-time (- (benchmark lang) hello-world)
                                          :benchmark-time-str (str (.toFixed benchmark-time 1) " ms")
                                          :x 0
@@ -129,7 +125,6 @@
 
 (defn update-state [{:keys [max-start-time track-length] :as draw-state} elapsed-ms]
   (let [arena (arena (q/width) (q/height))
-        {:keys [start-time-line-x start-line-x]} arena
         race-started? (> elapsed-ms startup-sequence-ms)
         position-time (- elapsed-ms startup-sequence-ms)]
     (merge draw-state
@@ -137,32 +132,32 @@
            {:race-started? race-started?
             :time-to-stop-greeting (- greeting-display-ms elapsed-ms)}
            {:languages (mapv (fn [{:keys [start-time speed] :as lang}]
-                               (merge lang
-                                      (if-not race-started?
-                                        (let [startup-progress (/ elapsed-ms (* startup-sequence-ms (/ start-time max-start-time)))]
+                               (let [startup-progress (/ elapsed-ms (* startup-sequence-ms (/ start-time max-start-time)))]
+                                 (merge lang
+                                        {:startup-progress startup-progress}
+                                        (if-not race-started?
                                           {:start-sequence-x (min (* start-time-line-x startup-progress)
-                                                                  start-time-line-x)
-                                           :greeting (when (>= startup-progress 1) "Hello, World!")})
-                                        (let [normalized-time (/ position-time min-track-time-ms)
-                                              scaled-time (* normalized-time speed)  ; Apply the speed ratio
-                                              distance (* track-length scaled-time)
-                                              loop-distance (mod distance (* 2 track-length))
-                                              x (if (> loop-distance track-length)
-                                                  (- (* 2 track-length) loop-distance)
-                                                  loop-distance)]
-                                          {:track-x (+ start-line-x x)
-                                           :runs (quot distance (* 2 track-length))}))))
+                                                                  start-time-line-x)}
+                                          (let [normalized-time (/ position-time min-track-time-ms)
+                                                scaled-time (* normalized-time speed)  ; Apply the speed ratio
+                                                distance (* track-length scaled-time)
+                                                loop-distance (mod distance (* 2 track-length))
+                                                x (if (> loop-distance track-length)
+                                                    (- (* 2 track-length) loop-distance)
+                                                    loop-distance)]
+                                            {:track-x (+ start-line-x x)
+                                             :runs (quot distance (* 2 track-length))})))))
                              (:languages draw-state))})))
 
 (comment
   (q/no-loop)
   :rcf)
 
-(defn draw-state! [{:keys [t time-to-stop-greeting start-time-line-x race-started middle-x half-ball-width] :as draw-state}]
+(defn draw-state! [{:keys [time-to-stop-greeting race-started?  middle-x] :as draw-state}]
   (def draw-state draw-state)
   (q/background 245)
   (q/stroke-weight 0)
-  (doseq [lang (:languages draw-state)]
+  (doseq [{:keys [startup-progress] :as lang} (:languages draw-state)]
     (let [y (:y lang)
           track-x (:track-x lang)
           runs (:runs lang)]
@@ -170,17 +165,17 @@
       (q/fill 120)
       (q/rect 0 (- y 10) (q/width) 20)
       (q/text-align :right :center)
-      (when-not race-started
+      (when-not race-started?
         (q/fill 60)
         (q/rect (:start-sequence-x lang) (- y 10) (- start-time-line-x (:start-sequence-x lang)) 20))
       (q/fill "white")
         ;(q/text-style :bold)
       (q/text-size 14)
       (q/text (:language-name lang) start-time-line-x y)
-      (when race-started
+      (when race-started?
         (q/text (:benchmark-time-str lang) (- (q/width) 5) y))
       (q/text-size 12)
-      (when (and (:greeting lang)
+      (when (and (> startup-progress 1)
                  (> time-to-stop-greeting 0))
         (q/fill 0 0 0 time-to-stop-greeting)
         (q/text-style :bold)
@@ -188,7 +183,7 @@
         (q/text-align :left)
         (q/text-style :normal)
         (q/text (str "(" (:hello-world-str lang) ") ") (+ start-time-line-x 5) (- y 20)))
-      (q/image (:logo-image lang) track-x y 40 40)
+      (q/image (:logo-image lang) track-x y ball-width ball-width)
       (q/text-align :left)
       (q/fill "white")
       (q/text-num runs (+ track-x half-ball-width 5) y)
@@ -197,7 +192,7 @@
       (q/text-style :bold)
       (q/text-align :center)
       (q/fill "black")
-      (if-not race-started
+      (if-not race-started?
         (q/text (:start-message draw-state) middle-x 20)
         (q/text (:race-message draw-state) middle-x 20)))))
 
