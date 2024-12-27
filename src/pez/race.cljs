@@ -111,7 +111,7 @@
                                          :benchmark-time (- (benchmark lang) hello-world)
                                          :benchmark-time-str (str (-> benchmark-time
                                                                       (.toFixed 1)
-                                                                      (.padStart 5))
+                                                                      (.padStart 10))
                                                                   "ms")
                                          :x 0
                                          :y (+ 90 (* i 45))
@@ -121,6 +121,7 @@
 
 (comment
   (setup :loops)
+  (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
 (defn update-state [{:keys [max-start-time track-length] :as draw-state} elapsed-ms]
