@@ -78,17 +78,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: gh_pages
 
       - name: Copy public directory to tag directory
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          mkdir "public/$TAG_NAME"
-          cp -r public/{images,index.html,js,style.css} "./$TAG_NAME/"
+          #mkdir "public/$TAG_NAME"
+          #cp -r public/{images,index.html,js,style.css} "./$TAG_NAME/"
+          echo TAG_NAME $TAG_NAME
           tree
 
-      - name: Deploy tag to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: public
+      # - name: Deploy tag to gh-pages
+      #   uses: peaceiris/actions-gh-pages@v4
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: public
