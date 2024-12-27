@@ -60,11 +60,27 @@
                  (bd/benchmarks language-file-name)))
         conf/languages))
 
+(defn fastest-implementation [benchmark implementations]
+  (apply min-key
+         (fn [impl]
+           (- (benchmark impl)
+              (get impl (start-time-key benchmark))))
+         implementations))
+
+(defn best-languages [benchmark]
+  (->> (languages)
+       (group-by :language)
+       vals
+       (map (fn [champion]
+              (fastest-implementation benchmark champion)))
+       (filter (fn [lang]
+                 (benchmark lang)))))
+
 (defn sorted-languages [benchmark]
   (sort-by (fn [lang]
              (- (benchmark lang)
                 (get lang (start-time-key benchmark))))
-           (filter benchmark (languages))))
+           (best-languages benchmark)))
 
 (comment
   (languages)
