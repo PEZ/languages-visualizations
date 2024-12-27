@@ -11,10 +11,9 @@
 (defonce !app-state (atom {:benchmark :loops}))
 
 (def frame-rate 120)
-(def fastest-track-time-ms 600)
+(def min-track-time-ms 600)
+(def frames-per-track (/ (* frame-rate min-track-time-ms) 1000))
 (def drawing-width 700)
-
-;(def start-time-line-x-% 0.30)
 
 (defn start-time-key [benchmark]
   (-> benchmark name (str "-hello-world") keyword))
@@ -110,7 +109,6 @@
                                      starting-sequence-ticks (* (/ hello-world (max-start-time benchmark))
                                                                 total-starting-sequence-ticks)
                                      benchmark-time (- (benchmark lang) hello-world)
-                                     frames-per-track (/ (* frame-rate fastest-track-time-ms) 1000)
                                      speed (/ min-time benchmark-time)
                                      track-ticks (/ frames-per-track speed)]
                                  (merge lang
