@@ -151,7 +151,6 @@
 
 (defn draw-state! [{:keys [time-to-stop-greeting race-started?
                            start-message race-message middle-x] :as draw-state}]
-  (def draw-state draw-state)
   (q/background 245)
   (q/stroke-weight 0)
   (doseq [lang (:languages draw-state)]
@@ -166,7 +165,6 @@
         (q/fill 60)
         (q/rect start-sequence-x (- y 10) (- start-time-line-x start-sequence-x) 20))
       (q/fill "white")
-        ;(q/text-style :bold)
       (q/text-size 14)
       (q/text language-name start-time-line-x y)
       (when race-started?
@@ -194,8 +192,8 @@
         (q/text race-message middle-x 20)))))
 
 (defn run-sketch [benchmark]
-  (def benchmark benchmark)
   ; TODO: Figure out if there's a way to set the current applet with public API
+  #_{:clj-kondo/ignore [:unresolved-namespace]}
   (set! quil.sketch/*applet*
         (let [start-time (js/performance.now)]
           (q/sketch
@@ -211,7 +209,6 @@
            :middleware [m/fun-mode]))))
 
 (defn app [state]
-  (def state state)
   [:article
    [:h1 "Languages"]
    (into [:section.benchmark-options]
@@ -272,7 +269,6 @@
 (def app-el
   (js/document.getElementById "app"))
 
-;; start is called by init and after code reloading finishes
 (defn ^:dev/after-load start []
   (js/console.log "start")
   (render-app! app-el @!app-state))
@@ -290,6 +286,6 @@
   (start)
   (run-sketch (:benchmark @!app-state)))
 
-;; this is called before any code is reloaded
-(defn ^:dev/before-load stop []
+(defn ^{:export true
+        :dev/before-load true} stop []
   (js/console.log "stop"))
