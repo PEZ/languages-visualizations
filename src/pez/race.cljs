@@ -41,17 +41,19 @@
                       benchmarks)))
 
 (defn benchmark-times [benchmark]
-  (mapv -
-        (->> bd/benchmarks
-             vals
-             (map benchmark))
-        (->> bd/benchmarks
-             vals
-             (map (start-time-key benchmark)))))
+  (let [benchmarks (filter (comp benchmark second) bd/benchmarks)]
+    (mapv -
+          (->> benchmarks
+               vals
+               (map benchmark))
+          (->> benchmarks
+               vals
+               (map (start-time-key benchmark))))))
 
 (comment
   (benchmark-times :loops)
   (benchmark-times :levenshtein)
+  (benchmark-times :fibonacci)
   :rcf)
 
 (defn languages []
@@ -250,7 +252,8 @@
                      :on {:change [[:app/set-benchmark :event/target.value]]}}]
             (benchmark conf/benchmark-names)]))
    [:section#race]
-   [:a {:href "https://github.com/bddicken/languages"} "github.com/bddicken/languages"]])
+   [:section.info
+    [:a {:href "https://github.com/bddicken/languages"} "github.com/bddicken/languages"]]])
 
 (defn- enrich-action-from-replicant-data [{:replicant/keys [js-event]} actions]
   (walk/postwalk
