@@ -10,10 +10,11 @@
 
 (defonce !app-state (atom {:benchmark :loops}))
 
-(def frame-rate 120)
 (def min-track-time-ms 600)
-(def frames-per-track (/ (* frame-rate min-track-time-ms) 1000))
 (def drawing-width 700)
+
+(def startup-sequence-ms 2000)
+(def greeting-display-ms 4500)
 
 (defn start-time-key [benchmark]
   (-> benchmark name (str "-hello-world") keyword))
@@ -84,43 +85,35 @@
      :middle-y (/ height 2)}))
 
 (defn setup [benchmark]
-  (q/frame-rate frame-rate)
+  (q/frame-rate 120)
   (q/image-mode :center)
 
-  (let [total-starting-sequence-ticks (* frame-rate 2)
-        arena (arena (q/width) (q/height))
-        {:keys [start-time-line-x start-line-x track-length]} arena
+  (let [arena (arena (q/width) (q/height))
+        {:keys [start-line-x]} arena
         max-time (apply max (benchmark-times benchmark))
         min-time (apply min (benchmark-times benchmark))]
     (merge arena
            {:t 0
             :benchmark benchmark
-            :race-started false
+            :race-started? false
             :max-start-time (max-start-time benchmark)
-            :total-starting-sequence-ticks total-starting-sequence-ticks
-            :tracj-length track-length
             :max-time max-time
             :min-time min-time
             :start-message "Starting engines!"
             :race-message (benchmark conf/benchmark-names)
-            :greeting-timeout (* frame-rate 2.5)
             :languages (mapv (fn [i lang]
                                (let [hello-world (get lang (start-time-key benchmark))
-                                     starting-sequence-ticks (* (/ hello-world (max-start-time benchmark))
-                                                                total-starting-sequence-ticks)
                                      benchmark-time (- (benchmark lang) hello-world)
-                                     speed (/ min-time benchmark-time)
-                                     track-ticks (/ frames-per-track speed)]
+                                     speed (/ min-time benchmark-time)]
                                  (merge lang
                                         {:speed speed
                                          :hello-world-str (str (.toFixed hello-world 1) " ms")
+                                         :start-time hello-world
                                          :runs 0
-                                         :track-ticks track-ticks
                                          :track-x start-line-x
-                                         :starting-sequence-ticks starting-sequence-ticks
-                                         :start-sequence-x-per-tick (/ start-time-line-x starting-sequence-ticks)
                                          :start-sequence-x 0
                                          :hello-world-shown false
+                                         :time-to-stop-greeting greeting-display-ms
                                          :greeting nil
                                          :benchmark-time (- (benchmark lang) hello-world)
                                          :benchmark-time-str (str (.toFixed benchmark-time 1) " ms")
@@ -134,27 +127,25 @@
   (setup :loops)
   :rcf)
 
-(defn update-state [{:keys [race-started greeting-timeout total-starting-sequence-ticks track-length] :as draw-state}]
+(defn update-state [{:keys [max-start-time track-length] :as draw-state} elapsed-ms]
   (let [arena (arena (q/width) (q/height))
         {:keys [start-time-line-x start-line-x]} arena
-        t (inc (:t draw-state))
-        elapsed-t (- t total-starting-sequence-ticks)]
+        race-started? (> elapsed-ms startup-sequence-ms)
+        position-time (- elapsed-ms startup-sequence-ms)]
     (merge draw-state
            arena
-           {:t t}
-           (when (> t (+ total-starting-sequence-ticks (/ frame-rate 10)))
-             {:race-started true})
-           (when race-started
-             {:greeting-timeout (max 0 (dec greeting-timeout))})
-           {:languages (mapv (fn [{:keys [start-sequence-x start-sequence-x-per-tick track-ticks] :as lang}]
+           {:race-started? race-started?
+            :time-to-stop-greeting (- greeting-display-ms elapsed-ms)}
+           {:languages (mapv (fn [{:keys [start-time speed] :as lang}]
                                (merge lang
-                                      (if-not race-started
-                                        (if (> start-time-line-x start-sequence-x)
-                                          {:start-sequence-x (min start-time-line-x
-                                                                  (+ start-sequence-x start-sequence-x-per-tick))}
-                                          {:greeting "Hello, World!"})
-                                        (let [track-x-per-tick (/ track-length track-ticks)
-                                              distance (* track-x-per-tick elapsed-t)
+                                      (if-not race-started?
+                                        (let [startup-progress (/ elapsed-ms (* startup-sequence-ms (/ start-time max-start-time)))]
+                                          {:start-sequence-x (min (* start-time-line-x startup-progress)
+                                                                  start-time-line-x)
+                                           :greeting (when (>= startup-progress 1) "Hello, World!")})
+                                        (let [normalized-time (/ position-time min-track-time-ms)
+                                              scaled-time (* normalized-time speed)  ; Apply the speed ratio
+                                              distance (* track-length scaled-time)
                                               loop-distance (mod distance (* 2 track-length))
                                               x (if (> loop-distance track-length)
                                                   (- (* 2 track-length) loop-distance)
@@ -167,7 +158,7 @@
   (q/no-loop)
   :rcf)
 
-(defn draw-state! [{:keys [t greeting-timeout start-time-line-x race-started middle-x half-ball-width] :as draw-state}]
+(defn draw-state! [{:keys [t time-to-stop-greeting start-time-line-x race-started middle-x half-ball-width] :as draw-state}]
   (def draw-state draw-state)
   (q/background 245)
   (q/stroke-weight 0)
@@ -190,8 +181,8 @@
         (q/text (:benchmark-time-str lang) (- (q/width) 5) y))
       (q/text-size 12)
       (when (and (:greeting lang)
-                 (> greeting-timeout 0))
-        (q/fill 0 0 0 (* greeting-timeout greeting-timeout))
+                 (> time-to-stop-greeting 0))
+        (q/fill 0 0 0 time-to-stop-greeting)
         (q/text-style :bold)
         (q/text (:greeting lang) start-time-line-x (- y 20))
         (q/text-align :left)
@@ -214,15 +205,18 @@
   (def benchmark benchmark)
   ; TODO: Figure out if there's a way to set the current applet with public API
   (set! quil.sketch/*applet*
-        (q/sketch
-         :host "race"
-         :size (dims benchmark)
-         :renderer :p2d
-         :setup (fn [] (setup benchmark))
-         :update update-state
-         :draw draw-state!
+        (let [start-time (js/performance.now)]
+          (q/sketch
+           :host "race"
+           :size (dims benchmark)
+           :renderer :p2d
+           :setup (fn [] (setup benchmark))
+           :update (fn [state]
+                     (let [elapsed-ms (- (js/performance.now) start-time)]
+                       (update-state state elapsed-ms)))
+           :draw draw-state!
     ;; :key-pressed (u/save-image "export.png")
-         :middleware [m/fun-mode])))
+           :middleware [m/fun-mode]))))
 
 (defn app [state]
   (def state state)
