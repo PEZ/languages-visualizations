@@ -329,8 +329,9 @@
   (let [hash (-> js/window .-location .-hash)
         benchmark (when (seq hash)
                     (keyword (subs hash 1)))]
-    (when (contains? (set (active-benchmarks bd/benchmarks)) benchmark)
-      (event-handler {} [[:ax/set-benchmark benchmark]]))))
+    (if (contains? (set (active-benchmarks bd/benchmarks)) benchmark)
+      (event-handler {} [[:ax/set-benchmark benchmark]])
+      (event-handler {} [[:ax/set-benchmark :loops]]))))
 
 (defn ^:dev/after-load start []
   (js/console.log "start")
