@@ -2,6 +2,7 @@
   (:require
    [babashka.fs :as fs]
    [cheshire.core :as json]
+   [clojure.pprint :as pprint]
    [clojure.string :as string]))
 
 (defn get-mean-ms [file]
@@ -12,7 +13,7 @@
       :mean
       (* 1000)))
 
-(defn ^:export get-benchmark-means-from-path [path]
+(defn  get-benchmark-means-from-path! [path]
   (->> (map str (fs/glob path "*/*.json"))
        (map (fn [file]
               (let [benchmark (-> (subs file (inc (count path)) (string/last-index-of file "/"))
@@ -23,8 +24,12 @@
                  (assoc-in acc [language benchmark] mean))
                {})))
 
+(defn ^:export collect-benchmark-data! [& args]
+  (pprint/pprint
+   (get-benchmark-means-from-path! (or (first args) "/tmp/languages"))))
+
 (comment
-  (get-benchmark-means-from-path "/tmp/languages")
+  (get-benchmark-means-from-path! "/tmp/languages")
   (map str (fs/glob "/tmp/languages" "*/*.json"))
   :rcf)
 
