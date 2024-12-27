@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Checkout
+      - name: Checkout gh-pages
         uses: actions/checkout@v4
         with:
           ref: gh_pages
@@ -83,8 +83,8 @@ jobs:
       - name: Copy public directory to tag directory
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          #mkdir "public/$TAG_NAME"
-          #cp -r public/{images,index.html,js,style.css} "./$TAG_NAME/"
+          #mkdir "./$TAG_NAME"
+          #cp -r ./{images,index.html,js,style.css} "./$TAG_NAME/"
           echo TAG_NAME $TAG_NAME
           tree
 
