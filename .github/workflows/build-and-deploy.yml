@@ -63,7 +63,7 @@ jobs:
           npx shadow-cljs release app
 
       - name: Deploy app to gh-pages
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
