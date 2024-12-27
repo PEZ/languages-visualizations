@@ -256,7 +256,7 @@
                      :name :benchmark
                      :value benchmark
                      :checked (= benchmark (:benchmark state))
-                     :on {:change [[:app/set-benchmark :event/target.value]]}}]
+                     :on {:change [[:ax/set-hash :event/target.value]]}}]
             (benchmark conf/benchmark-names)]))
    [:section#race]
    [:section.info
@@ -277,10 +277,12 @@
   (let [[action-name & args :as enriched] (enrich-action-from-replicant-data replicant-data action)
         _ (js/console.debug "Enriched action" enriched)
         {:keys [new-state effects]} (cond
-                                      (= :app/set-benchmark action-name)
+                                      (= :ax/set-hash action-name)
+                                      {:effects [[:fx/set-hash (first args)]]}
+                                      (= :ax/set-benchmark action-name)
                                       (let [benchmark (keyword (first args))]
                                         {:new-state (assoc state :benchmark benchmark)
-                                         :effects [[:draw/run-sketch benchmark]]}))]
+                                         :effects [[:fx/run-sketch benchmark]]}))]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -300,10 +302,18 @@
         (let [[effect-name & args] effect]
           (cond
             (= :console/log effect-name) (apply js/console.log args)
-            (= :draw/run-sketch effect-name) (run-sketch (first args))))))))
+            (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
+            (= :fx/run-sketch effect-name) (run-sketch (first args))))))))
 
 (defn render-app! [el state]
   (d/render el (app state)))
+
+(defn handle-hash []
+  (let [hash (-> js/window .-location .-hash)
+        benchmark (when (seq hash)
+                    (keyword (subs hash 1)))]
+    (when (contains? (set (active-benchmarks bd/benchmarks)) benchmark)
+      (event-handler {} [[:ax/set-benchmark benchmark]]))))
 
 (defn ^:dev/after-load start []
   (js/console.log "start")
@@ -313,13 +323,15 @@
   (js/console.log "init")
   (inspector/inspect "App state" !app-state)
   (add-watch !app-state :update (fn [_k _r _o n]
-                              (render-app! app-el n)))
+                                  (render-app! app-el n)))
   (js/window.addEventListener "resize"
                               (fn [_e]
                                 (let [[w h] (dims (:benchmark @!app-state))]
                                   (q/resize-sketch w h))))
   (d/set-dispatch! event-handler)
   (start)
+  (handle-hash)
+  (js/window.addEventListener "hashchange" handle-hash)
   (run-sketch (:benchmark @!app-state)))
 
 (defn ^{:export true
