@@ -9,6 +9,7 @@
    [replicant.dom :as d]))
 
 (defonce !app-state (atom {:benchmark :loops}))
+(def app-el (js/document.getElementById "app"))
 
 (def drawing-width 700)
 (def start-time-line-x 140)
@@ -71,7 +72,7 @@
   :rcf)
 
 (defn dims [benchmark]
-  [(min drawing-width (- (.-innerWidth js/window) 20)) (+ 80 (* 45 (count (sorted-languages benchmark))))])
+  [(min drawing-width (.-offsetWidth app-el)) (+ 80 (* 45 (count (sorted-languages benchmark))))])
 
 (defn arena [width height]
   (let [finish-line-x (- width half-ball-width 5)]
@@ -100,7 +101,7 @@
                                      speed (/ min-time benchmark-time)]
                                  (merge lang
                                         {:speed speed
-                                         :start-time-str (str (.toFixed hello-world 1) " ms")
+                                         :start-time-str (str (.toFixed hello-world 1) "ms")
                                          :start-time hello-world
                                          :runs 0
                                          :track-x start-line-x
@@ -108,9 +109,12 @@
                                          :time-to-stop-greeting greeting-display-ms
                                          :greeting "Hello, World!"
                                          :benchmark-time (- (benchmark lang) hello-world)
-                                         :benchmark-time-str (str (.toFixed benchmark-time 1) " ms")
+                                         :benchmark-time-str (str (-> benchmark-time
+                                                                      (.toFixed 1)
+                                                                      (.padStart 5))
+                                                                  "ms")
                                          :x 0
-                                         :y (+ 70 (* i 45))
+                                         :y (+ 90 (* i 45))
                                          :logo-image (q/load-image (:logo lang))})))
                              (range)
                              (sorted-languages benchmark))})))
@@ -125,7 +129,8 @@
         position-time (- elapsed-ms startup-sequence-ms)]
     (merge draw-state
            arena
-           {:race-started? race-started?
+           {:t elapsed-ms
+            :race-started? race-started?
             :time-to-stop-greeting (- greeting-display-ms elapsed-ms)}
            {:languages (mapv (fn [{:keys [start-time speed] :as lang}]
                                (let [startup-progress (/ elapsed-ms (* startup-sequence-ms (/ start-time max-start-time)))]
@@ -149,47 +154,54 @@
   (q/no-loop)
   :rcf)
 
-(defn draw-state! [{:keys [time-to-stop-greeting race-started?
+(def offwhite 245)
+(def darkgrey 120)
+(def black 40)
+
+(defn draw-state! [{:keys [t width time-to-stop-greeting race-started?
                            start-message race-message middle-x] :as draw-state}]
-  (q/background 245)
+  (q/background offwhite)
   (q/stroke-weight 0)
   (doseq [lang (:languages draw-state)]
     (let [{:keys [language-name logo-image y track-x runs
                   start-sequence-x benchmark-time-str
                   startup-progress start-time-str greeting]} lang]
       (q/text-style :normal)
-      (q/fill 120)
-      (q/rect 0 (- y 10) (q/width) 20)
+      (q/fill darkgrey)
+      (q/rect 0 (- y 12) (+ start-time-line-x 5) 24)
       (q/text-align :right :center)
       (when-not race-started?
-        (q/fill 60)
+        (q/fill black)
         (q/rect start-sequence-x (- y 10) (- start-time-line-x start-sequence-x) 20))
-      (q/fill "white")
+      (q/fill offwhite)
       (q/text-size 14)
       (q/text language-name start-time-line-x y)
-      (when race-started?
-        (q/text benchmark-time-str (- (q/width) 5) y))
       (q/text-size 12)
+      (q/fill darkgrey)
+      (q/text-align :right)
       (when (and (> startup-progress 1)
                  (> time-to-stop-greeting 0))
         (q/fill 0 0 0 time-to-stop-greeting)
-        (q/text-style :bold)
-        (q/text greeting start-time-line-x (- y 20))
+        (q/text (str "(" start-time-str ") " greeting) start-time-line-x (- y 20)))
+      (when (> 0 time-to-stop-greeting)
         (q/text-align :left)
-        (q/text-style :normal)
-        (q/text (str "(" start-time-str ") ") (+ start-time-line-x 5) (- y 20)))
+        (q/text benchmark-time-str 5 (- y 20))
+        (q/text-align :right)
+        (q/fill darkgrey)
+        (q/text-num runs start-time-line-x (- y 20)))
       (q/image logo-image track-x y ball-width ball-width)
-      (q/text-align :left)
-      (q/fill "white")
-      (q/text-num runs (+ track-x half-ball-width 5) y)
       (q/text-align :right)
+      (q/text-align :center)
       (q/text-size 20)
       (q/text-style :bold)
-      (q/text-align :center)
-      (q/fill "black")
+      (q/fill black)
+      (q/text race-message middle-x 20)
+      (q/text-style :normal)
+      (q/text-size 16)
+      (q/fill black)
       (if-not race-started?
-        (q/text start-message middle-x 20)
-        (q/text race-message middle-x 20)))))
+        (q/text start-message middle-x 45)
+        (q/text "How fast is your favorite language?" middle-x 45)))))
 
 (defn run-sketch [benchmark]
   ; TODO: Figure out if there's a way to set the current applet with public API
@@ -265,9 +277,6 @@
 
 (defn render-app! [el state]
   (d/render el (app state)))
-
-(def app-el
-  (js/document.getElementById "app"))
 
 (defn ^:dev/after-load start []
   (js/console.log "start")
