@@ -261,7 +261,7 @@
    [:p [:b "Note:"] " There are several problems with this naïve way of subtracting start times:"]
    [:ul
     [:li "One is that it still doesn't compensate for that many JIT compilers will optimize the programs as they run. So a Java program getting cold started over and over, like this benchmark is run, will not be given a fair chance to show what it is actually capable of."]
-    [:li "Another, bigger(?), problem is that the fluctuations of the start-times and the benchmark runs are too bug, at least for the " [:b "levenshtein"] " benchmark, which is very quick. Subtracting the " [:b "hello-world"] " time from the benchmarked time can even result in negative values..."]]))
+    [:li "Another, bigger(?), problem is that the fluctuations of the start-times and the benchmark runs are too big, at least for the " [:b "levenshtein"] " benchmark, which is very quick. Subtracting the " [:b "hello-world"] " time from the benchmarked time can even result in negative values..."]]))
 
 (defn app [state]
   [:article
