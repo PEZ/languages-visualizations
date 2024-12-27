@@ -248,13 +248,13 @@
 
 (defn- info-view [state]
   (list
-   [:h2 "What's this?"]
+   [:h2 "A visualization experiment"]
    [:p "This is a visualization of results running the benchmarks setup by Benjamin Dicken's "
-    [:a {:href "https://github.com/bddicken/languages"} "Languages"] " project. Visualization source: " [:a {:href "https://github.com/PEZ/languages-visualizations"} "github.com/PEZ/languages-visualizations"]]
-   [:p "The selection of languages are a subset of languages that are added to the project, and languages for which I have a working toolchain on my machine. (A Macbook Pro M4.)"]
+    [:a {:href "https://github.com/bddicken/languages"} "Languages"] " project. The visualization is very much inspired by how Benjamin choose to do it. The main twist here is the experiment with trying to compensate somewhat for the different start times of the executables in the bench. Source: " [:a {:href "https://github.com/PEZ/languages-visualizations"} "github.com/PEZ/languages-visualizations"]]
+   [:p "The selection of languages are the subset of languages that are added to the project for which I have a working toolchain on my machine. (A Macbook Pro M4.). The languages need to pass the simple output check, and the implementation need to seem compliant (to me). I may also have skipped some of the slower languages because I don't want to wait forever to run it all."]
    [:p "I run the benchmarks like so, for each benchmark:"]
-   [:ul
-    [:li "For each language first run the " [:b "hello-world"] " benchmark, " [:b "7 runs"] ", and use this as a measure of start time for the exectutable benched."]
+   [:ol
+    [:li "For each language first run the " [:b "hello-world"] " benchmark, " [:b "7 runs"] ", and use this as a measure of start time for the exectutable being benched."]
     [:li "Run the benchmark, " [:b "7 runs."]]
     [:li "Subtract the start time to get the benchmark results"]]
    [:p "Some languages have several ways to compile and package the executables. I call them “champions” for their language, and only the best champion is selected for a given benchmark. E.g. Clojure is represented by “Clojure” and “Clojure Native”, where the former is running the Clojure program using the " [:code "java"] " command, and the latter is a compiled binary (using GraalVM native-image). Several JVM languages gets this treatment."]
