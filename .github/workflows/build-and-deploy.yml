@@ -83,7 +83,7 @@ jobs:
       - name: Copy public directory to tag directory
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          cp -r public "public/$TAG_NAME"
+          cp -r . "./$TAG_NAME"
 
       - name: Deploy tag to gh-pages
         uses: peaceiris/actions-gh-pages@v4
