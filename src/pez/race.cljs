@@ -13,9 +13,9 @@
 
 (def drawing-width 700)
 (def start-time-line-x 140)
-(def ball-width 40)
+(def ball-width 44)
 (def half-ball-width (/ ball-width 2))
-(def start-line-x (+ start-time-line-x half-ball-width 5))
+(def start-line-x (+ start-time-line-x half-ball-width 10))
 
 (def min-track-time-ms 600)
 
