@@ -1,5 +1,6 @@
 (ns pez.race
   (:require
+   [clojure.set :as set]
    [clojure.walk :as walk]
    [gadget.inspector :as inspector]
    [pez.benchmark-data :as bd]
@@ -84,9 +85,15 @@
                 (get lang (start-time-key benchmark))))
            (best-languages benchmark)))
 
+(defn find-missing-languages []
+  (let [config-languages (set (map :language-file-name conf/languages))
+        benchmark-languages (set (keys bd/benchmarks))]
+    (set/difference benchmark-languages config-languages)))
+
 (comment
   (languages)
   (sorted-languages :levenshtein)
+  (find-missing-languages)
   :rcf)
 
 (defn dims [benchmark]
