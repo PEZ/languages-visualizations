@@ -22,7 +22,7 @@
 
 (def pre-startup-wait-ms 1500)
 (def startup-sequence-ms 5000)
-(def greeting-display-ms 4500)
+(def greeting-display-ms 7500)
 
 (defn start-time-key [benchmark]
   (-> benchmark name (str "-hello-world") keyword))
@@ -153,8 +153,8 @@
 (defn update-state [{:keys [max-start-time track-length] :as draw-state} elapsed-ms]
   (let [arena (arena (q/width) (q/height))
         wait-adjusted-time (- elapsed-ms pre-startup-wait-ms)
-        race-started? (> elapsed-ms startup-sequence-ms)
-        position-time (- elapsed-ms startup-sequence-ms)]
+        race-started? (> wait-adjusted-time startup-sequence-ms)
+        position-time (- wait-adjusted-time startup-sequence-ms)]
     (merge draw-state
            arena
            {:t elapsed-ms
