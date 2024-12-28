@@ -20,7 +20,8 @@
 
 (def min-track-time-ms 600)
 
-(def startup-sequence-ms 2000)
+(def pre-startup-wait-ms 1500)
+(def startup-sequence-ms 5000)
 (def greeting-display-ms 4500)
 
 (defn start-time-key [benchmark]
@@ -151,15 +152,20 @@
 
 (defn update-state [{:keys [max-start-time track-length] :as draw-state} elapsed-ms]
   (let [arena (arena (q/width) (q/height))
+        wait-adjusted-time (- elapsed-ms pre-startup-wait-ms)
         race-started? (> elapsed-ms startup-sequence-ms)
         position-time (- elapsed-ms startup-sequence-ms)]
     (merge draw-state
            arena
            {:t elapsed-ms
             :race-started? race-started?
-            :time-to-stop-greeting (- greeting-display-ms elapsed-ms)}
+            :time-to-stop-greeting (- greeting-display-ms wait-adjusted-time)}
            {:languages (mapv (fn [{:keys [start-time speed] :as lang}]
-                               (let [startup-progress (/ elapsed-ms (* startup-sequence-ms (/ start-time max-start-time)))]
+                               (let [startup-progress (if (pos? wait-adjusted-time)
+                                                        (/ wait-adjusted-time
+                                                           (* startup-sequence-ms
+                                                              (/ start-time max-start-time)))
+                                                        0)]
                                  (merge lang
                                         {:startup-progress startup-progress}
                                         (if-not race-started?
@@ -225,9 +231,10 @@
       (q/text-style :normal)
       (q/text-size 16)
       (q/fill black)
-      (if-not race-started?
-        (q/text start-message middle-x 45)
-        (q/text "How fast is your favorite language?" middle-x 45)))))
+      (if (or (< t pre-startup-wait-ms)
+              race-started?)
+        (q/text "How fast is your favorite language?" middle-x 45)
+        (q/text start-message middle-x 45)))))
 
 (defn run-sketch [benchmark]
   ; TODO: Figure out if there's a way to set the current applet with public API
