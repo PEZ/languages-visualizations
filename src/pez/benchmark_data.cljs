@@ -1,9 +1,9 @@
 (ns pez.benchmark-data)
 
 (def benchmarks
-  {"Julia" {:levenshtein-hello-world 213.4316962857143
+  {"Julia" {;:levenshtein-hello-world 213.4316962857143
             :loops-hello-world 200.9608692857143
-            :levenshtein 202.764
+            ;:levenshtein 202.764
             :loops 873.6935595714286}
    "Clojure_Native" {:fibonacci-hello-world 5.125356857142857
                      :levenshtein-hello-world 4.951119142857142
