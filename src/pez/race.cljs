@@ -119,7 +119,7 @@
      :middle-x (/ width 2)
      :middle-y (/ height 2)}))
 
-(defn setup [{:keys [benchmark] :as app-state}]
+(defn setup [{:keys [benchmark start-times-mode?] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
   (let [arena (arena (q/width) (q/height))
@@ -127,6 +127,7 @@
     (merge arena
            {:t 0
             :benchmark benchmark
+            :start-times-mode? start-times-mode?
             :race-started? false
             :max-start-time (max-start-time benchmark)
             :start-message "Starting engines!"
@@ -142,7 +143,9 @@
                                          :runs 0
                                          :track-x start-line-x
                                          :start-sequence-x 0
-                                         :time-to-stop-greeting greeting-display-ms
+                                         :time-to-stop-greeting (if start-times-mode?
+                                                                  greeting-display-ms
+                                                                  0)
                                          :greeting "Hello, World!"
                                          :benchmark-time benchmark-time
                                          :benchmark-time-str (str (-> benchmark-time
@@ -160,16 +163,22 @@
   (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
-(defn update-draw-state [{:keys [max-start-time track-length] :as draw-state} elapsed-ms]
+(defn update-draw-state [{:keys [max-start-time track-length start-times-mode?] :as draw-state} elapsed-ms]
   (let [arena (arena (q/width) (q/height))
         wait-adjusted-time (- elapsed-ms pre-startup-wait-ms)
-        race-started? (> wait-adjusted-time startup-sequence-ms)
-        position-time (- wait-adjusted-time startup-sequence-ms)]
+        race-started? (if start-times-mode?
+                        (> wait-adjusted-time startup-sequence-ms)
+                        (> elapsed-ms pre-startup-wait-ms))
+        position-time (if start-times-mode?
+                        (- wait-adjusted-time startup-sequence-ms)
+                        (- elapsed-ms pre-startup-wait-ms))]
     (merge draw-state
            arena
            {:t elapsed-ms
             :race-started? race-started?
-            :time-to-stop-greeting (- greeting-display-ms wait-adjusted-time)}
+            :time-to-stop-greeting (if start-times-mode?
+                                     (- greeting-display-ms wait-adjusted-time)
+                                     0)}
            {:languages (mapv (fn [{:keys [start-time speed] :as lang}]
                                (let [startup-progress (if (pos? wait-adjusted-time)
                                                         (/ wait-adjusted-time
@@ -200,7 +209,7 @@
 (def darkgrey 120)
 (def black 40)
 
-(defn draw! [{:keys [t time-to-stop-greeting race-started?
+(defn draw! [{:keys [t time-to-stop-greeting race-started? start-times-mode?
                      start-message race-message middle-x] :as draw-state}]
   (q/background offwhite)
   (q/stroke-weight 0)
@@ -209,23 +218,23 @@
                   start-sequence-x benchmark-time-str
                   startup-progress start-time-str greeting]} lang]
       (q/text-style :normal)
+      (q/text-align :right :center)
       (q/fill darkgrey)
       (q/rect 0 (- y 12) (+ start-time-line-x 5) 24)
-      (q/text-align :right :center)
-      (when-not race-started?
-        (q/fill black)
-        (q/rect start-sequence-x (- y 10) (- start-time-line-x start-sequence-x) 20))
+      (when start-times-mode?
+        (when-not race-started?
+          (q/fill black)
+          (q/rect start-sequence-x (- y 10) (- start-time-line-x start-sequence-x) 20))
+        (when (and (> startup-progress 1)
+                   (> time-to-stop-greeting 0))
+          (q/text-size 12)
+          (q/fill 0 0 0 time-to-stop-greeting)
+          (q/text (str "(" start-time-str ") " greeting) start-time-line-x (- y 20))))
       (q/fill offwhite)
       (q/text-size 14)
       (q/text language-name start-time-line-x y)
-      (q/text-size 12)
       (q/fill darkgrey)
-      (q/text-align :right)
-      (when (and (> startup-progress 1)
-                 (> time-to-stop-greeting 0))
-        (q/fill 0 0 0 time-to-stop-greeting)
-        (q/text (str "(" start-time-str ") " greeting) start-time-line-x (- y 20)))
-      (when (> 0 time-to-stop-greeting)
+      (when (>= 0 time-to-stop-greeting)
         (q/text-align :left)
         (q/text benchmark-time-str 5 (- y 20))
         (q/text-align :right)
