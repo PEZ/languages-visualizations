@@ -64,6 +64,11 @@
     :color "rgb(84, 59, 93)"
     :language :elixir
     :language-file-name "Elixir"}
+   {:language-name "Emacs Lisp Native"
+    :logo "images/Emacs.png"
+    :color "rgb(84, 59, 93)"
+    :language :emacs
+    :language-file-name "Emacs_Lisp_Native"}
    {:language-name "Fortran"
     :logo "images/fortran.png"
     :color "rgb(116, 77, 151)"
