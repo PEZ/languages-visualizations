@@ -289,21 +289,27 @@
     [:li "One is that it still doesn't compensate for that many JIT compilers will optimize the programs as they run. So a Java program getting cold started over and over, like this benchmark is run, will not be given a fair chance to show what it is actually capable of."]
     [:li "Another, bigger(?), problem is that the fluctuations of the start-times and the benchmark runs are too big, at least for the " [:b "levenshtein"] " benchmark, which is very quick. Subtracting the " [:b "hello-world"] " time from the benchmarked time can even result in negative values..."]]))
 
-(defn app [state]
+(defn app [{:keys [benchmark start-times-mode?] :as app-state}]
   [:article
    [:h1 "Languages"]
-   (into [:section.benchmark-options]
-         (for [benchmark (active-benchmarks bd/benchmarks)]
-           [:label.benchmark-label
-            [:input {:type :radio
-                     :name :benchmark
-                     :value benchmark
-                     :checked (= benchmark (:benchmark state))
-                     :on {:change [[:ax/set-hash :event/target.value]]}}]
-            (benchmark conf/benchmark-names)]))
+   [:section
+    [:div.benchmark-options
+     (for [benchmark-option (active-benchmarks bd/benchmarks)]
+       [:label.benchmark-label
+        [:input {:type :radio
+                 :name :benchmark
+                 :value benchmark-option
+                 :checked (= benchmark-option benchmark)
+                 :on {:change [[:ax/set-hash :event/target.value]]}}]
+        (benchmark-option conf/benchmark-names)])]
+    [:label.benchmark-label
+     [:input {:type :checkbox
+              :checked start-times-mode?
+              :on {:change [[:ax/toggle-start-time-mode start-times-mode?]]}}]
+     [:span "start-time mode " [:em "(Caveats: see below)"]]]]
    [:section#race]
    [:section.info
-    (info-view state)]])
+    (info-view app-state)]])
 
 (defn- enrich-action-from-replicant-data [{:replicant/keys [js-event]} actions]
   (walk/postwalk
@@ -322,9 +328,15 @@
         {:keys [new-state effects]} (cond
                                       (= :ax/set-hash action-name)
                                       {:effects [[:fx/set-hash (first args)]]}
+
                                       (= :ax/set-benchmark action-name)
                                       (let [benchmark (keyword (first args))
                                             new-state (assoc state :benchmark benchmark)]
+                                        {:new-state new-state
+                                         :effects [[:fx/run-sketch new-state]]})
+
+                                      (= :ax/toggle-start-time-mode action-name)
+                                      (let [new-state (update state :start-times-mode? not)]
                                         {:new-state new-state
                                          :effects [[:fx/run-sketch new-state]]}))]
     (cond-> result
