@@ -9,7 +9,8 @@
    [quil.middleware :as m]
    [replicant.dom :as d]))
 
-(defonce !app-state (atom {:benchmark :loops}))
+(defonce !app-state (atom {:benchmark :loops
+                           :start-times-mode? false}))
 (def app-el (js/document.getElementById "app"))
 
 (def drawing-width 700)
@@ -42,20 +43,21 @@
                       #{}
                       benchmarks)))
 
-(defn benchmark-times [benchmark]
-  (let [benchmarks (filter (comp benchmark second) bd/benchmarks)]
-    (mapv -
-          (->> benchmarks
-               vals
-               (map benchmark))
-          (->> benchmarks
-               vals
-               (map (start-time-key benchmark))))))
+(defn benchmark-times [{:keys [benchmark start-times-mode?]}]
+  (let [benchmarks (filter (comp benchmark second) bd/benchmarks)
+        times (->> benchmarks
+                   vals
+                   (map benchmark))
+        start-times (->> benchmarks
+                         vals
+                         (map (start-time-key benchmark)))]
+    (if start-times-mode?
+      (mapv - times start-times)
+      times)))
 
 (comment
-  (benchmark-times :loops)
-  (benchmark-times :levenshtein)
-  (benchmark-times :fibonacci)
+  (benchmark-times {:benchmark :loops
+                    :start-times-mode? false})
   :rcf)
 
 (defn languages []
@@ -64,27 +66,36 @@
                  (bd/benchmarks language-file-name)))
         conf/languages))
 
-(defn fastest-implementation [benchmark implementations]
+(defn- benchmark-result [{:keys [benchmark start-times-mode? lang]}]
+  (if start-times-mode?
+    (- (benchmark lang)
+       (get lang (start-time-key benchmark)))
+    (benchmark lang)))
+
+(defn fastest-implementation [app-state implementations]
   (apply min-key
          (fn [impl]
-           (- (benchmark impl)
-              (get impl (start-time-key benchmark))))
+           (benchmark-result (assoc app-state :lang impl)))
          implementations))
 
-(defn best-languages [benchmark]
+(defn best-languages [{:keys [benchmark] :as app-state}]
   (->> (languages)
        (group-by :language)
        vals
-       (map (fn [champion]
-              (fastest-implementation benchmark champion)))
+       (map (fn [champions]
+              (fastest-implementation app-state champions)))
        (filter (fn [lang]
                  (benchmark lang)))))
 
-(defn sorted-languages [benchmark]
+(comment
+  (best-languages {:benchmark :loops
+                   :start-times-mode? false})
+  :rcf)
+
+(defn sorted-languages [app-state]
   (sort-by (fn [lang]
-             (- (benchmark lang)
-                (get lang (start-time-key benchmark))))
-           (best-languages benchmark)))
+             (benchmark-result (assoc app-state :lang lang)))
+           (best-languages app-state)))
 
 (defn find-missing-languages []
   (let [config-languages (set (map :language-file-name conf/languages))
@@ -93,12 +104,12 @@
 
 (comment
   (languages)
-  (sorted-languages :levenshtein)
+  (sorted-languages {:benchmark :loops})
   (find-missing-languages)
   :rcf)
 
-(defn dims [benchmark]
-  [(min drawing-width (.-offsetWidth app-el)) (+ 80 (* 45 (count (sorted-languages benchmark))))])
+(defn dims [app-state]
+  [(min drawing-width (.-offsetWidth app-el)) (+ 80 (* 45 (count (sorted-languages app-state))))])
 
 (defn arena [width height]
   (let [finish-line-x (- width half-ball-width 5)]
@@ -108,12 +119,11 @@
      :middle-x (/ width 2)
      :middle-y (/ height 2)}))
 
-(defn setup [benchmark]
+(defn setup [{:keys [benchmark] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
-
   (let [arena (arena (q/width) (q/height))
-        min-time (apply min (benchmark-times benchmark))]
+        min-time (apply min (benchmark-times app-state))]
     (merge arena
            {:t 0
             :benchmark benchmark
@@ -123,7 +133,7 @@
             :race-message (benchmark conf/benchmark-names)
             :languages (mapv (fn [i lang]
                                (let [hello-world (get lang (start-time-key benchmark))
-                                     benchmark-time (- (benchmark lang) hello-world)
+                                     benchmark-time (benchmark-result (assoc app-state :lang lang))
                                      speed (/ min-time benchmark-time)]
                                  (merge lang
                                         {:speed speed
@@ -134,7 +144,7 @@
                                          :start-sequence-x 0
                                          :time-to-stop-greeting greeting-display-ms
                                          :greeting "Hello, World!"
-                                         :benchmark-time (- (benchmark lang) hello-world)
+                                         :benchmark-time benchmark-time
                                          :benchmark-time-str (str (-> benchmark-time
                                                                       (.toFixed 1)
                                                                       (.padStart 10))
@@ -143,14 +153,14 @@
                                          :y (+ 90 (* i 45))
                                          :logo-image (q/load-image (:logo lang))})))
                              (range)
-                             (sorted-languages benchmark))})))
+                             (sorted-languages app-state))})))
 
 (comment
   (setup :loops)
   (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
-(defn update-state [{:keys [max-start-time track-length] :as draw-state} elapsed-ms]
+(defn update-draw-state [{:keys [max-start-time track-length] :as draw-state} elapsed-ms]
   (let [arena (arena (q/width) (q/height))
         wait-adjusted-time (- elapsed-ms pre-startup-wait-ms)
         race-started? (> wait-adjusted-time startup-sequence-ms)
@@ -190,8 +200,8 @@
 (def darkgrey 120)
 (def black 40)
 
-(defn draw-state! [{:keys [t width time-to-stop-greeting race-started?
-                           start-message race-message middle-x] :as draw-state}]
+(defn draw! [{:keys [t time-to-stop-greeting race-started?
+                     start-message race-message middle-x] :as draw-state}]
   (q/background offwhite)
   (q/stroke-weight 0)
   (doseq [lang (:languages draw-state)]
@@ -236,24 +246,24 @@
         (q/text "How fast is your favorite language?" middle-x 45)
         (q/text start-message middle-x 45)))))
 
-(defn run-sketch [benchmark]
+(defn run-sketch [app-state]
   ; TODO: Figure out if there's a way to set the current applet with public API
   #_{:clj-kondo/ignore [:unresolved-namespace]}
   (set! quil.sketch/*applet*
         (let [start-time (js/performance.now)]
           (q/sketch
            :host "race"
-           :size (dims benchmark)
+           :size (dims app-state)
            :renderer :p2d
-           :setup (fn [] (setup benchmark))
+           :setup (fn [] (setup app-state))
            :update (fn [state]
                      (let [elapsed-ms (- (js/performance.now) start-time)]
-                       (update-state state elapsed-ms)))
-           :draw draw-state!
+                       (update-draw-state state elapsed-ms)))
+           :draw draw!
     ;; :key-pressed (u/save-image "export.png")
            :middleware [m/fun-mode]))))
 
-(defn- info-view [state]
+(defn- info-view [_state]
   (list
    [:h2 "A visualization experiment"]
    [:p "This is a visualization of results running the benchmarks setup by Benjamin Dicken's "
@@ -304,9 +314,10 @@
                                       (= :ax/set-hash action-name)
                                       {:effects [[:fx/set-hash (first args)]]}
                                       (= :ax/set-benchmark action-name)
-                                      (let [benchmark (keyword (first args))]
-                                        {:new-state (assoc state :benchmark benchmark)
-                                         :effects [[:fx/run-sketch benchmark]]}))]
+                                      (let [benchmark (keyword (first args))
+                                            new-state (assoc state :benchmark benchmark)]
+                                        {:new-state new-state
+                                         :effects [[:fx/run-sketch new-state]]}))]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -357,7 +368,7 @@
   (start)
   (handle-hash)
   (js/window.addEventListener "hashchange" handle-hash)
-  (run-sketch (:benchmark @!app-state)))
+  (run-sketch @!app-state))
 
 (defn ^{:export true
         :dev/before-load true} stop []
