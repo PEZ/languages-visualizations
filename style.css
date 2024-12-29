@@ -12,6 +12,7 @@ body {
   flex-direction: row;
   gap: 1rem;
   max-width: 600px;
+  margin-bottom: 0.25rem;
 }
 
 .benchmark-label {
