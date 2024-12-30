@@ -12,7 +12,8 @@
     " Source: " [:a {:href "https://github.com/PEZ/languages-visualizations"}
                  "github.com/PEZ/languages-visualizations"]]
    [:p "The selection of languages are the subset of languages that are added to the project
-        for which I have a working toolchain on my machine. (A Macbook Pro M4.). The languages
+        for which I have a working toolchain on my benchmarking machine. (A Macbook Pro M1 Max
+        where I have tried to make things as nonbusy as MaxOS can be). The languages
         need to pass the simple output check, and the implementation need to seem compliant
         (to me). I may also have skipped some of the slower languages because I don't want to
         wait forever to run it all."]
@@ -34,6 +35,12 @@
    [:blockquote "Something strange " [:em "is"]
     " going on with “Kotlin”, where the “Kotlin Native” results are very slow, and never beats
      the “Kotlin JVM” results (not even close)."]
+   [:h3 "You favorite language is missing?"]
+   [:p "If you lack some language in the visualizations, let me know in an issue "
+   [:a {:href "https://github.com/PEZ/languages-visualizations"}
+    "on the project"]
+    ". If you include instructions on how to get the toolchain installed on a Mac
+     silicon (without any Docker involved) it increases the chances I get the language included."]
    [:h3 "start-times mode – a failed experiment"]
    [:p "The main twist here is the experiment with trying to compensate somewhat for the different
         start times of the executables in the bench."]
