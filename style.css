@@ -29,3 +29,19 @@ section {
   margin-top: 1rem;
   max-width: 700px;
 }
+
+blockquote {
+  font-style: italic;
+  color: #555;
+  border-left: 4px solid #ccc;
+  padding-left: 1rem;
+  margin: 1rem 0;
+}
+
+@media (min-width: 1200px) {
+  .report {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+  }
+}
