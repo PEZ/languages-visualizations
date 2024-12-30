@@ -83,7 +83,7 @@
        (group-by :language)
        vals
        (map (fn [champions]
-              (fastest-implementation app-state champions)))
+              (fastest-implementation app-state (filter benchmark champions))))
        (filter (fn [lang]
                  (benchmark lang)))))
 
