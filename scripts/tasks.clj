@@ -43,11 +43,12 @@
     (-> *file*
         fs/parent)))
 
-(defn bench! [languages-dir]
+(defn bench! [languages-dir bench-some?]
   (let [bench-script (str (fs/path (scripts-dir)
-                                   (if (System/getProperty "babashka.config")
-                                     "bench.sh"
-                                     "bench-some.sh")))]
+                                   (if (or bench-some?
+                                           (not (System/getProperty "babashka.config")))
+                                     "bench-some.sh"
+                                     "bench.sh")))]
     (doseq [benchmark ["levenshtein" "loops" "fibonacci"]]
       (println "BENCH:" benchmark)
       (p/shell {:dir (fs/path languages-dir benchmark)
@@ -72,12 +73,12 @@
 (defn ^:export compile-benchmarks! [& [languages-dir]]
   (compile! (or languages-dir "../languages")))
 
-(defn ^:export bench-benchmarks! [& [languages-dir]]
-  (bench! (or languages-dir "../languages")))
+(defn ^:export bench-benchmarks! [& [languages-dir bench-some]]
+  (bench! (or languages-dir "../languages") (not (nil? bench-some))))
 
-(defn ^:export compile-and-bench! [& [languages-dir]]
+(defn ^:export compile-and-bench! [& [languages-dir bench-some]]
   (compile! (or languages-dir "../languages"))
-  (bench! (or languages-dir "../languages")))
+  (bench! (or languages-dir "../languages") (not (nil? bench-some))))
 
 (defn ^:export permalink-tag! [& [tag]]
   (let [iso-date (.format (java.time.LocalDate/now)
