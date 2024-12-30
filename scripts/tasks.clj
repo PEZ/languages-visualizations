@@ -42,7 +42,7 @@
 
 (defn bench! [languages-dir]
   (let [bench-script (str (fs/path (scripts-dir)
-                                   (if (= *file* (System/getProperty "babashka.file"))
+                                   (if (System/getProperty "babashka.config")
                                      "bench.sh"
                                      "bench-some.sh")))]
     (doseq [benchmark ["levenshtein" "loops" "fibonacci"]]
