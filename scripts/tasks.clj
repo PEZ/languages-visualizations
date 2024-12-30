@@ -80,10 +80,12 @@
   (bench! (or languages-dir "../languages")))
 
 (defn ^:export permalink-tag! [& [tag]]
-  (let [default-tag (.format (java.time.LocalDate/now) java.time.format.DateTimeFormatter/ISO_DATE)
+  (let [iso-date (.format (java.time.LocalDate/now)
+                          java.time.format.DateTimeFormatter/ISO_DATE)
+        default-tag (str "v" (string/replace iso-date #"-" "."))
         final-tag (find-available-tag (or tag default-tag))]
-    (p/shell "echo" "git" "tag" final-tag)
-    (p/shell "echo" "git" "push" "origin" final-tag)
+    (p/shell "git" "tag" final-tag)
+    (p/shell "git" "push" "origin" final-tag)
     final-tag))
 
 (comment
