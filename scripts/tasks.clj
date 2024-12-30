@@ -65,17 +65,17 @@
           numbered-tag
           (recur (inc n)))))))
 
-(defn ^:export collect-benchmark-data! [results-dir & _]
+(defn ^:export collect-benchmark-data! [& [results-dir]]
   (pprint/pprint
    (get-benchmark-means-from-path! (or results-dir "/tmp/languages"))))
 
-(defn ^:export compile-benchmarks! [languages-dir & _]
+(defn ^:export compile-benchmarks! [& [languages-dir]]
   (compile! (or languages-dir "../languages")))
 
-(defn ^:export bench-benchmarks! [languages-dir & _]
+(defn ^:export bench-benchmarks! [& [languages-dir]]
   (bench! (or languages-dir "../languages")))
 
-(defn ^:export compile-and-bench! [languages-dir & _]
+(defn ^:export compile-and-bench! [& [languages-dir]]
   (compile! (or languages-dir "../languages"))
   (bench! (or languages-dir "../languages")))
 
