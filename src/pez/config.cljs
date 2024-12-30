@@ -27,8 +27,8 @@
     :language :csharp
     :language-file-name "C#"}
    {:language :cobol
-    :language-name "Cobol"
-    :language-file-name "Cobol"
+    :language-name "COBOL"
+    :language-file-name "COBOL"
     :logo "images/Cobol.png"}
    {:language :c++
     :language-name "CPP"
