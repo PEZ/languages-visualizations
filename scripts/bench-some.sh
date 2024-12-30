@@ -69,7 +69,7 @@ function run {
 #run "Bun (jitless)" "./js/code.js" "bun ./js/code.js" "BUN_JSC_useJIT=0" "${input}"
 #run "Bun" "./js/code.js" "bun ./js/code.js" "${input}"
 #run "C" "./c/code" "./c/code" "${input}"
-#run "C#" "./csharp/code" "./csharp/code" "${input}"
+run "C#" "./csharp/code/code" "./csharp/code/code" "${input}"
 #run "C# AOT" "./csharp/code-aot/code" "./csharp/code-aot/code" "${input}"
 #run "Chez Scheme" "./chez/code.so" "chez --program ./chez/code.so" "${input}"
 #run "Clojure" "./clojure/classes/code.class" "java -cp clojure/classes:$(clojure -Spath) code" "${input}"
@@ -90,7 +90,7 @@ function run {
 #run "Free Pascal" "./fpc/code" "./fpc/code" "${input}"
 #run "Go" "./go/code" "./go/code" "${input}"
 #run "Haskell" "./haskell/code" "./haskell/code" "${input}"
-#run "Haxe JVM" "haxe/code.jar" "java -jar haxe/code.jar" "${input}" # was getting errors running `haxelib install hxjava` 
+#run "Haxe JVM" "haxe/code.jar" "java -jar haxe/code.jar" "${input}" # was getting errors running `haxelib install hxjava`
 #run "Inko" "./inko/code" "./inko/code" "${input}"
 #run "Java" "./jvm/code.class" "java jvm.code" "${input}"
 #run "Java Native" "./jvm.code" "./jvm.code" "${input}"
@@ -115,8 +115,8 @@ function run {
 #run "Ruby YJIT" "./ruby/code.rb" "miniruby --yjit ./ruby/code.rb" "${input}"
 #run "Ruby" "./ruby/code.rb" "ruby ./ruby/code.rb" "${input}"
 #run "Rust" "./rust/target/release/code" "./rust/target/release/code" "${input}"
-run "Scala" "./scala/code" "./scala/code" "${input}"
-run "Scala-Native" "./scala/code-native" "./scala/code-native" "${input}"
+#run "Scala" "./scala/code" "./scala/code" "${input}"
+#run "Scala-Native" "./scala/code-native" "./scala/code-native" "${input}"
 #run "Bun Scala-JS(Compiled)" "./scala/bun" "./scala/bun" "${input}"
 #run "Bun Scala-JS(jitless)" "./scala/code.js" "bun ./scala/code.js" "BUN_JSC_useJIT=0" "${input}"
 #run "Bun Scala-JS" "./scala/code.js" "bun ./scala/code.js" "${input}"
