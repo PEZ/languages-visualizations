@@ -11,4 +11,8 @@
 
          bench-benchmarks
          {:task t/bench-benchmarks!
-          :doc "Bench all contributions for all benchmarks"}}}
+          :doc "Bench all contributions for all benchmarks"}
+
+         compile-and-bench
+         {:task t/compile-and-bench!
+          :doc "Compile and bench all contributions for all benchmarks"}}}

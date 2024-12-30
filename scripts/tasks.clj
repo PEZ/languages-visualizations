@@ -37,10 +37,8 @@
                        fs/parent
                        (fs/path "scripts"))
         bench-script (str (fs/path scripts-dir "bench.sh"))]
-    (println scripts-dir bench-script)
     (doseq [benchmark ["levenshtein" "loops" "fibonacci"]]
       (println "BENCH:" benchmark)
-      (println bench-script)
       (p/shell {:dir (fs/path languages-dir benchmark)
                 :continue true}
                bench-script))))
@@ -53,7 +51,10 @@
   (compile! (or (first args) "../languages")))
 
 (defn ^:export bench-benchmarks! [& args]
-  (println args)
+  (bench! (or (first args) "../languages")))
+
+(defn ^:export compile-and-bench! [& args]
+  (compile! (or (first args) "../languages"))
   (bench! (or (first args) "../languages")))
 
 (comment
