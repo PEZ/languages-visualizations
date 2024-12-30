@@ -26,6 +26,10 @@
     :logo "images/csharp.png"
     :language :csharp
     :language-file-name "C#"}
+   {:language-name "C3"
+    :logo "images/c3.png"
+    :language :c3
+    :language-file-name "C3"}
    {:language :cobol
     :language-name "COBOL"
     :language-file-name "COBOL"
