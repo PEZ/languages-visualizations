@@ -11,7 +11,9 @@
    [replicant.dom :as d]))
 
 (defonce !app-state (atom {:benchmark :loops
-                           :start-times-mode? false}))
+                           :start-times-mode? false
+                           :min-track-time-ms 600}))
+
 (def app-el (js/document.getElementById "app"))
 
 (def drawing-width 700)
@@ -19,8 +21,6 @@
 (def ball-width 44)
 (def half-ball-width (/ ball-width 2))
 (def start-line-x (+ start-time-line-x half-ball-width 10))
-
-(def min-track-time-ms 600)
 
 (def pre-startup-wait-ms 1500)
 (def startup-sequence-ms 5000)
@@ -164,7 +164,8 @@
   (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
-(defn update-draw-state [{:keys [max-start-time track-length start-times-mode?] :as draw-state} elapsed-ms]
+(defn update-draw-state [{:keys [max-start-time track-length start-times-mode?] :as draw-state}
+                         {:keys [elapsed-ms min-track-time-ms] :as _app-state}]
   (let [arena (arena (q/width) (q/height))
         wait-adjusted-time (- elapsed-ms pre-startup-wait-ms)
         race-started? (if start-times-mode?
@@ -192,7 +193,7 @@
                                           {:start-sequence-x (min (* start-time-line-x startup-progress)
                                                                   start-time-line-x)}
                                           (let [normalized-time (/ position-time min-track-time-ms)
-                                                scaled-time (* normalized-time speed)  ; Apply the speed ratio
+                                                scaled-time (* normalized-time speed)
                                                 distance (* track-length scaled-time)
                                                 loop-distance (mod distance (* 2 track-length))
                                                 x (if (> loop-distance track-length)
@@ -268,7 +269,7 @@
            :setup (fn [] (setup app-state))
            :update (fn [state]
                      (let [elapsed-ms (- (js/performance.now) start-time)]
-                       (update-draw-state state elapsed-ms)))
+                       (update-draw-state state (assoc app-state :elapsed-ms elapsed-ms))))
            :draw draw!
     ;; :key-pressed (u/save-image "export.png")
            :middleware [m/fun-mode]))))
