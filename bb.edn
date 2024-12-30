@@ -15,4 +15,8 @@
 
          compile-and-bench
          {:task t/compile-and-bench!
-          :doc "Compile and bench all contributions for all benchmarks"}}}
+          :doc "Compile and bench all contributions for all benchmarks"}
+
+         permalink-tag
+         {:task t/permalink-tag!
+          :doc "Tag and push the tag"}}}

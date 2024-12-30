@@ -53,20 +53,38 @@
       (p/shell {:dir (fs/path languages-dir benchmark)
                 :continue true}
                bench-script))))
+(defn tag-exists? [tag]
+  (= 0 (:exit (p/shell {:continue true :out nil :err nil} "git" "rev-parse" tag))))
 
-(defn ^:export collect-benchmark-data! [& args]
+(defn find-available-tag [base-tag]
+  (if-not (tag-exists? base-tag)
+    base-tag
+    (loop [n 1]
+      (let [numbered-tag (str base-tag "-" n)]
+        (if-not (tag-exists? numbered-tag)
+          numbered-tag
+          (recur (inc n)))))))
+
+(defn ^:export collect-benchmark-data! [results-dir & _]
   (pprint/pprint
-   (get-benchmark-means-from-path! (or (first args) "/tmp/languages"))))
+   (get-benchmark-means-from-path! (or results-dir "/tmp/languages"))))
 
-(defn ^:export compile-benchmarks! [& args]
-  (compile! (or (first args) "../languages")))
+(defn ^:export compile-benchmarks! [languages-dir & _]
+  (compile! (or languages-dir "../languages")))
 
-(defn ^:export bench-benchmarks! [& args]
-  (bench! (or (first args) "../languages")))
+(defn ^:export bench-benchmarks! [languages-dir & _]
+  (bench! (or languages-dir "../languages")))
 
-(defn ^:export compile-and-bench! [& args]
-  (compile! (or (first args) "../languages"))
-  (bench! (or (first args) "../languages")))
+(defn ^:export compile-and-bench! [languages-dir & _]
+  (compile! (or languages-dir "../languages"))
+  (bench! (or languages-dir "../languages")))
+
+(defn ^:export permalink-tag! [& [tag]]
+  (let [default-tag (.format (java.time.LocalDate/now) java.time.format.DateTimeFormatter/ISO_DATE)
+        final-tag (find-available-tag (or tag default-tag))]
+    (p/shell "echo" "git" "tag" final-tag)
+    (p/shell "echo" "git" "push" "origin" final-tag)
+    final-tag))
 
 (comment
   (get-benchmark-means-from-path! "/tmp/languages")
