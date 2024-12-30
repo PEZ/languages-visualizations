@@ -110,10 +110,10 @@
     :logo "images/kotlin.png"
     :language :kotlin
     :language-file-name "Kotlin_JVM"}
-   {:language-name "Lisp"
-    :logo "images/lisp.png"
-    :language :lisp
-    :language-file-name "Lisp"}
+   {:language-name "Common Lisp"
+    :logo "images/common-lisp.png"
+    :language :common-lisp
+    :language-file-name "Common_Lisp"}
    {:language-name "Lua"
     :logo "images/lua.png"
     :language :lua
