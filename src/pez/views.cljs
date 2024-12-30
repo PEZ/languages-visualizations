@@ -18,7 +18,7 @@
         wait forever to run it all."]
    [:p "I run the benchmarks like so, for each benchmark:"]
    [:ol
-    [:li "For each language first run the " [:b "hello-world"] " benchmark, " [:b "7 runs"]
+    [:li "For each language first run the " [:b "hello-world"] " benchmark, " [:b "14 runs"]
      ", and use this as a measure of start time for the exectutable being benched."]
     [:li "Run the benchmark, " [:b "7 runs."]]
     [:li "At render time, " [:em "and only if in " [:b "start-times mode"]] ": Subtract the start time to get the benchmark results"]]
@@ -29,7 +29,8 @@
         " [:code "java"]
     " command, and the latter is a compiled binary (using GraalVM
      native-image). Unless something really strange is going on, only “Clojure Native” will ever
-     show up in the visualizations, because Clojure takes a lot of time to start."]
+     show up in the visualizations, because Clojure takes a lot of time to start in a regular
+     JVM environment. (Which typically doesn't matter in the real world, and all that.)"]
    [:blockquote "Something strange " [:em "is"]
     " going on with “Kotlin”, where the “Kotlin Native” results are very slow, and never beats
      the “Kotlin JVM” results (not even close)."]

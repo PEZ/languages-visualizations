@@ -345,7 +345,7 @@
                                   (render-app! app-el n)))
   (js/window.addEventListener "resize"
                               (fn [_e]
-                                (let [[w h] (dims (:benchmark @!app-state))]
+                                (let [[w h] (dims @!app-state)]
                                   (q/resize-sketch w h))))
   (d/set-dispatch! event-handler)
   (start)
