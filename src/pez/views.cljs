@@ -5,6 +5,7 @@
 (defn- info-view [_state]
   (list
    [:h2 "A visualization experiment"]
+   [:blockquote "You can save a snapshot by pressing " [:span.kbd "S"]]
    [:p "This is a visualization of results running the benchmarks setup by Benjamin Dicken's "
     [:a {:href "https://github.com/bddicken/languages"}
      "Languages"]
@@ -74,6 +75,8 @@
                  :on {:change [[:ax/set-hash :event/target.value]]}}]
         (benchmark-option conf/benchmark-names)])]
     [:div.benchmark-options
+     [:button {:on {:click [[:ax/take-snapshot benchmark]]}}
+      "Snapshot"]
      [:label.benchmark-label
       "Animation speed: "
       [:select {:value min-track-time-ms

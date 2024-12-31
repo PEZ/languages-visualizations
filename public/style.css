@@ -38,6 +38,24 @@ blockquote {
   margin: 1rem 0;
 }
 
+code {
+  background-color: #eee;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  color: rgb(192, 49, 49);
+}
+
+.kbd {
+  background-color: #eee;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  border-width: 0.5px;
+  border-color: black;
+  border-style: solid;
+  font-family: monospace;
+  font-style: normal;
+}
+
 @media (min-width: 1200px) {
   .report {
     display: flex;

@@ -258,6 +258,21 @@
         (q/text "How fast is your favorite language?" middle-x 45)
         (q/text start-message middle-x 45)))))
 
+(defn save-image [benchmark]
+  (println "Saving file...")
+  (q/save (str "languages-visualizations-" (name benchmark) ".png")))
+
+(declare event-handler)
+
+(defn save-handler
+  [benchmark]
+  (fn [state {:keys [key _key-code]}]
+    (case key
+      (:s) (do
+             (event-handler {} [[:ax/take-snapshot benchmark]])
+             state)
+      state)))
+
 (defn run-sketch []
   ; TODO: Figure out if there's a way to set the current applet with public API
   #_{:clj-kondo/ignore [:unresolved-namespace]}
@@ -272,7 +287,7 @@
                      (let [elapsed-ms (- (js/performance.now) start-time)]
                        (update-draw-state state (assoc @!app-state :elapsed-ms elapsed-ms))))
            :draw draw!
-    ;; :key-pressed (u/save-image "export.png")
+           :key-pressed (save-handler (:benchmark @!app-state))
            :middleware [m/fun-mode]))))
 
 (defn- enrich-action-from-replicant-data [{:replicant/keys [js-event]} actions]
@@ -292,6 +307,9 @@
         {:keys [new-state effects]} (cond
                                       (= :ax/set-hash action-name)
                                       {:effects [[:fx/set-hash (first args)]]}
+
+                                      (= :ax/take-snapshot action-name)
+                                      {:effects [[:fx/take-snapshot (first args)]]}
 
                                       (= :ax/set-benchmark action-name)
                                       (let [benchmark (keyword (first args))
@@ -326,7 +344,8 @@
           (cond
             (= :console/log effect-name) (apply js/console.log args)
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
-            (= :fx/run-sketch effect-name) (run-sketch)))))))
+            (= :fx/run-sketch effect-name) (run-sketch)
+            (= :fx/take-snapshot effect-name) (save-image (first args))))))))
 
 (defn render-app! [el state]
   (d/render el (views/app state (active-benchmarks bd/benchmarks))))
