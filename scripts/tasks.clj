@@ -44,11 +44,9 @@
         fs/parent)))
 
 (defn bench! [languages-dir bench-some?]
-  (let [bench-script (str (fs/path (scripts-dir)
-                                   (if (or bench-some?
-                                           (not (System/getProperty "babashka.config")))
-                                     "bench-some.sh"
-                                     "bench.sh")))]
+  (let [bench-script (str (fs/path (scripts-dir) (if bench-some?
+                                                   "bench-some.sh"
+                                                   "bench.sh")))]
     (doseq [benchmark ["levenshtein" "loops" "fibonacci"]]
       (println "BENCH:" benchmark)
       (p/shell {:dir (fs/path languages-dir benchmark)
@@ -93,5 +91,5 @@
   (get-benchmark-means-from-path! "/tmp/languages")
   (get-benchmark-means-from-path! "/Volumes/Macintosh HD-1/tmp/languages")
   (compile! "../../languages")
-  (bench! "../../languages")
+  (bench! "../../languages" true)
   :rcf)
