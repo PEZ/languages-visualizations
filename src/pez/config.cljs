@@ -25,7 +25,7 @@
    {:language-name "C#"
     :logo "images/csharp.png"
     :language :csharp
-    :language-file-name "C#"}
+    :language-file-name "C_"}
    {:language-name "C3"
     :logo "images/c3.png"
     :language :c3
@@ -74,6 +74,10 @@
     :logo "images/Emacs.png"
     :language :emacs
     :language-file-name "Emacs_Lisp_Native"}
+   {:language-name "F#"
+    :logo "images/fsharp.png"
+    :language :fsharp
+    :language-file-name "F_"}
    {:language-name "Fortran"
     :logo "images/fortran.png"
     :language :fortran
