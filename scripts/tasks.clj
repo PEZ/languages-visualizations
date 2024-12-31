@@ -68,7 +68,7 @@
 
 (defn ^:export collect-benchmark-data! [& [results-dir]]
   (pprint/pprint
-   (get-benchmark-means-from-path! (or results-dir "/tmp/languages"))))
+   (get-benchmark-means-from-path! (str (fs/path (or results-dir "/tmp/languages"))))))
 
 (defn ^:export compile-benchmarks! [& [languages-dir]]
   (compile! (or languages-dir "../languages")))
