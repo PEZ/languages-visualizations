@@ -2,7 +2,7 @@
 
 (With optional Start Times)
 
-![alt text](public/images/langauges-visualizations-header.png)
+![Fibonacci - Clojure wins!](public/images/languages-visualizations-fibonacci.png)
 
 This a playground for visualizing the the [Languages](https://github.com/bddicken/languages) benchmark of [Benjamin Dicken](https://github.com/bddicken)'s.
 
