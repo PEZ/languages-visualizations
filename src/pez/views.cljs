@@ -60,7 +60,7 @@
      " So a Java program getting cold started over and over, like this benchmark is run, will"
      " not be given a fair chance to show what it is actually capable of."]]))
 
-(defn app [{:keys [benchmark start-times-mode?] :as app-state} active-benchmarks]
+(defn app [{:keys [benchmark start-times-mode? min-track-time-ms] :as app-state} active-benchmarks]
   [:article
    [:h1 "Languages"]
    [:section
@@ -73,11 +73,29 @@
                  :checked (= benchmark-option benchmark)
                  :on {:change [[:ax/set-hash :event/target.value]]}}]
         (benchmark-option conf/benchmark-names)])]
-    [:label.benchmark-label
-     [:input {:type :checkbox
-              :checked start-times-mode?
-              :on {:change [[:ax/toggle-start-time-mode start-times-mode?]]}}]
-     [:span "start-time mode " [:em "(Major caveats: see below)"]]]]
+    [:div.benchmark-options
+     [:label.benchmark-label
+      "Animation speed: "
+      [:select {:value min-track-time-ms
+                :on {:change [[:ax/set-min-track-time-ms :event/target.value]]}}
+       [:option {:value 600} "Normal"]
+       [:option {:value 60000} "Too slow"]
+       [:option {:value 9600} "Very very slow"]
+       [:option {:value 4800} "Very Slow"]
+       [:option {:value 2400} "Slow"]
+       [:option {:value 1200} "Slower"]
+       [:option {:value 600} "Normal"]
+       [:option {:value 450} "Faster"]
+       [:option {:value 300} "Very fast"]
+       [:option {:value 200} "Very very fast"]
+       [:option {:value 150} "Too fast"]
+       [:option {:value 75} "Way too fast"]
+       [:option {:value 5} "Warp speed"]]]
+     [:label.benchmark-label
+      [:input {:type :checkbox
+               :checked start-times-mode?
+               :on {:change [[:ax/toggle-start-time-mode start-times-mode?]]}}]
+      [:span "start-time mode " [:em "(Major caveats: see below)"]]]]]
    [:div.report
     [:section#race]
     [:section.info

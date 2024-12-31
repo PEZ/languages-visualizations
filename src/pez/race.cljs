@@ -166,6 +166,7 @@
 
 (defn update-draw-state [{:keys [max-start-time track-length start-times-mode?] :as draw-state}
                          {:keys [elapsed-ms min-track-time-ms] :as _app-state}]
+  (def min-track-time-ms min-track-time-ms)
   (let [arena (arena (q/width) (q/height))
         wait-adjusted-time (- elapsed-ms pre-startup-wait-ms)
         race-started? (if start-times-mode?
@@ -257,19 +258,19 @@
         (q/text "How fast is your favorite language?" middle-x 45)
         (q/text start-message middle-x 45)))))
 
-(defn run-sketch [app-state]
+(defn run-sketch []
   ; TODO: Figure out if there's a way to set the current applet with public API
   #_{:clj-kondo/ignore [:unresolved-namespace]}
   (set! quil.sketch/*applet*
         (let [start-time (js/performance.now)]
           (q/sketch
            :host "race"
-           :size (dims app-state)
+           :size (dims @!app-state)
            :renderer :p2d
-           :setup (fn [] (setup app-state))
+           :setup (fn [] (setup @!app-state))
            :update (fn [state]
                      (let [elapsed-ms (- (js/performance.now) start-time)]
-                       (update-draw-state state (assoc app-state :elapsed-ms elapsed-ms))))
+                       (update-draw-state state (assoc @!app-state :elapsed-ms elapsed-ms))))
            :draw draw!
     ;; :key-pressed (u/save-image "export.png")
            :middleware [m/fun-mode]))))
@@ -296,12 +297,15 @@
                                       (let [benchmark (keyword (first args))
                                             new-state (assoc state :benchmark benchmark)]
                                         {:new-state new-state
-                                         :effects [[:fx/run-sketch new-state]]})
+                                         :effects [[:fx/run-sketch]]})
 
                                       (= :ax/toggle-start-time-mode action-name)
                                       (let [new-state (update state :start-times-mode? not)]
                                         {:new-state new-state
-                                         :effects [[:fx/run-sketch new-state]]}))]
+                                         :effects [[:fx/run-sketch]]})
+
+                                      (= :ax/set-min-track-time-ms action-name)
+                                      {:new-state (assoc state :min-track-time-ms (parse-long (first args)))})]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -322,7 +326,7 @@
           (cond
             (= :console/log effect-name) (apply js/console.log args)
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
-            (= :fx/run-sketch effect-name) (run-sketch (first args))))))))
+            (= :fx/run-sketch effect-name) (run-sketch)))))))
 
 (defn render-app! [el state]
   (d/render el (views/app state (active-benchmarks bd/benchmarks))))
@@ -352,7 +356,7 @@
   (start)
   (handle-hash)
   (js/window.addEventListener "hashchange" handle-hash)
-  (run-sketch @!app-state))
+  (run-sketch))
 
 (defn ^{:export true
         :dev/before-load true} stop []
