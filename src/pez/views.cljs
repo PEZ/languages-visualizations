@@ -5,7 +5,7 @@
 (defn- info-view [_state]
   (list
    [:h2 "A visualization experiment"]
-   [:blockquote "You can save a snapshot by pressing " [:span.kbd "S"]]
+   [:blockquote "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time. If you are using a keyboard device, you can save a snapshot by pressing " [:span.kbd "S"]]
    [:p "This is a visualization of results running the benchmarks setup by Benjamin Dicken's "
     [:a {:href "https://github.com/bddicken/languages"}
      "Languages"]
