@@ -61,7 +61,7 @@
      " So a Java program getting cold started over and over, like this benchmark is run, will"
      " not be given a fair chance to show what it is actually capable of."]]))
 
-(defn app [{:keys [benchmark start-times-mode? min-track-time-ms] :as app-state} active-benchmarks]
+(defn app [{:keys [benchmark start-times-mode? snapshot-mode? min-track-time-ms] :as app-state} active-benchmarks]
   [:article
    [:h1 "Languages"]
    [:section
@@ -77,6 +77,11 @@
     [:div.benchmark-options
      [:button {:on {:click [[:ax/take-snapshot benchmark]]}}
       "Snapshot"]
+     [:label.benchmark-label
+      [:input {:type :checkbox
+               :checked snapshot-mode?
+               :on {:change [[:ax/toggle-snapshot-mode start-times-mode?]]}}]
+      [:span "Auto-snapshot winner"]]
      [:label.benchmark-label
       "Animation speed: "
       [:select {:value min-track-time-ms

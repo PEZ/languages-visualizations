@@ -12,6 +12,7 @@
 
 (defonce !app-state (atom {:benchmark :loops
                            :start-times-mode? false
+                           :snapshot-mode? false
                            :min-track-time-ms 600}))
 
 (def app-el (js/document.getElementById "app"))
@@ -165,8 +166,7 @@
   :rcf)
 
 (defn update-draw-state [{:keys [max-start-time track-length start-times-mode?] :as draw-state}
-                         {:keys [elapsed-ms min-track-time-ms] :as _app-state}]
-  (def min-track-time-ms min-track-time-ms)
+                         {:keys [elapsed-ms min-track-time-ms snapshot-mode?] :as _app-state}]
   (let [arena (arena (q/width) (q/height))
         wait-adjusted-time (- elapsed-ms pre-startup-wait-ms)
         race-started? (if start-times-mode?
@@ -174,11 +174,20 @@
                         (> elapsed-ms pre-startup-wait-ms))
         position-time (if start-times-mode?
                         (- wait-adjusted-time startup-sequence-ms)
-                        (- elapsed-ms pre-startup-wait-ms))]
+                        (- elapsed-ms pre-startup-wait-ms))
+        first-lang (first (:languages draw-state))
+        first-bounce? (and race-started?
+                           (= 0 (:runs first-lang))
+                           (>= (:track-x first-lang) (- (:finish-line-x arena) 3)))
+        take-snapshot? (and snapshot-mode?
+                            first-bounce?
+                            (not (:snapshot-taken? draw-state)))]
     (merge draw-state
            arena
            {:t elapsed-ms
             :race-started? race-started?
+            :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
+            :take-snapshot? take-snapshot?
             :time-to-stop-greeting (if start-times-mode?
                                      (- greeting-display-ms wait-adjusted-time)
                                      0)}
@@ -212,8 +221,12 @@
 (def darkgrey 120)
 (def black 40)
 
+(declare event-handler)
+
 (defn draw! [{:keys [t time-to-stop-greeting race-started? start-times-mode?
-                     start-message race-message middle-x] :as draw-state}]
+                     start-message race-message middle-x take-snapshot? benchmark] :as draw-state}]
+  (when take-snapshot?
+    (event-handler {} [[:ax/take-snapshot benchmark]]))
   (q/background offwhite)
   (q/stroke-weight 0)
   (doseq [lang (:languages draw-state)]
@@ -261,8 +274,6 @@
 (defn save-image [benchmark]
   (println "Saving file...")
   (q/save (str "languages-visualizations-" (name benchmark) ".png")))
-
-(declare event-handler)
 
 (defn save-handler
   [benchmark]
@@ -312,18 +323,18 @@
                                       {:effects [[:fx/take-snapshot (first args)]]}
 
                                       (= :ax/set-benchmark action-name)
-                                      (let [benchmark (keyword (first args))
-                                            new-state (assoc state :benchmark benchmark)]
-                                        {:new-state new-state
-                                         :effects [[:fx/run-sketch]]})
+                                      {:new-state (assoc state :benchmark (keyword (first args)))
+                                       :effects [[:fx/run-sketch]]}
 
                                       (= :ax/toggle-start-time-mode action-name)
-                                      (let [new-state (update state :start-times-mode? not)]
-                                        {:new-state new-state
-                                         :effects [[:fx/run-sketch]]})
+                                      {:new-state (update state :start-times-mode? not)
+                                       :effects [[:fx/run-sketch]]}
 
                                       (= :ax/set-min-track-time-ms action-name)
-                                      {:new-state (assoc state :min-track-time-ms (parse-long (first args)))})]
+                                      {:new-state (assoc state :min-track-time-ms (parse-long (first args)))}
+
+                                      (= :ax/toggle-snapshot-mode action-name)
+                                      {:new-state (update state :snapshot-mode? not)})]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
