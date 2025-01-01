@@ -178,7 +178,7 @@
         first-lang (first (:languages draw-state))
         first-bounce? (and race-started?
                            (= 0 (:runs first-lang))
-                           (>= (:track-x first-lang) (- (:finish-line-x arena) 3)))
+                           (>= (:track-x first-lang) (- (:finish-line-x arena) 5)))
         take-snapshot? (and snapshot-mode?
                             first-bounce?
                             (not (:snapshot-taken? draw-state)))]
