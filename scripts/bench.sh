@@ -4,10 +4,6 @@
 # The special argument "check" makes the input always input.txt, and skips the benchmark
 
 benchmark=$(basename "${PWD}")
-if [ "$benchmark" = "hello-world" ]; then
-  echo "Not benching hello-world, aborting"
-  exit 1
-fi
 
 num_script_args="${#}"
 script_args="${*}"
@@ -35,12 +31,8 @@ function run {
     if [ ${?} -eq 0 ] && [ "${script_args}" != "check" ]; then
       cmd=$(echo "${3} ${4}" | awk '{ if (length($0) > 80) print substr($0, 1, 60) " ..."; else print $0 }')
       json_file_name="${1//[^[:alnum:]]/_}"
-      json_dir_hw=/tmp/languages/${benchmark}-hello-world
-      mkdir -p "$json_dir_hw"
       json_dir="/tmp/languages/${benchmark}"
       mkdir -p "$json_dir"
-      echo "Benchmarking $1 - hello-world"
-      (cd ../hello-world && hyperfine -i --shell=none --export-json "${json_dir_hw}/${json_file_name}".json --output=pipe --runs 14 --warmup 2 -n "${cmd}" "${3}")
       echo "Benchmarking $1"
       hyperfine -i --shell=none --export-json "${json_dir}/${json_file_name}".json --output=pipe --runs 7 --warmup 2 -n "${cmd}" "${3} ${4}"
     fi
@@ -49,10 +41,11 @@ function run {
   fi
 }
 
+
 # run "Language" "Executable" "Command" "Arguments"
 run "Ada" "./ada/code" "./ada/code" "${input}"
 #run "AWK" "./awk/code.awk" "awk -f ./awk/code.awk" "${input}"
-#run "Babashka" "bb/code.clj" "bb bb/code.clj" "${input}"
+run "Babashka" "bb/code.clj" "bb bb/code.clj" "${input}"
 run "Bun (Compiled)" "./js/bun" "./js/bun" "${input}"
 #run "Bun (jitless)" "./js/code.js" "bun ./js/code.js" "BUN_JSC_useJIT=0" "${input}"
 run "Bun" "./js/code.js" "bun ./js/code.js" "${input}"
@@ -63,7 +56,7 @@ run "C3" "./c3/code" "./c3/code" "${input}"
 run "Chez Scheme" "./chez/code.so" "chez --program ./chez/code.so" "${input}"
 run "Clojure" "./clojure/classes/code.class" "java -cp clojure/classes:$(clojure -Spath) code" "${input}"
 run "Clojure Native" "./clojure-native-image/code" "./clojure-native-image/code" "${input}"
-#run "COBOL" "./cobol/main" "./cobol/main" "${input}"
+run "COBOL" "./cobol/main" "./cobol/main" "${input}"
 run "Common Lisp" "./common-lisp/code.lisp" "sbcl --script common-lisp/code.lisp" "${input}"
 run "CPP" "./cpp/code" "./cpp/code" "${input}"
 run "Crystal" "./crystal/code" "./crystal/code" "${input}"
@@ -100,7 +93,7 @@ run "PHP JIT" "./php/code.php" "php -dopcache.enable_cli=1 -dopcache.jit=on -dop
 run "PHP" "./php/code.php" "php ./php/code.php" "${input}"
 run "PyPy" "./py/code.py" "pypy ./py/code.py" "${input}"
 run "Python" "./py/code.py" "python3.13 ./py/code.py" "${input}"
-#run "R" "./r/code.R" "Rscript ./r/code.R" "${input}"
+run "R" "./r/code.R" "Rscript ./r/code.R" "${input}"
 run "Ruby YJIT" "./ruby/code.rb" "miniruby --yjit ./ruby/code.rb" "${input}"
 run "Ruby" "./ruby/code.rb" "ruby ./ruby/code.rb" "${input}"
 run "Rust" "./rust/target/release/code" "./rust/target/release/code" "${input}"

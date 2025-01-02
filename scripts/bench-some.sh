@@ -4,10 +4,6 @@
 # The special argument "check" makes the input always input.txt, and skips the benchmark
 
 benchmark=$(basename "${PWD}")
-if [ "$benchmark" = "hello-world" ]; then
-  echo "Not benching hello-world, aborting"
-  exit 1
-fi
 
 num_script_args="${#}"
 script_args="${*}"
@@ -35,12 +31,8 @@ function run {
     if [ ${?} -eq 0 ] && [ "${script_args}" != "check" ]; then
       cmd=$(echo "${3} ${4}" | awk '{ if (length($0) > 80) print substr($0, 1, 60) " ..."; else print $0 }')
       json_file_name="${1//[^[:alnum:]]/_}"
-      json_dir_hw=/tmp/languages/${benchmark}-hello-world
-      mkdir -p "$json_dir_hw"
       json_dir="/tmp/languages/${benchmark}"
       mkdir -p "$json_dir"
-      echo "Benchmarking $1 - hello-world"
-      (cd ../hello-world && hyperfine -i --shell=none --export-json "${json_dir_hw}/${json_file_name}".json --output=pipe --runs 20 --warmup 2 -n "${cmd}" "${3}")
       echo "Benchmarking $1"
       hyperfine -i --shell=none --export-json "${json_dir}/${json_file_name}".json --output=pipe --runs 7 --warmup 2 -n "${cmd}" "${3} ${4}"
     fi
