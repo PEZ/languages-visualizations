@@ -2,10 +2,11 @@
   (:require
    [pez.config :as conf]))
 
-(defn- info-view [_state]
+(defn- info-view [{:keys [benchmark]}]
   (list
+   [:button.cta {:on {:click [[:ax/share-on-x "The Languages benchmark project, by @BenjDicken. Visualizations app by @pappapez."]]}}
+    "Share on X"]
    [:h2 "A visualization experiment"]
-   [:blockquote "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time. If you are using a keyboard device, you can save a snapshot by pressing " [:span.kbd "S"]]
    [:p "This is a visualization of results running the benchmarks setup by Benjamin Dicken's " [:a {:href "https://github.com/bddicken/languages"} "Languages"] " project. The visualization is very much inspired by how Benjamin choose to do it." " Source: " [:a {:href "https://github.com/PEZ/languages-visualizations"} "github.com/PEZ/languages-visualizations"]]
    [:h3 "How I run the benchmarks"]
    [:p "The benchmarks are run on a Macbook Pro M1 Max with 32GB of RAM.
@@ -32,7 +33,9 @@
      [:b "levenshtein"] " benchmark, which is very quick. Subtracting the "
      [:b "hello-world"] " time from the benchmarked time can even result in negative values."
      [:blockquote " With Julia this seems to happen consistently. The " [:b "levenshtein"] " program runs faster than the " [:b "hello-world"] " program. (Something for a Julia expert to explain?)"]]
-    [:li "Another problem is that subtracting the start times, even if done accurately, still doesn't compensate for that many JIT compilers will optimize the programs as they run. So a Java program getting cold started over and over, like this benchmark is run, will not be given a fair chance to show what it is actually capable of."]]))
+    [:li "Another problem is that subtracting the start times, even if done accurately, still doesn't compensate for that many JIT compilers will optimize the programs as they run. So a Java program getting cold started over and over, like this benchmark is run, will not be given a fair chance to show what it is actually capable of."]]
+   [:h3 "Usage tips"]
+   [:blockquote "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time. If you are using a keyboard device, you can save a snapshot by pressing " [:span.kbd "S"]]))
 
 (defn app [{:keys [benchmark start-times-mode? snapshot-mode? min-track-time-ms] :as app-state} active-benchmarks]
   [:article

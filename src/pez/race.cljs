@@ -281,6 +281,13 @@
              state)
       state)))
 
+(defn- share-on-x! [text]
+  (let [url (-> js/window .-location .-href)]
+    (.open js/window (str "https://twitter.com/intent/tweet?text="
+                          (js/encodeURIComponent text)
+                          "&url="
+                          (js/encodeURIComponent url)))))
+
 (defn run-sketch []
   ; TODO: Figure out if there's a way to set the current applet with public API
   #_{:clj-kondo/ignore [:unresolved-namespace]}
@@ -331,7 +338,10 @@
                                       {:new-state (assoc state :min-track-time-ms (parse-long (first args)))}
 
                                       (= :ax/toggle-snapshot-mode action-name)
-                                      {:new-state (update state :snapshot-mode? not)})]
+                                      {:new-state (update state :snapshot-mode? not)}
+
+                                      (= :ax/share-on-x action-name)
+                                      {:effects [[:fx/share-on-x (first args)]]})]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -353,7 +363,8 @@
             (= :console/log effect-name) (apply js/console.log args)
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
             (= :fx/run-sketch effect-name) (run-sketch)
-            (= :fx/take-snapshot effect-name) (save-image (first args))))))))
+            (= :fx/take-snapshot effect-name) (save-image (first args))
+            (= :fx/share-on-x effect-name) (share-on-x! (first args))))))))
 
 (defn render-app! [el state]
   (d/render el (views/app state (active-benchmarks bd/benchmarks))))
