@@ -2,10 +2,13 @@
   (:require
    [pez.config :as conf]))
 
-(defn- info-view [{:keys [benchmark]}]
+(defn- info-view [_state]
   (list
-   [:button.cta {:on {:click [[:ax/share-on-x "The Languages benchmark project, by @BenjDicken. Visualizations app by @pappapez."]]}}
-    "Share on X"]
+   [:div.buttons
+    [:button.cta {:on {:click [[:ax/share :site/x "The Languages benchmark project, by @BenjDicken. Visualizations app by @pappapez."]]}}
+     "Share on X"]
+    [:button.cta {:on {:click [[:ax/share :site/linkedin "Visualizations of the Languages benchmark project."]]}}
+     "Share to LinkedIn"]]
    [:h2 "A visualization experiment"]
    [:p "This is a visualization of results running the benchmarks setup by Benjamin Dicken's " [:a {:href "https://github.com/bddicken/languages"} "Languages"] " project. The visualization is very much inspired by how Benjamin choose to do it." " Source: " [:a {:href "https://github.com/PEZ/languages-visualizations"} "github.com/PEZ/languages-visualizations"]]
    [:h3 "How I run the benchmarks"]

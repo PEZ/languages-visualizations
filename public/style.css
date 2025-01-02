@@ -7,7 +7,7 @@ body {
   justify-content: center;
 }
 
-.benchmark-options {
+.benchmark-options, .buttons {
   display: flex;
   flex-direction: row;
   gap: 1rem;

@@ -282,8 +282,17 @@
       state)))
 
 (defn- share-on-x! [text]
-  (let [url (-> js/window .-location .-href)]
+  (let [url (str "https://pez.github.io/languages-visualizations/"
+                 (-> js/window .-location .-hash))]
     (.open js/window (str "https://twitter.com/intent/tweet?text="
+                          (js/encodeURIComponent text)
+                          "&url="
+                          (js/encodeURIComponent url)))))
+
+(defn- share-on-linkedin! [text]
+  (let [url (str "https://pez.github.io/languages-visualizations/"
+                 (-> js/window .-location .-hash))]
+    (.open js/window (str "https://www.linkedin.com/shareArticle?mini=true&text="
                           (js/encodeURIComponent text)
                           "&url="
                           (js/encodeURIComponent url)))))
@@ -340,8 +349,12 @@
                                       (= :ax/toggle-snapshot-mode action-name)
                                       {:new-state (update state :snapshot-mode? not)}
 
-                                      (= :ax/share-on-x action-name)
-                                      {:effects [[:fx/share-on-x (first args)]]})]
+                                      (= :ax/share action-name)
+                                      (let [fx (case (first args)
+                                                 :site/x :fx/share.x
+                                                 :site/linkedin :fx/share.linked-in
+                                                 :fx/console.log)]
+                                        {:effects [[fx (second args)]]}))]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -360,11 +373,12 @@
           (js/console.debug "Triggered effect" effect))
         (let [[effect-name & args] effect]
           (cond
-            (= :console/log effect-name) (apply js/console.log args)
+            (= :fx/console.log effect-name) (apply js/console.log args)
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
             (= :fx/run-sketch effect-name) (run-sketch)
             (= :fx/take-snapshot effect-name) (save-image (first args))
-            (= :fx/share-on-x effect-name) (share-on-x! (first args))))))))
+            (= :fx/share.x effect-name) (share-on-x! (first args))
+            (= :fx/share.linked-in effect-name) (share-on-linkedin! (first args))))))))
 
 (defn render-app! [el state]
   (d/render el (views/app state (active-benchmarks bd/benchmarks))))
