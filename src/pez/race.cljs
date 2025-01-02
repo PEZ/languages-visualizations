@@ -176,11 +176,8 @@
                         (- wait-adjusted-time startup-sequence-ms)
                         (- elapsed-ms pre-startup-wait-ms))
         first-lang (first (:languages draw-state))
-        first-bounce? (and race-started?
-                           (= 0 (:runs first-lang))
-                           (>= (:track-x first-lang) (- (:finish-line-x arena) 5)))
         take-snapshot? (and snapshot-mode?
-                            first-bounce?
+                            (= 1 (:runs first-lang))
                             (not (:snapshot-taken? draw-state)))]
     (merge draw-state
            arena
@@ -210,7 +207,7 @@
                                                     (- (* 2 track-length) loop-distance)
                                                     loop-distance)]
                                             {:track-x (+ start-line-x x)
-                                             :runs (quot distance (* 2 track-length))})))))
+                                             :runs (quot distance track-length)})))))
                              (:languages draw-state))})))
 
 (comment
