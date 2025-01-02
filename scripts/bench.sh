@@ -82,7 +82,7 @@ run "Haskell" "./haskell/code" "./haskell/code" "${input}"
 run "Haxe JVM" "haxe/code.jar" "java -jar haxe/code.jar" "${input}" # was getting errors running `haxelib install hxjava`
 run "Inko" "./inko/code" "./inko/code" "${input}"
 run "Java" "./jvm/code.class" "java jvm.code" "${input}"
-run "Java Native" "./jvm.code" "./jvm.code" "${input}"
+run "Java Native" "./java-native-image/code" "./java-native-image/code" "${input}"
 run "Julia" "./julia/code.jl" "julia ./julia/code.jl" "${input}"
 run "Kotlin JVM" "kotlin/code.jar" "java -jar kotlin/code.jar" "${input}"
 run "Kotlin Native" "./kotlin/code.kexe" "./kotlin/code.kexe" "${input}"
