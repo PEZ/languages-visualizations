@@ -5,7 +5,7 @@
 (defn- info-view [_state]
   (list
    [:div.buttons
-    [:button.cta {:on {:click [[:ax/share :site/x "The Languages benchmark project, by @BenjDicken. Visualizations app by @pappapez."]]}}
+    [:button.cta {:on {:click [[:ax/share :site/x "Visualizations of @BenjDicken's Languages benchmark project, by @pappapez."]]}}
      "Share on X"]
     [:button.cta {:on {:click [[:ax/share :site/linkedin "Visualizations of the Languages benchmark project."]]}}
      "Share to LinkedIn"]]
