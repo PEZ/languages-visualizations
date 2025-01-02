@@ -11,30 +11,18 @@
    [replicant.dom :as d]))
 
 (defonce !app-state (atom {:benchmark :loops
-                           :start-times-mode? false
                            :snapshot-mode? false
                            :min-track-time-ms 600}))
 
 (def app-el (js/document.getElementById "app"))
 
 (def drawing-width 700)
-(def start-time-line-x 140)
+(def language-labels-x 140)
 (def ball-width 44)
 (def half-ball-width (/ ball-width 2))
-(def start-line-x (+ start-time-line-x half-ball-width 10))
+(def start-line-x (+ language-labels-x half-ball-width 10))
 
 (def pre-startup-wait-ms 1500)
-(def startup-sequence-ms 5000)
-(def greeting-display-ms 7500)
-
-(defn start-time-key [benchmark]
-  (-> benchmark name (str "-hello-world") keyword))
-
-(defn max-start-time [benchmark]
-  (->> bd/benchmarks
-       vals
-       (map (start-time-key benchmark))
-       (apply max)))
 
 (defn active-benchmarks [benchmarks]
   (sort-by #(.indexOf [:loops :fibonacci :levenshtein] %)
@@ -45,21 +33,14 @@
                       #{}
                       benchmarks)))
 
-(defn benchmark-times [{:keys [benchmark start-times-mode?]}]
-  (let [benchmarks (filter (comp benchmark second) bd/benchmarks)
-        times (->> benchmarks
-                   vals
-                   (map benchmark))
-        start-times (->> benchmarks
-                         vals
-                         (map (start-time-key benchmark)))]
-    (if start-times-mode?
-      (mapv - times start-times)
-      times)))
+(defn benchmark-times [{:keys [benchmark]}]
+  (let [benchmarks (filter (comp benchmark second) bd/benchmarks)]
+    (->> benchmarks
+         vals
+         (map benchmark))))
 
 (comment
-  (benchmark-times {:benchmark :loops
-                    :start-times-mode? false})
+  (benchmark-times {:benchmark :loops})
   :rcf)
 
 (defn languages []
@@ -68,17 +49,8 @@
                  (bd/benchmarks language-file-name)))
         conf/languages))
 
-(defn- benchmark-result [{:keys [benchmark start-times-mode? lang]}]
-  (if start-times-mode?
-    (- (benchmark lang)
-       (get lang (start-time-key benchmark)))
-    (benchmark lang)))
-
-(defn fastest-implementation [app-state implementations]
-  (apply min-key
-         (fn [impl]
-           (benchmark-result (assoc app-state :lang impl)))
-         implementations))
+(defn fastest-implementation [{:keys [benchmark]} implementations]
+  (apply min-key benchmark implementations))
 
 (defn best-languages [{:keys [benchmark] :as app-state}]
   (->> (languages)
@@ -90,14 +62,11 @@
                  (benchmark lang)))))
 
 (comment
-  (best-languages {:benchmark :loops
-                   :start-times-mode? false})
+  (best-languages {:benchmark :loops})
   :rcf)
 
-(defn sorted-languages [app-state]
-  (sort-by (fn [lang]
-             (benchmark-result (assoc app-state :lang lang)))
-           (best-languages app-state)))
+(defn sorted-languages [{:keys [benchmark] :as app-state}]
+  (sort-by benchmark (best-languages app-state)))
 
 (defn find-missing-languages []
   (let [config-languages (set (map :language-file-name conf/languages))
@@ -121,7 +90,7 @@
      :middle-x (/ width 2)
      :middle-y (/ height 2)}))
 
-(defn setup [{:keys [benchmark start-times-mode?] :as app-state}]
+(defn setup [{:keys [benchmark] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
   (let [arena (arena (q/width) (q/height))
@@ -129,24 +98,15 @@
     (merge arena
            {:t 0
             :benchmark benchmark
-            :start-times-mode? start-times-mode?
             :race-started? false
-            :max-start-time (max-start-time benchmark)
-            :start-message "Starting engines!"
             :benchmark-title (benchmark conf/benchmark-names)
             :languages (mapv (fn [i lang]
-                               (let [hello-world (get lang (start-time-key benchmark))
-                                     benchmark-time (benchmark-result (assoc app-state :lang lang))
+                               (let [benchmark-time (benchmark lang)
                                      speed (/ min-time benchmark-time)]
                                  (merge lang
                                         {:speed speed
-                                         :start-time-str (str (.toFixed hello-world 1) "ms")
-                                         :start-time hello-world
                                          :runs 0
                                          :track-x start-line-x
-                                         :time-to-stop-greeting (if start-times-mode?
-                                                                  greeting-display-ms
-                                                                  0)
                                          :greeting "Hello, World!"
                                          :benchmark-time benchmark-time
                                          :benchmark-time-str (str (-> benchmark-time
@@ -164,16 +124,11 @@
   (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
-(defn update-draw-state [{:keys [track-length start-times-mode?] :as draw-state}
+(defn update-draw-state [{:keys [track-length] :as draw-state}
                          {:keys [elapsed-ms min-track-time-ms snapshot-mode?] :as _app-state}]
   (let [arena (arena (q/width) (q/height))
-        wait-adjusted-time (- elapsed-ms pre-startup-wait-ms)
-        race-started? (if start-times-mode?
-                        (> wait-adjusted-time startup-sequence-ms)
-                        (> elapsed-ms pre-startup-wait-ms))
-        position-time (if start-times-mode?
-                        (- wait-adjusted-time startup-sequence-ms)
-                        (- elapsed-ms pre-startup-wait-ms))
+        race-started? (> elapsed-ms pre-startup-wait-ms)
+        position-time (- elapsed-ms pre-startup-wait-ms)
         first-lang (first (:languages draw-state))
         take-snapshot? (and snapshot-mode?
                             (= 1 (:runs first-lang))
@@ -227,15 +182,15 @@
       (q/text-style :normal)
       (q/text-align :right :center)
       (q/fill darkgrey)
-      (q/rect 0 (- y 12) (+ start-time-line-x 5) 24)
+      (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
       (q/fill offwhite)
       (q/text-size 14)
-      (q/text language-name start-time-line-x y)
+      (q/text language-name language-labels-x y)
       (q/fill darkgrey)
       (q/text-align :left)
       (q/text benchmark-time-str 5 (- y 20))
       (q/text-align :right)
-      (q/text-num runs start-time-line-x (- y 20))
+      (q/text-num runs language-labels-x (- y 20))
       (q/image logo-image track-x y ball-width ball-width))))
 
 (defn save-image [benchmark]
@@ -299,10 +254,6 @@
 
                                       (= :ax/set-benchmark action-name)
                                       {:new-state (assoc state :benchmark (keyword (first args)))
-                                       :effects [[:fx/run-sketch]]}
-
-                                      (= :ax/toggle-start-time-mode action-name)
-                                      {:new-state (update state :start-times-mode? not)
                                        :effects [[:fx/run-sketch]]}
 
                                       (= :ax/set-min-track-time-ms action-name)
