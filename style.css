@@ -47,13 +47,17 @@ code {
 
 button.cta {
   background-color: #007bff;
-  color: white;
   padding: 0.5rem 1rem;
   border-radius: 0.25rem;
   border: none;
-  font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.cta, .cta a {
+  font-size: 1rem;
+  color: white;
+  text-decoration: none;
 }
 
 button.cta:hover {
