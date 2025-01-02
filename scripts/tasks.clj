@@ -47,7 +47,7 @@
   (let [bench-script (str (fs/path (scripts-dir) (if bench-some?
                                                    "bench-some.sh"
                                                    "bench.sh")))]
-    (doseq [benchmark ["levenshtein" "loops" "fibonacci"]]
+    (doseq [benchmark ["hello-world" "levenshtein" "loops" "fibonacci"]]
       (println "BENCH:" benchmark)
       (p/shell {:dir (fs/path languages-dir benchmark)
                 :continue true}
