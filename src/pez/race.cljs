@@ -133,7 +133,7 @@
             :race-started? false
             :max-start-time (max-start-time benchmark)
             :start-message "Starting engines!"
-            :race-message (benchmark conf/benchmark-names)
+            :benchmark-title (benchmark conf/benchmark-names)
             :languages (mapv (fn [i lang]
                                (let [hello-world (get lang (start-time-key benchmark))
                                      benchmark-time (benchmark-result (assoc app-state :lang lang))
@@ -144,7 +144,6 @@
                                          :start-time hello-world
                                          :runs 0
                                          :track-x start-line-x
-                                         :start-sequence-x 0
                                          :time-to-stop-greeting (if start-times-mode?
                                                                   greeting-display-ms
                                                                   0)
@@ -165,7 +164,7 @@
   (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
-(defn update-draw-state [{:keys [max-start-time track-length start-times-mode?] :as draw-state}
+(defn update-draw-state [{:keys [track-length start-times-mode?] :as draw-state}
                          {:keys [elapsed-ms min-track-time-ms snapshot-mode?] :as _app-state}]
   (let [arena (arena (q/width) (q/height))
         wait-adjusted-time (- elapsed-ms pre-startup-wait-ms)
@@ -184,30 +183,19 @@
            {:t elapsed-ms
             :race-started? race-started?
             :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
-            :take-snapshot? take-snapshot?
-            :time-to-stop-greeting (if start-times-mode?
-                                     (- greeting-display-ms wait-adjusted-time)
-                                     0)}
-           {:languages (mapv (fn [{:keys [start-time speed] :as lang}]
-                               (let [startup-progress (if (pos? wait-adjusted-time)
-                                                        (/ wait-adjusted-time
-                                                           (* startup-sequence-ms
-                                                              (/ start-time max-start-time)))
-                                                        0)]
-                                 (merge lang
-                                        {:startup-progress startup-progress}
-                                        (if-not race-started?
-                                          {:start-sequence-x (min (* start-time-line-x startup-progress)
-                                                                  start-time-line-x)}
-                                          (let [normalized-time (/ position-time min-track-time-ms)
-                                                scaled-time (* normalized-time speed)
-                                                distance (* track-length scaled-time)
-                                                loop-distance (mod distance (* 2 track-length))
-                                                x (if (> loop-distance track-length)
-                                                    (- (* 2 track-length) loop-distance)
-                                                    loop-distance)]
-                                            {:track-x (+ start-line-x x)
-                                             :runs (quot distance track-length)})))))
+            :take-snapshot? take-snapshot?}
+           {:languages (mapv (fn [{:keys [speed] :as lang}]
+                               (merge lang
+                                      (when race-started?
+                                        (let [normalized-time (/ position-time min-track-time-ms)
+                                              scaled-time (* normalized-time speed)
+                                              distance (* track-length scaled-time)
+                                              loop-distance (mod distance (* 2 track-length))
+                                              x (if (> loop-distance track-length)
+                                                  (- (* 2 track-length) loop-distance)
+                                                  loop-distance)]
+                                          {:track-x (+ start-line-x x)
+                                           :runs (quot distance track-length)}))))
                              (:languages draw-state))})))
 
 (comment
@@ -220,53 +208,35 @@
 
 (declare event-handler)
 
-(defn draw! [{:keys [t time-to-stop-greeting race-started? start-times-mode?
-                     start-message race-message middle-x take-snapshot? benchmark] :as draw-state}]
+(defn draw! [{:keys [benchmark-title middle-x
+                     take-snapshot? benchmark] :as draw-state}]
   (when take-snapshot?
     (event-handler {} [[:ax/take-snapshot benchmark]]))
   (q/background offwhite)
   (q/stroke-weight 0)
+  (q/text-align :center)
+  (q/fill black)
+  (q/text-size 20)
+  (q/text-style :bold)
+  (q/text benchmark-title middle-x 20)
+  (q/text-size 16)
+  (q/text-style :normal)
+  (q/text "How fast is your favorite language?" middle-x 45)
   (doseq [lang (:languages draw-state)]
-    (let [{:keys [language-name logo-image y track-x runs
-                  start-sequence-x benchmark-time-str
-                  startup-progress start-time-str greeting]} lang]
+    (let [{:keys [language-name logo-image y track-x runs benchmark-time-str]} lang]
       (q/text-style :normal)
       (q/text-align :right :center)
       (q/fill darkgrey)
       (q/rect 0 (- y 12) (+ start-time-line-x 5) 24)
-      (when start-times-mode?
-        (when-not race-started?
-          (q/fill black)
-          (q/rect start-sequence-x (- y 10) (- start-time-line-x start-sequence-x) 20))
-        (when (and (> startup-progress 1)
-                   (> time-to-stop-greeting 0))
-          (q/text-size 12)
-          (q/fill 0 0 0 time-to-stop-greeting)
-          (q/text (str "(" start-time-str ") " greeting) start-time-line-x (- y 20))))
       (q/fill offwhite)
       (q/text-size 14)
       (q/text language-name start-time-line-x y)
       (q/fill darkgrey)
-      (when (>= 0 time-to-stop-greeting)
-        (q/text-align :left)
-        (q/text benchmark-time-str 5 (- y 20))
-        (q/text-align :right)
-        (q/fill darkgrey)
-        (q/text-num runs start-time-line-x (- y 20)))
-      (q/image logo-image track-x y ball-width ball-width)
+      (q/text-align :left)
+      (q/text benchmark-time-str 5 (- y 20))
       (q/text-align :right)
-      (q/text-align :center)
-      (q/text-size 20)
-      (q/text-style :bold)
-      (q/fill black)
-      (q/text race-message middle-x 20)
-      (q/text-style :normal)
-      (q/text-size 16)
-      (q/fill black)
-      (if (or (< t pre-startup-wait-ms)
-              race-started?)
-        (q/text "How fast is your favorite language?" middle-x 45)
-        (q/text start-message middle-x 45)))))
+      (q/text-num runs start-time-line-x (- y 20))
+      (q/image logo-image track-x y ball-width ball-width))))
 
 (defn save-image [benchmark]
   (println "Saving file...")
