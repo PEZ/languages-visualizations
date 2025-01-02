@@ -281,22 +281,14 @@
              state)
       state)))
 
-(defn- share-on-x! [text]
-  (let [url (str "https://pez.github.io/languages-visualizations/"
-                 (-> js/window .-location .-hash))]
-    (.open js/window (str "https://twitter.com/intent/tweet?text="
+(defn- share! [site text]
+  (let [url (-> js/window .-location .-href)]
+    (.open js/window (str (case site
+                            :site/x "https://twitter.com/intent/tweet?text="
+                            :site/linkedin "https://www.linkedin.com/shareArticle?mini=true&text=")
                           (js/encodeURIComponent text)
                           "&url="
                           (js/encodeURIComponent url)))))
-
-(defn- share-on-linkedin! [text]
-  (let [url (str "https://pez.github.io/languages-visualizations/"
-                 (-> js/window .-location .-hash))]
-    (.open js/window (str "https://www.linkedin.com/shareArticle?mini=true&text="
-                          (js/encodeURIComponent text)
-                          "&url="
-                          (js/encodeURIComponent url)))))
-
 (defn run-sketch []
   ; TODO: Figure out if there's a way to set the current applet with public API
   #_{:clj-kondo/ignore [:unresolved-namespace]}
@@ -350,11 +342,7 @@
                                       {:new-state (update state :snapshot-mode? not)}
 
                                       (= :ax/share action-name)
-                                      (let [fx (case (first args)
-                                                 :site/x :fx/share.x
-                                                 :site/linkedin :fx/share.linked-in
-                                                 :fx/console.log)]
-                                        {:effects [[fx (second args)]]}))]
+                                      {:effects [[:fx/share (first args) (second args)]]})]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -377,8 +365,7 @@
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
             (= :fx/run-sketch effect-name) (run-sketch)
             (= :fx/take-snapshot effect-name) (save-image (first args))
-            (= :fx/share.x effect-name) (share-on-x! (first args))
-            (= :fx/share.linked-in effect-name) (share-on-linkedin! (first args))))))))
+            (= :fx/share effect-name) (apply share! args)))))))
 
 (defn render-app! [el state]
   (d/render el (views/app state (active-benchmarks bd/benchmarks))))
