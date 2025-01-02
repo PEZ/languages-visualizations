@@ -45,6 +45,32 @@ code {
   color: rgb(192, 49, 49);
 }
 
+button.cta {
+  background-color: #007bff;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+button.cta:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+button.cta:active {
+  background-color: #004494;
+  transform: scale(1);
+}
+
+button.cta:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
+}
+
 .kbd {
   background-color: #eee;
   padding: 0.1rem 0.3rem;
