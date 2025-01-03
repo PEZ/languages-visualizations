@@ -12,6 +12,7 @@
 
 (defonce !app-state (atom {:benchmark :loops
                            :snapshot-mode? false
+                           :filter-champions? true
                            :min-track-time-ms 600}))
 
 (def app-el (js/document.getElementById "app"))
@@ -52,14 +53,19 @@
 (defn fastest-implementation [{:keys [benchmark]} implementations]
   (apply min-key benchmark implementations))
 
-(defn best-languages [{:keys [benchmark] :as app-state}]
-  (->> (languages)
-       (group-by :language)
-       vals
-       (map (fn [champions]
-              (fastest-implementation app-state (filter benchmark champions))))
-       (filter (fn [lang]
-                 (benchmark lang)))))
+(defn best-languages [{:keys [benchmark filter-champions?] :as app-state}]
+  (let [langs (languages)]
+    (if filter-champions?
+      (->> langs
+           (group-by :language)
+           vals
+           (map (fn [champions]
+                  (fastest-implementation app-state (filter benchmark champions))))
+           (filter (fn [lang]
+                     (benchmark lang))))
+      (filter (fn [lang]
+                (benchmark lang))
+              langs))))
 
 (comment
   (best-languages {:benchmark :loops})
