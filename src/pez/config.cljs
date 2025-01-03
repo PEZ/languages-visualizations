@@ -164,8 +164,8 @@
     :language :pascal
     :language-file-name "Pascal"}
    {:language-name "PyPy"
-    :logo "images/pypy.png"
-    :language :pypy
+    :logo "images/python.png"
+    :language :python
     :language-file-name "PyPy"}
    {:language-name "Python"
     :logo "images/python.png"
