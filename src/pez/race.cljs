@@ -12,7 +12,7 @@
 
 (defonce !app-state (atom {:benchmark :loops
                            :snapshot-mode? false
-                           :filter-champions? true
+                           :filter-champions? false
                            :min-track-time-ms 600}))
 
 (def app-el (js/document.getElementById "app"))
@@ -268,6 +268,10 @@
 
                                       (= :ax/toggle-snapshot-mode action-name)
                                       {:new-state (update state :snapshot-mode? not)}
+
+                                      (= :ax/toggle-champions-mode action-name)
+                                      {:new-state (update state :filter-champions? not)
+                                       :effects [[:fx/run-sketch]]}
 
                                       (= :ax/share action-name)
                                       {:effects [[:fx/share (first args) (second args)]]})]
