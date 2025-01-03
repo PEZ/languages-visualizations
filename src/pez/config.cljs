@@ -67,6 +67,10 @@
     :logo "images/deno.png"
     :language :jsDeno
     :language-file-name "Deno"}
+   {:language-name "Deno JIT-less"
+    :logo "images/deno.png"
+    :language :jsDeno
+    :language-file-name "Deno__jitless_"}
    {:language-name "Elixir"
     :logo "images/elixir.png"
     :language :elixir
