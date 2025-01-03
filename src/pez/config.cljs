@@ -203,6 +203,14 @@
     :language-file-name "Scala_Native"
     :language-name "Scala Native"
     :logo "images/scala.png"}
+   #_{:language :scala
+    :language-file-name "Bun_Scala_JS"
+    :language-name "Bun Scala JS"
+    :logo "images/scala.png"}
+   #_{:language :scala
+    :language-file-name "Bun_Scala_JS_Compiled_"
+    :language-name "Bun Scala JS Compiled"
+    :logo "images/scala.png"}
    {:language-name "Swift"
     :logo "images/swift.png"
     :language :swift
