@@ -25,7 +25,7 @@
 (def pre-startup-wait-ms 1500)
 
 (defn active-benchmarks [benchmarks]
-  (sort-by #(.indexOf [:loops :fibonacci :levenshtein] %)
+  (sort-by #(.indexOf [:loops :fibonacci :levenshtein :hello-world] %)
            (reduce-kv (fn [acc _k v]
                         (into acc (remove (fn [benchmark]
                                             (.endsWith (name benchmark) "-hello-world"))
