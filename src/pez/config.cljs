@@ -115,10 +115,14 @@
     :logo "images/julia.png"
     :language :julia
     :language-file-name "Julia"}
-   {:language-name "Kotlin JVM"
+   {:language-name "Kotlin"
     :logo "images/kotlin.png"
     :language :kotlin
     :language-file-name "Kotlin_JVM"}
+   {:language-name "Kotlin Native"
+    :logo "images/kotlin.png"
+    :language :kotlin
+    :language-file-name "Kotlin_Native"}
    {:language-name "Common Lisp"
     :logo "images/common-lisp.png"
     :language :common-lisp
