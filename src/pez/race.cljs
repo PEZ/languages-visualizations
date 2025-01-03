@@ -257,7 +257,8 @@
                                        :effects [[:fx/run-sketch]]}
 
                                       (= :ax/set-min-track-time-ms action-name)
-                                      {:new-state (assoc state :min-track-time-ms (parse-long (first args)))}
+                                      {:new-state (assoc state :min-track-time-ms (parse-long (first args)))
+                                       :effects [[:fx/run-sketch]]}
 
                                       (= :ax/toggle-snapshot-mode action-name)
                                       {:new-state (update state :snapshot-mode? not)}
