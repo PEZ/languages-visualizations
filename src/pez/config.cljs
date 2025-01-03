@@ -3,13 +3,18 @@
 (def benchmark-names
   {:loops "1 Billion Loops"
    :fibonacci "Naïve Fibonacci"
-   :levenshtein "Levenshtein Distance"})
+   :levenshtein "Levenshtein Distance"
+   :hello-world "Hello World!"})
 
 (def languages
   [{:language-name "Ada"
     :logo "images/ada.png"
     :language :ada
     :language-file-name "Ada"}
+   #_{:language-name "Babashka"
+    :logo "images/babashka.png"
+    :language :bb
+    :language-file-name "Babashka"}
    {:language-name "Bun"
     :logo "images/bun.png"
     :language :jsBun
