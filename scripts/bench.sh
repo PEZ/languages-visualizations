@@ -34,7 +34,7 @@ function run {
       json_dir="/tmp/languages/${benchmark}"
       mkdir -p "$json_dir"
       echo "Benchmarking $1"
-      hyperfine -i --shell=none --export-json "${json_dir}/${json_file_name}".json --output=pipe --runs 7 --warmup 2 -n "${cmd}" "${3} ${4}"
+      hyperfine -i --shell=none --export-json "${json_dir}/${json_file_name}".json --output=pipe --runs 15 --warmup 2 -n "${cmd}" "${3} ${4}"
     fi
   else
     echo "No executable or script found for $1. Skipping."
