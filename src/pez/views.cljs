@@ -17,7 +17,7 @@
    [:h3 "How I run the benchmarks"]
    [:p "The benchmarks are run on a Macbook Pro M1 Max with 32GB of RAM. I have tried to make things nonbusy on the machine. E.g. created a dedicated user, for which I have disabled all startup/login items. And I only have the benchmarks running."]
    [:p [:a {:href "https://github.com/sharkdp/hyperfine"} "Hyperfine"] " is used to run each benchmark, where each language is given " [:strong "15 runs."]]
-   [:blockquote "Since there are " [:strong "only 15 runs per language"] " on a given benchmark, the ranking results can vary quite a lot between batches when contendants are close."]
+   [:blockquote "Since there are " [:strong "only 15 runs per language"] " on a given benchmark, the ranking results can vary quite a lot between batches when contendants are close. Here's a " [:a {:href "https://pez.github.io/languages-visualizations/v2025.01.04-25-runs/"} "snapshot of a batch with 25 runs per language"] " (which still may be to little to really decide ranking)."]
    [:p "See also the " [:a {:href "https://github.com/bddicken/languages"} "Languages"] " repository for the source code for each language implementation. There you'll also find all:"]
    [:ul
     [:li [:a {:href "https://github.com/bddicken/languages/blob/main/compile.sh"} "Compilation command lines"]]
