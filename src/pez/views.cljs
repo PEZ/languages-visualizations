@@ -16,8 +16,8 @@
    [:p "This is a visualization of results running the benchmarks setup by Benjamin Dicken's " [:a {:href "https://github.com/bddicken/languages"} "Languages"] " project. Source: " [:a {:href "https://github.com/PEZ/languages-visualizations"} "github.com/PEZ/languages-visualizations"]]
    [:h3 "How I run the benchmarks"]
    [:p "The benchmarks are run on a Macbook Pro M1 Max with 32GB of RAM. I have tried to make things nonbusy on the machine. E.g. created a dedicated user, for which I have disabled all startup/login items. And I only have the benchmarks running."]
-   [:p [:a {:href "https://github.com/sharkdp/hyperfine"} "Hyperfine"] " is used to run each benchmark, where each language is given " [:strong "7 runs."]]
-   [:blockquote "Especially since there are " [:strong "only 7 runs per language"] " on a given benchmark, the results can vary quite a lot. When the differences are small, the ordering of the languages often varies between runs. "]
+   [:p [:a {:href "https://github.com/sharkdp/hyperfine"} "Hyperfine"] " is used to run each benchmark, where each language is given " [:strong "25 runs."]]
+   #_[:blockquote "Especially since there are " [:strong "only 7 runs per language"] " on a given benchmark, the results can vary quite a lot. When the differences are small, the ordering of the languages often varies between runs. "]
    [:p "See also the " [:a {:href "https://github.com/bddicken/languages"} "Languages"] " repository for the source code for each language implementation. There you'll also find all:"]
    [:ul
     [:li [:a {:href "https://github.com/bddicken/languages/blob/main/compile.sh"} "Compilation command lines"]]
