@@ -180,7 +180,7 @@
     :language :python
     :language-file-name "Python"}
    {:language-name "R"
-    :logo "images/r.png"
+    :logo "images/R.png"
     :language :r
     :language-file-name "R"}
    {:language-name "Ruby"
