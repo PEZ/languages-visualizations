@@ -10,9 +10,11 @@ body {
 .benchmark-options, .buttons {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
+  gap: 0.5rem;
   max-width: 600px;
+  margin-top: 1rem;
   margin-bottom: 0.25rem;
+  flex-wrap: wrap;
 }
 
 .benchmark-label {
