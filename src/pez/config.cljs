@@ -31,6 +31,10 @@
     :logo "images/csharp.png"
     :language :csharp
     :language-file-name "C_"}
+   {:language-name "C# AOT"
+    :logo "images/csharp.png"
+    :language :csharp
+    :language-file-name "C__AOT"}
    {:language-name "C3"
     :logo "images/c3.png"
     :language :c3
@@ -87,6 +91,10 @@
     :logo "images/fsharp.png"
     :language :fsharp
     :language-file-name "F_"}
+   {:language-name "F# AOT"
+    :logo "images/fsharp.png"
+    :language :fsharp
+    :language-file-name "F__AOT"}
    {:language-name "Fortran"
     :logo "images/fortran.png"
     :language :fortran
@@ -159,6 +167,10 @@
     :logo "images/odin.png"
     :language :odin
     :language-file-name "Odin"}
+   {:language-name "Pacal"
+    :logo "images/pascal.png"
+    :language :pascal
+    :language-file-name "Free_Pascal"}
    {:language-name "PHP"
     :logo "images/php.png"
     :language :php
