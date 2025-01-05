@@ -195,6 +195,10 @@
     :logo "images/R.png"
     :language :r
     :language-file-name "R"}
+   {:language-name "Racket"
+    :logo "images/Racket.png"
+    :language :racket
+    :language-file-name "Racket"}
    {:language-name "Ruby"
     :logo "images/ruby.png"
     :language :ruby
