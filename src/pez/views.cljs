@@ -34,7 +34,8 @@
    [:p "Some languages have several ways to compile and package the executables. I call them “champions” for their language. When " [:strong "Chamions"] " mode is enabled only the best champion is selected for a given benchmark. E.g. Clojure is represented by “Clojure” and “Clojure Native”, where the former is running the Clojure program using the " [:code "java"] " command, and the latter is a compiled binary (using GraalVM native-image). Unless something really strange is going on, only “Clojure Native” will ever show up in the visualizations, because Clojure takes a lot of time to start in a regular JVM environment. (Which typically doesn't matter in the real world, and all that.)"]
    [:blockquote "Something strange " [:em "is"] " going on with “Kotlin”, where the “Kotlin Native” " [:button {:on {:click [[:ax/set-hash "loops"]]}} "loops"] " results are very slow, and never beats the “Kotlin JVM” results (not even close)."]
    [:h3 "Usage tips"]
-   [:blockquote "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time. If you are using a keyboard device, you can save a snapshot by pressing " [:span.kbd "S"]]))
+   [:p "The " [:strong "Execution time"] " animation speed setting makes the balls/logos travel one distance across the track in the same time as they executed the active benchmark."]
+   [:p "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time. If you are using a keyboard device, you can save a snapshot by pressing " [:span.kbd "S"]]))
 
 (defn app [{:keys [benchmark snapshot-mode? filter-champions? min-track-time-ms] :as app-state}
            active-benchmarks]
@@ -66,8 +67,9 @@
      [:label.benchmark-label
       "Animation speed: "
       [:select {:value min-track-time-ms
-                :on {:change [[:ax/set-min-track-time-ms :event/target.value]]}}
+                :on {:change [[:ax/set-min-track-time-choice :event/target.value]]}}
        [:option {:value 600} "Normal"]
+       [:option {:value "fastest-language"} "Execution time"]
        [:option {:value 60000} "Too slow"]
        [:option {:value 9600} "Very very slow"]
        [:option {:value 4800} "Very Slow"]

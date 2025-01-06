@@ -13,7 +13,7 @@
 (defonce !app-state (atom {:benchmark :loops
                            :snapshot-mode? false
                            :filter-champions? false
-                           :min-track-time-ms 600}))
+                           :min-track-time-choice "600"}))
 
 (def app-el (js/document.getElementById "app"))
 
@@ -96,7 +96,7 @@
      :middle-x (/ width 2)
      :middle-y (/ height 2)}))
 
-(defn setup [{:keys [benchmark] :as app-state}]
+(defn setup [{:keys [benchmark min-track-time-choice] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
   (let [arena (arena (q/width) (q/height))
@@ -106,6 +106,9 @@
             :benchmark benchmark
             :race-started? false
             :benchmark-title (benchmark conf/benchmark-names)
+            :min-track-time-ms (if (= "fastest-language" min-track-time-choice)
+                                 min-time
+                                 (parse-long min-track-time-choice))
             :languages (mapv (fn [i lang]
                                (let [benchmark-time (benchmark lang)
                                      speed (/ min-time benchmark-time)]
@@ -130,8 +133,8 @@
   (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
-(defn update-draw-state [{:keys [track-length] :as draw-state}
-                         {:keys [elapsed-ms min-track-time-ms snapshot-mode?] :as _app-state}]
+(defn update-draw-state [{:keys [track-length min-track-time-ms] :as draw-state}
+                         {:keys [elapsed-ms snapshot-mode?] :as _app-state}]
   (let [arena (arena (q/width) (q/height))
         race-started? (> elapsed-ms pre-startup-wait-ms)
         position-time (- elapsed-ms pre-startup-wait-ms)
@@ -262,8 +265,8 @@
                                       {:new-state (assoc state :benchmark (keyword (first args)))
                                        :effects [[:fx/run-sketch]]}
 
-                                      (= :ax/set-min-track-time-ms action-name)
-                                      {:new-state (assoc state :min-track-time-ms (parse-long (first args)))
+                                      (= :ax/set-min-track-time-choice action-name)
+                                      {:new-state (assoc state :min-track-time-choice (first args))
                                        :effects [[:fx/run-sketch]]}
 
                                       (= :ax/toggle-snapshot-mode action-name)
