@@ -68,7 +68,6 @@
       "Animation speed: "
       [:select {:value min-track-time-ms
                 :on {:change [[:ax/set-min-track-time-choice :event/target.value]]}}
-       [:option {:value 600} "Normal"]
        [:option {:value "fastest-language"} "Execution time"]
        [:option {:value 60000} "Too slow"]
        [:option {:value 9600} "Very very slow"]
