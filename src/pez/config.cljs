@@ -167,7 +167,7 @@
     :logo "images/odin.png"
     :language :odin
     :language-file-name "Odin"}
-   {:language-name "Pacal"
+   {:language-name "Pascal"
     :logo "images/pascal.png"
     :language :pascal
     :language-file-name "Free_Pascal"}
@@ -179,10 +179,6 @@
     :logo "images/php.png"
     :language :php
     :language-file-name "PHP_JIT"}
-   {:language-name "Pascal"
-    :logo "images/pascal.png"
-    :language :pascal
-    :language-file-name "Pascal"}
    {:language-name "PyPy"
     :logo "images/python.png"
     :language :python
