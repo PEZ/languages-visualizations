@@ -103,6 +103,7 @@
         min-time (apply min (benchmark-times app-state))]
     (merge arena
            {:t 0
+            :app-state app-state
             :benchmark benchmark
             :race-started? false
             :benchmark-title (benchmark conf/benchmark-names)
@@ -134,7 +135,7 @@
   :rcf)
 
 (defn update-draw-state [{:keys [track-length min-track-time-ms] :as draw-state}
-                         {:keys [elapsed-ms snapshot-mode?] :as _app-state}]
+                         {:keys [elapsed-ms snapshot-mode?] :as app-state}]
   (let [arena (arena (q/width) (q/height))
         race-started? (> elapsed-ms pre-startup-wait-ms)
         position-time (- elapsed-ms pre-startup-wait-ms)
@@ -145,6 +146,7 @@
     (merge draw-state
            arena
            {:t elapsed-ms
+            :app-state app-state
             :race-started? race-started?
             :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
             :take-snapshot? take-snapshot?}
@@ -173,9 +175,9 @@
 (declare event-handler)
 
 (defn draw! [{:keys [benchmark-title middle-x
-                     take-snapshot? benchmark] :as draw-state}]
+                     take-snapshot? app-state] :as draw-state}]
   (when take-snapshot?
-    (event-handler {} [[:ax/take-snapshot benchmark]]))
+    (event-handler {} [[:ax/take-snapshot app-state]]))
   (q/background offwhite)
   (q/stroke-weight 0)
   (q/text-align :center)
@@ -202,13 +204,16 @@
       (q/text-num runs language-labels-x (- y 20))
       (q/image logo-image track-x y ball-width ball-width))))
 
-(defn save-image [benchmark]
+(defn save-image [{:keys [benchmark filter-champions?]}]
   (let [iso-date (.substring (.toISOString (js/Date.)) 0 10)]
     (println "Saving file...")
-    (q/save (str "languages-visualizations-" (name benchmark) "-" iso-date ".png"))))
+    (q/save (str "languages-visualizations-"
+                 (name benchmark) "-" iso-date
+                 (when-not filter-champions? "-all")
+                 ".png"))))
 
 (defn save-handler
-  [benchmark]
+  [{:keys [benchmark]}]
   (fn [state {:keys [key _key-code]}]
     (case key
       (:s) (do
@@ -238,7 +243,7 @@
                      (let [elapsed-ms (- (js/performance.now) start-time)]
                        (update-draw-state state (assoc @!app-state :elapsed-ms elapsed-ms))))
            :draw draw!
-           :key-pressed (save-handler (:benchmark @!app-state))
+           :key-pressed (save-handler @!app-state)
            :middleware [m/fun-mode]))))
 
 (defn- enrich-action-from-replicant-data [{:replicant/keys [js-event]} actions]
@@ -260,7 +265,7 @@
                                       {:effects [[:fx/set-hash (first args)]]}
 
                                       (= :ax/take-snapshot action-name)
-                                      {:effects [[:fx/take-snapshot (first args)]]}
+                                      {:effects [[:fx/take-snapshot state]]}
 
                                       (= :ax/set-benchmark action-name)
                                       {:new-state (assoc state :benchmark (keyword (first args)))
