@@ -85,7 +85,7 @@ run "Java Native" "./java-native-image/code" "./java-native-image/code" "${input
 # run "Nim" "./nim/code" "./nim/code" "${input}"
 # #run "Node (jitless)" "./js/code.js" "node --jitles ./js/code.js" "${input}"
 # run "Node" "./js/code.js" "node ./js/code.js" "${input}"
-# run "Objective-C" "./objc/code" "./objc/code" "${input}"
+run "Objective-C" "./objc/code" "./objc/code" "${input}"
 # #run "Octave" "./octave/code.m" "octave ./octave/code.m 40" "${input}"
 # run "Odin" "./odin/code" "./odin/code" "${input}"
 # run "PHP JIT" "./php/code.php" "php -dopcache.enable_cli=1 -dopcache.jit=on -dopcache.jit_buffer_size=64M ./php/code.php" "${input}"
