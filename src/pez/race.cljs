@@ -203,8 +203,9 @@
       (q/image logo-image track-x y ball-width ball-width))))
 
 (defn save-image [benchmark]
-  (println "Saving file...")
-  (q/save (str "languages-visualizations-" (name benchmark) ".png")))
+  (let [iso-date (.substring (.toISOString (js/Date.)) 0 10)]
+    (println "Saving file...")
+    (q/save (str "languages-visualizations-" (name benchmark) "-" iso-date ".png"))))
 
 (defn save-handler
   [benchmark]
