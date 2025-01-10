@@ -13,7 +13,7 @@
 (defonce !app-state (atom {:benchmark :loops
                            :snapshot-mode? false
                            :filter-champions? false
-                           :min-track-time-choice "fastest-language"}))
+                           :min-track-time-choice "600" #_"fastest-language"}))
 
 (def app-el (js/document.getElementById "app"))
 

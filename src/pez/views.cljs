@@ -65,22 +65,23 @@
                :on {:change [[:ax/toggle-snapshot-mode snapshot-mode?]]}}]
       [:span "Auto-snapshot winner"]]
      [:label.benchmark-label
-      "Animation speed: "
+      "ms/track length: "
       [:select {:value min-track-time-ms
                 :on {:change [[:ax/set-min-track-time-choice :event/target.value]]}}
+       [:option {:value 600} "600"]
        [:option {:value "fastest-language"} "Execution time"]
-       [:option {:value 60000} "Too slow"]
-       [:option {:value 9600} "Very very slow"]
-       [:option {:value 4800} "Very Slow"]
-       [:option {:value 2400} "Slow"]
-       [:option {:value 1200} "Slower"]
-       [:option {:value 600} "Normal"]
-       [:option {:value 450} "Faster"]
-       [:option {:value 300} "Very fast"]
-       [:option {:value 200} "Very very fast"]
-       [:option {:value 150} "Too fast"]
-       [:option {:value 75} "Way too fast"]
-       [:option {:value 5} "Warp speed"]]]]]
+       [:option {:value 60000} "60000"]
+       [:option {:value 9600} "9600"]
+       [:option {:value 4800} "4800"]
+       [:option {:value 2400} "2400"]
+       [:option {:value 1200} "1200"]
+       [:option {:value 600} "600"]
+       [:option {:value 450} "450"]
+       [:option {:value 300} "300"]
+       [:option {:value 200} "200"]
+       [:option {:value 150} "150"]
+       [:option {:value 75} "75"]
+       [:option {:value 5} "5"]]]]]
    [:div.report
     [:section#race]
     [:section.info
