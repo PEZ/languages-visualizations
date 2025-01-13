@@ -127,7 +127,7 @@
              :levenshtein 6149.569447333333
              :loops 2292.0664053999994
              :fibonacci 989.8194388666668}
-   "Free_Pascal" {:levenshtein 272.59391373333324
+   "Free_Pascal" {;:levenshtein 272.59391373333324
                   :loops 2220.406916733333
                   :fibonacci 848.7302944666667}
    "LuaJIT" {:hello-world 3.6387612000000003

@@ -28,6 +28,8 @@
    [:p "The " [:button {:on {:click [[:ax/set-hash "hello-world"]]}} "hello-world"] " benchmark is included as a sort of measurement of start times. An inexact way to compensate for start times is to subtract hello-world times from the other benchmarks."]
    [:h3 "Language selection"]
    [:p "The selection of languages are the subset of languages that are added to the project for which I have a working toolchain on my benchmarking machine. The languages need to pass the simple output check, and the implementation need to seem compliant (to me). I may also have skipped some of the slower languages because I don't want to wait forever to run it all. I want to include more languages, it is mostly a matter of how much time I can spend on investigating toolchain issues."]
+   [:h4 "Where's Levenshtein Pascal?"]
+   [:p "The suspiciously stellar performance of Pascal in the " [:button {:on {:click [[:ax/set-hash "levenshtein"]]}} "levenshtein"] " test was explained by FreePascal defaulting to " [:code "ShortString"] "which effectively truncates the strings at 256 characters, and many strings in the test are much longer than that. " [:a {:href "https://github.com/bddicken/languages/issues/347"} "https://github.com/bddicken/languages/issues/347"] " I'll reinsitate Pascal when the program is fixed."]
    [:h4 "You favorite language is missing?"]
    [:p "If you lack some language in the visualizations, let me know in an issue " [:a {:href "https://github.com/PEZ/languages-visualizations"} "on the project"] ". If you include instructions on how to get the toolchain installed on a Mac silicon (without any Docker involved) it increases the chances that I get the language included."]
    [:h3 "Champions mode"]
