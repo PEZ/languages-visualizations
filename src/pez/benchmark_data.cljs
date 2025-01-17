@@ -1,170 +1,175 @@
 (ns pez.benchmark-data)
 
 (def benchmarks
-  {"Julia" {:levenshtein 972.7283888666668 :loops 2208.5497249333334}
-   "Clojure_Native" {:hello-world 7.021066733333332
-                     :levenshtein 1650.831564
-                     :loops 667.5466027999998
-                     :fibonacci 422.132886}
-   "Kotlin_JVM" {:hello-world 91.18588060000002
-                 :loops 751.5554946000001
-                 :fibonacci 573.9333444000001}
-   "Emacs_Lisp_Native" {:hello-world 91.38228886666667
-                        :loops 15008.838816733336
-                        :fibonacci 2636.9255388}
-   "Bun__Compiled_" {:hello-world 12.440077800000001
-                     :levenshtein 1601.2581222000001
-                     :loops 2092.0195723333336
-                     :fibonacci 909.9523556000001}
-   "Ruby_YJIT" {:hello-world 40.76618053333334
-                :levenshtein 15939.175110999999
-                :loops 14970.851113933333
-                :fibonacci 2566.7175444}
-   "Java_Native" {:hello-world 6.472961200000001
-                  :levenshtein 1529.8319416000004
-                  :loops 663.1550944000002
-                  :fibonacci 460.0822248666667}
-   "Dart" {:hello-world 20.854488733333337
-           :loops 706.2091529333334
-           :fibonacci 913.7045807333333}
-   "PHP" {:levenshtein 39664.91024993334
-          :loops 13521.171989
-          :fibonacci 16080.642922200002}
-   "Elixir" {:hello-world 275.422861
-             :loops 3288.440574866667
-             :fibonacci 1613.7779194000002}
-   "Objective_C" {:hello-world 4.5059417333333345
-                  :levenshtein 722.9879249333334
-                  :loops 657.4057528666668
-                  :fibonacci 506.7164473333333}
-   "F__AOT" {:hello-world 6.249611266666667
-             :levenshtein 1626.5963917333336
-             :loops 2136.061375066666
-             :fibonacci 658.7151139333333}
-   "Python" {:hello-world 23.954886133333336
-             :levenshtein 68944.05976386665
-             :loops 45287.993269266655
-             :fibonacci 27303.1607944}
-   "C_" {:hello-world 34.39518900000001
-         :levenshtein 1342.5076473333336
-         :loops 2168.6736333999997
-         :fibonacci 557.5641585333334}
-   "Modula_2" {:hello-world 15.678333400000001}
-   "PyPy" {:hello-world 30.14934446666667
-           :loops 3304.984638933334
-           :fibonacci 2364.332119466667}
-   "Deno" {:hello-world 22.930069600000003
-           :levenshtein 2370.0150304000003
-           :loops 2071.532372266667
-           :fibonacci 1556.1772195333335}
-   "Nim" {:levenshtein 2363.1157612000006 :loops 650.5611668000001}
-   "CPP" {:hello-world 4.686325133333334
-          :levenshtein 711.1546583333335
-          :loops 656.7976584
-          :fibonacci 487.43505260000006}
-   "Kotlin_Native" {:hello-world 6.388769533333334
-                    :loops 2106.4519084666667
-                    :fibonacci 521.8322970666668}
-   "Fortran" {:hello-world 4.7212445333333335
-              :levenshtein 593.8907166000001
-              :loops 652.9967361333335
-              :fibonacci 5.813650066666666}
-   "Scala" {:hello-world 145.2315804
-            :levenshtein 1286.1487749333332
-            :loops 803.8308946000001
-            :fibonacci 636.3751193333335}
-   "Ruby" {:hello-world 42.53522206666667
-           :levenshtein 36293.64546653334
-           :loops 39417.03442526667
-           :fibonacci 13774.4103944}
-   "Rust" {:hello-world 3.617661266666667
-           :levenshtein 1547.1667501333334
-           :loops 653.5243388000001
-           :fibonacci 506.53324433333336}
-   "Lua" {:hello-world 3.8288111333333337
-          :levenshtein 29056.02324166667
-          :loops 52860.084636333326
-          :fibonacci 12120.690972333334}
-   "Deno__jitless_" {:hello-world 22.590072266666667
-                     :levenshtein 33948.5136722
-                     :loops 22716.66310553333
-                     :fibonacci 20418.879244333333}
-   "Bun_Scala_JS" {:hello-world 13.083099933333333
-                   :levenshtein 1548.7564861333333
-                   :loops 2149.6681693333335
-                   :fibonacci 956.4450054666668}
-   "Swift" {:hello-world 3.7037778666666665
-            :levenshtein 749.8512414666667
-            :loops 650.5769528
-            :fibonacci 676.8415918000001}
-   "R" {:levenshtein 226183.52920846667 :fibonacci 93779.71895280002}
-   "C" {:hello-world 6.1798111333333345
-        :levenshtein 593.2985748666667
-        :loops 678.0700388
-        :fibonacci 266.07882493333335}
-   "C3" {:hello-world 5.649569333333335
-         :loops 2669.2820192
-         :fibonacci 893.3126166666665}
-   "Clojure" {:hello-world 456.6315528
-              :levenshtein 2128.5447139999997
-              :loops 1115.5892194
-              :fibonacci 923.4781944666667}
-   "Bun" {:hello-world 11.081277866666666
-          :levenshtein 1600.3298194666668
-          :loops 2090.2110525333333
-          :fibonacci 1100.2985222000002}
-   "C__AOT" {:hello-world 6.080230733333334
-             :levenshtein 1311.5449416666668
-             :loops 2133.0816833333333
-             :fibonacci 627.426189}
-   "V" {:hello-world 3.9899693333333337
-        :levenshtein 742.1709111333334
-        :loops 657.9033972
-        :fibonacci 520.0666195333334}
-   "Zig" {:hello-world 3.3069055333333335
-          :levenshtein 758.0950083333335
-          :loops 654.5473165999999
-          :fibonacci 519.9720028666667}
-   "Racket" {:hello-world 52.1601306
-             :levenshtein 6105.009930599999
-             :loops 2306.4440055333334
-             :fibonacci 992.7047528666667}
-   "Free_Pascal"
-   {#_#_:levenshtein 275.30683600000003 :loops 2236.6932972 :fibonacci 870.4411112}
-   "LuaJIT" {:hello-world 4.003130466666668
-             :levenshtein 1262.7826165999998
-             :loops 1008.0857279333333
-             :fibonacci 971.1030333333334}
-   "F_" {:hello-world 41.41702506666667
-         :levenshtein 1596.5275528
-         :loops 2277.2461666000004
-         :fibonacci 549.1431943333332}
-   "Scala_Native" {:hello-world 3.5982360666666673
-                   :levenshtein 770.8656640666667
-                   :loops 656.5076639333332
-                   :fibonacci 505.4111750000001}
-   "COBOL" {:hello-world 6.046152733333333 :loops 211890.0310084}
-   "PHP_JIT" {:levenshtein 9878.281416533333
-              :loops 3332.8938915999997
-              :fibonacci 4227.4803888666665}
-   "Go" {:hello-world 4.194122133333335
-         :levenshtein 1198.7012112
-         :loops 2134.0265638666665
-         :fibonacci 737.0247194666669}
-   "Java" {:hello-world 86.5235584
-           :levenshtein 1045.6651584666668
-           :loops 741.1567000666666
-           :fibonacci 572.1541890666667}
-   "Odin" {:hello-world 3.4227973333333335
-           :levenshtein 712.6277554000001
-           :loops 652.8568249999998
-           :fibonacci 520.3875166666667}
-   "Node" {:hello-world 47.11314446666667
-           :levenshtein 2405.9340249333336
-           :loops 2177.3863057333333
-           :fibonacci 1590.6922499333336}
-   "Bun_Scala_JS_Compiled_" {:hello-world 12.873013866666668
-                             :levenshtein 1541.6338526000002
-                             :loops 2146.4449806666667
-                             :fibonacci 958.1158584666666}})
+  {"Julia" {:levenshtein 967.1210026666669 :loops 2212.3613137999996}
+   "Clojure_Native" {:hello-world 5.993319533333334
+                     :levenshtein 1648.1433665999998
+                     :loops 665.1388860666666
+                     :fibonacci 434.1067054666668}
+   "Kotlin_JVM" {:hello-world 88.85027779999999
+                 :loops 751.8568444000001
+                 :fibonacci 574.0480667333333}
+   "Emacs_Lisp_Native" {:hello-world 88.99111953333335
+                        :loops 15005.086608399999
+                        :fibonacci 2641.0720721999996}
+   "Bun__Compiled_" {:hello-world 18.08085826666667
+                     :levenshtein 1595.1271970666667
+                     :loops 2098.054833333333
+                     :fibonacci 923.9544666666667}
+   "Ruby_YJIT" {:hello-world 39.42044193333334
+                :levenshtein 15569.231266666666
+                :loops 14983.8338944
+                :fibonacci 2567.5898166666675}
+   "Java_Native" {:hello-world 6.136594466666667
+                  :levenshtein 1528.0068919333335
+                  :loops 662.9526333333334
+                  :fibonacci 460.1557722}
+   "Dart" {:hello-world 16.628566733333333
+           :loops 705.0174917333334
+           :fibonacci 932.3925696666668}
+   "PHP" {:levenshtein 39439.424580733335
+          :loops 13556.124411133336
+          :fibonacci 16074.02326953333}
+   "Elixir" {:hello-world 271.5194388666667
+             :loops 3284.3453831999987
+             :fibonacci 1660.5321860666668}
+   "Objective_C" {:hello-world 4.371908266666668
+                  :levenshtein 722.0414028
+                  :loops 656.3720112000001
+                  :fibonacci 508.55265826666675}
+   "F__AOT" {:hello-world 5.822216666666667
+             :levenshtein 1630.7655278000002
+             :loops 2134.8671946666673
+             :fibonacci 658.0181693333334}
+   "Python" {:hello-world 24.52059426666667
+             :levenshtein 68276.30243046669
+             :loops 45087.46532206667
+             :fibonacci 27336.012091666664}
+   "C_" {:hello-world 33.38117206666667
+         :levenshtein 1338.4192666666665
+         :loops 2170.0833221999997
+         :fibonacci 577.4649445333334}
+   "Modula_2" {:hello-world 14.324322133333336}
+   "PyPy" {:hello-world 28.117474866666665
+           :loops 3299.746180666666
+           :fibonacci 2369.8589805999995}
+   "Deno" {:hello-world 22.262058399999997
+           :levenshtein 2366.546277733333
+           :loops 2073.0398388666667
+           :fibonacci 1557.2409056000001}
+   "Nim" {:levenshtein 2361.9295944000005 :loops 652.0700693333334}
+   "CPP" {:hello-world 4.383511000000001
+          :levenshtein 708.5599527333333
+          :loops 657.2610860666667
+          :fibonacci 507.81028066666664}
+   "Python_JIT" {:hello-world 24.21322226666667
+                 :levenshtein 13567.46792213333
+                 :loops 2460.5432417333336
+                 :fibonacci 1130.8755583999998}
+   "Kotlin_Native" {:hello-world 5.280686133333334
+                    :loops 2104.5234445333335
+                    :fibonacci 521.5622110666668}
+   "Fortran" {:hello-world 4.272488933333333
+              :levenshtein 590.9776058000001
+              :loops 652.5200445333334
+              :fibonacci 5.702905533333333}
+   "Scala" {:hello-world 145.83199426666667
+            :levenshtein 1292.0506359333335
+            :loops 801.9505277333333
+            :fibonacci 632.0759056}
+   "Ruby" {:hello-world 39.41320553333333
+           :levenshtein 36319.00707206666
+           :loops 39393.1934388
+           :fibonacci 13838.315424999999}
+   "Rust" {:hello-world 3.4058387333333333
+           :levenshtein 707.1504583999999
+           :loops 654.5385194666669
+           :fibonacci 505.01601939999995}
+   "Lua" {:hello-world 3.8978222000000002
+          :levenshtein 29103.031377799998
+          :loops 52501.731285999995
+          :fibonacci 12105.065066733334}
+   "Deno__jitless_" {:hello-world 21.84410833333333
+                     :levenshtein 33908.77721386667
+                     :loops 22717.714205599998
+                     :fibonacci 20202.614027800002}
+   "Bun_Scala_JS" {:hello-world 11.686236133333335
+                   :levenshtein 1551.0945612000003
+                   :loops 2148.529161
+                   :fibonacci 958.4089723333335}
+   "Swift" {:hello-world 3.715194466666667
+            :levenshtein 751.7735554666668
+            :loops 651.2548416666667
+            :fibonacci 675.6732472666669}
+   "R" {:levenshtein 222585.81332240003 :fibonacci 93566.39475553334}
+   "C" {:hello-world 3.054597133333334
+        :levenshtein 592.4954306
+        :loops 677.7765582666667
+        :fibonacci 274.39614706666663}
+   "C3" {:hello-world 4.020594533333334
+         :loops 2673.995611400001
+         :fibonacci 924.9714915333335}
+   "Clojure" {:hello-world 440.64833613333326
+              :levenshtein 2105.820919466667
+              :loops 1116.5108362666665
+              :fibonacci 958.4321500666667}
+   "Bun" {:hello-world 10.726772266666666
+          :levenshtein 1606.3785889333333
+          :loops 2095.2968943333335
+          :fibonacci 1148.9967831333333}
+   "C__AOT" {:hello-world 5.4026890000000005
+             :levenshtein 1310.673627733333
+             :loops 2130.2715666000004
+             :fibonacci 650.8295499999999}
+   "V" {:hello-world 3.772858333333333
+        :levenshtein 740.7803666
+        :loops 658.4057890000001
+        :fibonacci 520.8993582}
+   "Zig" {:hello-world 3.1116224000000003
+          :levenshtein 761.5262749333335
+          :loops 653.2253414666668
+          :fibonacci 519.386775}
+   "Racket" {:hello-world 50.426200066666674
+             :levenshtein 6101.6335668
+             :loops 2304.3042916
+             :fibonacci 990.9791806000001}
+   "Free_Pascal" {;:levenshtein 273.85144160000004
+                  :loops 2236.8419611333334
+                  :fibonacci 868.1321250666668}
+   "LuaJIT" {:hello-world 3.3301999333333336
+             :levenshtein 1260.7047306
+             :loops 1006.4970609999999
+             :fibonacci 997.5341861333334}
+   "F_" {:hello-world 39.69456386666667
+         :levenshtein 1594.8296639999996
+         :loops 2276.256149933333
+         :fibonacci 551.9943557333334}
+   "Scala_Native" {:hello-world 3.565175
+                   :levenshtein 770.9643526000001
+                   :loops 657.4971248666668
+                   :fibonacci 507.6458222000001}
+   "COBOL" {:hello-world 6.081233333333334 :loops 211700.81156119998}
+   "PHP_JIT" {:levenshtein 9919.172402866669
+              :loops 3330.6624443999995
+              :fibonacci 4217.905027666667}
+   "Go" {:hello-world 3.907183333333333
+         :levenshtein 1199.3512109333333
+         :loops 2132.8680416
+         :fibonacci 734.9682335333335}
+   "Java" {:hello-world 80.81876666666666
+           :levenshtein 1040.7946834666668
+           :loops 745.3504389999999
+           :fibonacci 568.1215499333334}
+   "Odin" {:hello-world 3.0235999333333337
+           :levenshtein 715.243425
+           :loops 654.9926164666665
+           :fibonacci 520.9414082}
+   "Node" {:hello-world 46.57630840000001
+           :levenshtein 2409.7490360000006
+           :loops 2174.964960933333
+           :fibonacci 1586.4639529333333}
+   "Bun_Scala_JS_Compiled_" {:hello-world 11.308138933333332
+                             :levenshtein 1552.4791139333333
+                             :loops 2148.2329944666667
+                             :fibonacci 956.0877110666667}})
 

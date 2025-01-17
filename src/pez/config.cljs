@@ -187,6 +187,10 @@
     :logo "images/python.png"
     :language :python
     :language-file-name "Python"}
+   {:language-name "Python JIT"
+    :logo "images/python.png"
+    :language :python
+    :language-file-name "Python_JIT"}
    {:language-name "R"
     :logo "images/R.png"
     :language :r
