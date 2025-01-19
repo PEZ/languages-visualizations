@@ -5,13 +5,25 @@
          {:task t/collect-benchmark-data!
           :doc "Collect languages benchmark data"}
 
+         compile-benchmarks-old
+         {:task t/compile-benchmarks-old!
+          :doc "Legacy: Compile all contributions for all benchmarks"}
+
          compile-benchmarks
          {:task t/compile-benchmarks!
           :doc "Compile all contributions for all benchmarks"}
 
+         bench-benchmarks-old
+         {:task t/bench-benchmarks-old!
+          :doc "Legacy: Bench all contributions for all benchmarks"}
+
          bench-benchmarks
          {:task t/bench-benchmarks!
           :doc "Bench all contributions for all benchmarks"}
+
+         compile-and-bench-old
+         {:task t/compile-and-bench-old!
+          :doc "Legacy: Compile and bench all contributions for all benchmarks"}
 
          compile-and-bench
          {:task t/compile-and-bench!

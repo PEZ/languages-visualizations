@@ -28,12 +28,19 @@
                  (assoc-in acc [language benchmark] mean))
                {})))
 
-(defn compile! [languages-dir]
+(defn compile-old! [languages-dir]
   (doseq [benchmark ["hello-world" "levenshtein" "loops" "fibonacci"]]
     (println "COMPILE:" benchmark)
     (p/shell {:dir (fs/path languages-dir benchmark)
               :continue true}
              "../compile.sh")))
+
+(defn compile! [languages-dir]
+  (doseq [benchmark ["hello-world" "levenshtein" "loops" "fibonacci"]]
+    (println "COMPILE:" benchmark)
+    (p/shell {:dir (fs/path languages-dir benchmark)
+              :continue true}
+             "../compile-benchmark.sh")))
 
 (defn- scripts-dir []
   (if (System/getProperty "babashka.config")
@@ -43,7 +50,7 @@
     (-> *file*
         fs/parent)))
 
-(defn bench! [languages-dir bench-some?]
+(defn bench-old! [languages-dir bench-some?]
   (let [bench-script (str (fs/path (scripts-dir) (if bench-some?
                                                    "bench-some.sh"
                                                    "bench.sh")))]
@@ -52,6 +59,17 @@
       (p/shell {:dir (fs/path languages-dir benchmark)
                 :continue true}
                bench-script))))
+
+(defn bench! [languages-dir user languages]
+  (let [bench-script (if languages
+                       (str "../run-benchmark.sh -u" user " -l " languages)
+                       (str "../run-benchmark.sh -u" user))]
+    (doseq [benchmark ["hello-world" "levenshtein" "loops" "fibonacci"]]
+      (println "BENCH:" benchmark)
+      (p/shell {:dir (fs/path languages-dir benchmark)
+                :continue true}
+               bench-script))))
+
 (defn tag-exists? [tag]
   (= 0 (:exit (p/shell {:continue true :out nil :err nil} "git" "rev-parse" tag))))
 
@@ -68,15 +86,25 @@
   (pprint/pprint
    (get-benchmark-means-from-path! (str (fs/path (or results-dir "/tmp/languages"))))))
 
+(defn ^:export compile-benchmarks-old! [& [languages-dir]]
+  (compile-old! (or languages-dir "../languages")))
+
+(defn ^:export bench-benchmarks-old! [& [languages-dir bench-some]]
+  (bench-old! (or languages-dir "../languages") (not (nil? bench-some))))
+
 (defn ^:export compile-benchmarks! [& [languages-dir]]
   (compile! (or languages-dir "../languages")))
 
-(defn ^:export bench-benchmarks! [& [languages-dir bench-some]]
-  (bench! (or languages-dir "../languages") (not (nil? bench-some))))
+(defn ^:export bench-benchmarks! [& [user languages languages-dir]]
+  (bench! (or languages-dir "../languages") (or user "PEZ") languages))
 
-(defn ^:export compile-and-bench! [& [languages-dir bench-some]]
+(defn ^:export compile-and-bench-old! [& [languages-dir bench-some]]
+  (compile-old! (or languages-dir "../languages"))
+  (bench-old! (or languages-dir "../languages") (not (nil? bench-some))))
+
+(defn ^:export compile-and-bench! [& [user languages languages-dir]]
   (compile! (or languages-dir "../languages"))
-  (bench! (or languages-dir "../languages") (not (nil? bench-some))))
+  (bench! (or languages-dir "../languages") (or user "PEZ") languages))
 
 (defn ^:export permalink-tag! [& [tag]]
   (let [iso-date (.format (java.time.LocalDate/now)
@@ -90,6 +118,6 @@
 (comment
   (get-benchmark-means-from-path! "/tmp/languages")
   (get-benchmark-means-from-path! "/Volumes/Macintosh HD-1/tmp/languages")
-  (compile! "../../languages")
-  (bench! "../../languages" true)
+  (compile-old! "../../languages")
+  (bench-old! "../../languages" true)
   :rcf)

@@ -40,25 +40,25 @@ Many languages need a compile step to produce a binary. To compile all benchmark
 bb compile-benchmarks
 ```
 
-Check the `compile.sh` script in the Languages project for the commands used to compile.
+Check the `compile-benchmark.sh` script in the Languages project for the commands used to compile.
 
 #### Run the benchmarks
 
 To produce the JSON results files and run the hello-world benchmarks together with each benchmark for each langage, there's a “copy” of the `run.sh` script from the Languages project in this repository: [scripts/bench.sh](scripts/bench.sh). Basically what I do is that I copy the `run` commands from `run.sh` and paste them in `bench.sh`, commenting out any languages I don't want to run. (Like I can't stand waiting for COBOL.)
 
-There's a Babashka task for running benchmarks in `bench.sh`:
+There's a Babashka task for running benchmarks in `bench.sh`, you'll need to provide at least one arg, user:
 
 ```sh
-bb bench-benchmarks
+bb bench-benchmarks PEZ
 ```
 
-Since this can take very long, there's also a [bench-some.sh](scripts/bench-some.sh) script, where you can have just a few languages enabled. To run that script instead you provide two arguments to task:
+Since this can take very long, there's a way to run just a few languages.
 
 ```sh
- bb bench-benchmarks ../languages some
+ bb bench-benchmarks PEZ 'Clojure,Java Native'
 ```
 
-`some` can really be anything, if the argument is not there the full `bench.sh` script will be run. The `../languages` is the otherwise default directory pointing out where the Languages project is.
+Provide the languages as a comma-separated string.
 
 #### Compile and Run
 
