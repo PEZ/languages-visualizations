@@ -1,6 +1,7 @@
 (ns pez.race
   (:require
    [clojure.set :as set]
+   [clojure.string :as string]
    [clojure.walk :as walk]
    [gadget.inspector :as inspector]
    [pez.benchmark-data :as bd]
@@ -8,12 +9,14 @@
    [pez.views :as views]
    [quil.core :as q]
    [quil.middleware :as m]
-   [replicant.dom :as d]))
+   [replicant.dom :as d]
+   [clojure.string :as cstr]))
 
 (defonce !app-state (atom {:benchmark :loops
                            :snapshot-mode? false
                            :filter-champions? false
-                           :min-track-time-choice "600" #_"fastest-language"}))
+                           :min-track-time-choice "600" #_"fastest-language"
+                           :benchmarks bd/benchmarks}))
 
 (def app-el (js/document.getElementById "app"))
 
@@ -34,55 +37,58 @@
                       #{}
                       benchmarks)))
 
-(defn benchmark-times [{:keys [benchmark]}]
-  (let [benchmarks (filter (comp benchmark second) bd/benchmarks)]
+(defn benchmark-times [{:keys [benchmark benchmarks]}]
+  (let [benchmarks (filter (comp benchmark second) benchmarks)]
     (->> benchmarks
          vals
-         (map benchmark))))
+         (map benchmark)
+         (map :mean))))
 
 (comment
   (benchmark-times {:benchmark :loops})
   :rcf)
 
-(defn languages []
+(defn languages [{:keys [benchmarks]}]
   (mapv (fn [{:keys [language-file-name] :as lang}]
           (merge lang
-                 (bd/benchmarks language-file-name)))
+                 (benchmarks language-file-name)))
         conf/languages))
 
 (defn fastest-implementation [{:keys [benchmark]} implementations]
   (apply min-key benchmark implementations))
 
 (defn best-languages [{:keys [benchmark filter-champions?] :as app-state}]
-  (let [langs (languages)]
+  (let [langs (languages app-state)]
     (if filter-champions?
       (->> langs
            (group-by :language)
            vals
            (map (fn [champions]
-                  (fastest-implementation app-state (filter benchmark champions))))
+                  (fastest-implementation app-state (filter #(get-in % [benchmark :mean]) champions))))
            (filter (fn [lang]
-                     (benchmark lang))))
+                     (get-in lang [benchmark :mean]))))
       (filter (fn [lang]
-                (benchmark lang))
+                (get-in lang [benchmark :mean]))
               langs))))
+
 
 (comment
   (best-languages {:benchmark :loops})
   :rcf)
 
 (defn sorted-languages [{:keys [benchmark] :as app-state}]
-  (sort-by benchmark (best-languages app-state)))
+  (sort-by #(get-in % [benchmark :mean]) (best-languages app-state)))
 
-(defn find-missing-languages []
+(defn find-missing-languages [benchmarks]
   (let [config-languages (set (map :language-file-name conf/languages))
-        benchmark-languages (set (keys bd/benchmarks))]
+        benchmark-languages (set (keys benchmarks))]
     (set/difference benchmark-languages config-languages)))
 
 (comment
-  (languages)
-  (sorted-languages {:benchmark :loops})
-  (find-missing-languages)
+  (languages (:benchmarks @!app-state))
+  (sorted-languages {:benchmark :loops
+                     :benchmarks @!app-state})
+  (find-missing-languages (:benchmarks @!app-state))
   :rcf)
 
 (defn dims [app-state]
@@ -111,7 +117,7 @@
                                  min-time
                                  (parse-long min-track-time-choice))
             :languages (mapv (fn [i lang]
-                               (let [benchmark-time (benchmark lang)
+                               (let [benchmark-time (get-in lang [benchmark :mean])
                                      speed (/ min-time benchmark-time)]
                                  (merge lang
                                         {:speed speed
@@ -212,15 +218,6 @@
                  (when-not filter-champions? "-all")
                  ".png"))))
 
-(defn save-handler
-  [{:keys [benchmark]}]
-  (fn [state {:keys [key _key-code]}]
-    (case key
-      (:s) (do
-             (event-handler {} [[:ax/take-snapshot benchmark]])
-             state)
-      state)))
-
 (defn- share! [site text]
   (let [url (-> js/window .-location .-href)]
     (.open js/window (str (case site
@@ -243,22 +240,48 @@
                      (let [elapsed-ms (- (js/performance.now) start-time)]
                        (update-draw-state state (assoc @!app-state :elapsed-ms elapsed-ms))))
            :draw draw!
-           :key-pressed (save-handler @!app-state)
            :middleware [m/fun-mode]))))
 
-(defn- enrich-action-from-replicant-data [{:replicant/keys [js-event]} actions]
+(defn csv->benchmark-data [csv-text]
+  (let [lines (-> csv-text
+                  (string/split #"\n")
+                  rest)
+        rows (map #(string/split % #",") lines)]
+    (reduce (fn [acc [benchmark _timestamp _commit-sha
+                      _is-checked _user _model _ram _os
+                      _arch language _run_ms mean-ms
+                      _std-dev-ms _min-ms _max-ms _runs]]
+              (let [language-slug (string/replace language #"[^a-zA-Z0-9]" "_")]
+                (assoc-in acc [language-slug (keyword benchmark)] {:mean (parse-double mean-ms)})))
+            {}
+            rows)))
+
+(defn- enrich-action-from-replicant-data [{:replicant/keys [js-event node]} actions]
   (walk/postwalk
    (fn [x]
      (if (keyword? x)
        (cond (= :event/target.value x) (some-> js-event .-target .-value)
+             (= :dom/node x) node
              :else x)
        x))
    actions))
 
+(defn- enrich-action-from-app-state [app-state action]
+  (walk/postwalk
+   (fn [x]
+     (cond
+       (and (vector? x)
+            (= :db/get (first x))) (get app-state (second x))
+       :else x))
+   action))
+
 (defn- action-handler [{state :new-state :as result} replicant-data action]
   (when js/goog.DEBUG
     (js/console.debug "Triggered action" action))
-  (let [[action-name & args :as enriched] (enrich-action-from-replicant-data replicant-data action)
+  (let [[action-name & args :as enriched] (enrich-action-from-app-state
+                                           state
+                                           (enrich-action-from-replicant-data
+                                            replicant-data action))
         _ (js/console.debug "Enriched action" enriched)
         {:keys [new-state effects]} (cond
                                       (= :ax/set-hash action-name)
@@ -283,7 +306,19 @@
                                        :effects [[:fx/run-sketch]]}
 
                                       (= :ax/share action-name)
-                                      {:effects [[:fx/share (first args) (second args)]]})]
+                                      {:effects [[:fx/share (first args) (second args)]]}
+
+                                      (= :ax/add-benchmark-run action-name)
+                                      (let [csv (-> (first args) .-value)]
+                                        {:new-state (assoc state :benchmarks (csv->benchmark-data csv))
+                                         :effects [[:fx/run-sketch]]})
+
+                                      (= :ax/reset-benchmark-data action-name)
+                                      {:new-state (assoc state :benchmarks bd/benchmarks)
+                                       :effects [[:fx/run-sketch]]}
+
+                                      (= :ax/assoc action-name)
+                                      {:new-state (apply assoc state args)})]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -308,14 +343,14 @@
             (= :fx/take-snapshot effect-name) (save-image (first args))
             (= :fx/share effect-name) (apply share! args)))))))
 
-(defn render-app! [el state]
-  (d/render el (views/app state (active-benchmarks bd/benchmarks))))
+(defn render-app! [el {:keys [benchmarks] :as state}]
+  (d/render el (views/app state (active-benchmarks benchmarks))))
 
-(defn handle-hash []
+(defn handle-hash [{:keys [benchmarks]}]
   (let [hash (-> js/window .-location .-hash)
         benchmark (when (seq hash)
                     (keyword (subs hash 1)))]
-    (if (contains? (set (active-benchmarks bd/benchmarks)) benchmark)
+    (if (contains? (set (active-benchmarks benchmarks)) benchmark)
       (event-handler {} [[:ax/set-benchmark benchmark]])
       (event-handler {} [[:ax/set-benchmark :loops]]))))
 
@@ -334,8 +369,8 @@
                                   (q/resize-sketch w h))))
   (d/set-dispatch! event-handler)
   (start)
-  (handle-hash)
-  (js/window.addEventListener "hashchange" handle-hash)
+  (handle-hash @!app-state)
+  (js/window.addEventListener "hashchange" #(handle-hash @!app-state))
   (run-sketch))
 
 (defn ^{:export true

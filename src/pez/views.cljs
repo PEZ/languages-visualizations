@@ -1,6 +1,7 @@
 (ns pez.views
   (:require
-   [pez.config :as conf]))
+   [pez.config :as conf]
+   [pez.benchmark-data :as bd]))
 
 (defn- info-view [_state]
   (list
@@ -26,6 +27,15 @@
    [:p "The start times of executables/environments can vary a lot between languages. Since the benchmarks are run out of process, the " [:strong "benchmark results include the start times"] ". For some benchmark that takes, say 300ms to complete for a language that has start time of, say 100ms, this of course skews the results a lot."]
    [:p "To somewhat mitigate, I've been trying to provide " [:strong "native"] " compilations, to the " [:strong "Languages"] " repository, for as many languages as I can understand how to do that. For e.g. Clojure this brings down the start time from 440ms to 12ms, a quite significant difference when Clojure runs the tests in 40-650ms. But even with that, C starts 10ms faster than Clojure, which is not insignificant in benchmarks like these."]
    [:p "The " [:button {:on {:click [[:ax/set-hash "hello-world"]]}} "hello-world"] " benchmark is included as a sort of measurement of start times. An inexact way to compensate for start times is to subtract hello-world times from the other benchmarks."]
+   [:p "I have created a new benchmark runner, where the interesting part of each program is benchmarked in-process, thus removing the start-time (and any non-interesting setup) from the results. Here's a PR for adding this runner: " [:a {:href "https://github.com/bddicken/languages/pull/365"} "https://github.com/bddicken/languages/pull/365"] ". With Clojure, Java, C, and also Babashka ready. This data is from a run on the same machine as described above. Why not try it?"]
+   [:p
+    [:textarea {:replicant/on-mount [[:ax/assoc :element/csv-input :dom/node]]}
+     bd/csv]]
+   [:div.buttons
+    [:button {:on {:click [[:ax/add-benchmark-run [:db/get :element/csv-input]]]}}
+     "Load CSV"]
+    [:button {:on {:click [[:ax/reset-benchmark-data]]}}
+     "Reset original data"]]
    [:h3 "Language selection"]
    [:p "The selection of languages are the subset of languages that are added to the project for which I have a working toolchain on my benchmarking machine. The languages need to pass the simple output check, and the implementation need to seem compliant (to me). I may also have skipped some of the slower languages because I don't want to wait forever to run it all. I want to include more languages, it is mostly a matter of how much time I can spend on investigating toolchain issues."]
    [:h4 "Where's Levenshtein Pascal?"]
@@ -37,7 +47,7 @@
    [:blockquote "Something strange " [:em "is"] " going on with “Kotlin”, where the “Kotlin Native” " [:button {:on {:click [[:ax/set-hash "loops"]]}} "loops"] " results are very slow, and never beats the “Kotlin JVM” results (not even close)."]
    [:h3 "Usage tips"]
    [:p "The " [:strong "Execution time"] " animation speed setting makes the balls/logos travel one distance across the track in the same time as they executed the active benchmark."]
-   [:p "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time. If you are using a keyboard device, you can save a snapshot by pressing " [:span.kbd "S"]]))
+   [:p "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time."]))
 
 (defn app [{:keys [benchmark snapshot-mode? filter-champions? min-track-time-ms] :as app-state}
            active-benchmarks]
