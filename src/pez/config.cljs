@@ -11,7 +11,7 @@
     :logo "images/ada.png"
     :language :ada
     :language-file-name "Ada"}
-   #_{:language-name "Babashka"
+   {:language-name "Babashka"
     :logo "images/babashka.png"
     :language :bb
     :language-file-name "Babashka"}
