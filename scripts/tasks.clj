@@ -23,7 +23,7 @@
                                    keyword)
                      language (subs file (inc (string/last-index-of file "/")) (string/index-of file ".json"))]
                  (when-let [mean (get-mean-ms file)]
-                   [benchmark language mean]))))
+                   [benchmark language {:mean mean}]))))
        (reduce (fn [acc [benchmark language mean]]
                  (assoc-in acc [language benchmark] mean))
                {})))
