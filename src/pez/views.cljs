@@ -81,7 +81,7 @@
       [:input {:type :checkbox
                :checked add-overlaps?
                :on {:change [[:ax/toggle-overlaps add-overlaps?]]}}]
-      [:span "Add std-dev overlaps"]]
+      [:span "Group similar perf"]]
      [:label.benchmark-label
       [:input {:type :checkbox
                :checked filter-champions?
