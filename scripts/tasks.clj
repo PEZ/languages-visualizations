@@ -6,15 +6,25 @@
    [clojure.pprint :as pprint]
    [clojure.string :as string]))
 
-(defn get-mean-ms [file]
-  (when (string/blank? (slurp file))
-    (println "ERROR: Benchmark result file is empty: " file))
-  (some-> (slurp file)
+
+
+(defn stats-s->stats-ms [stats-s]
+  {:max (* 1000 (:max stats-s))
+   :mean (* 1000 (:max stats-s))
+   :median (* 1000 (:max stats-s))
+   :min (* 1000 (:max stats-s))
+   :stddev (* 1000 (:max stats-s))
+   :runs (count (:times stats-s))})
+
+(defn file-path->stats-ms [file-path]
+  (when (string/blank? (slurp file-path))
+    (println "ERROR: Benchmark result file is empty: " file-path))
+  #_(def file-path "/Volumes/Macintosh HD-1/tmp/languages/loops/C.json")
+  (some-> (slurp file-path)
           (json/parse-string true)
           :results
           first
-          :mean
-          (* 1000)))
+          stats-s->stats-ms))
 
 (defn  get-benchmark-means-from-path! [path]
   (->> (map str (fs/glob path "*/*.json"))
@@ -22,8 +32,8 @@
                (let [benchmark (-> (subs file (inc (count path)) (string/last-index-of file "/"))
                                    keyword)
                      language (subs file (inc (string/last-index-of file "/")) (string/index-of file ".json"))]
-                 (when-let [mean (get-mean-ms file)]
-                   [benchmark language {:mean mean}]))))
+                 (when-let [stats (file-path->stats-ms file)]
+                   [benchmark language stats]))))
        (reduce (fn [acc [benchmark language mean]]
                  (assoc-in acc [language benchmark] mean))
                {})))
