@@ -18,7 +18,7 @@
    [:h3 "How I run the benchmarks"]
    [:p "The benchmarks are run on a Macbook Pro M1 Max with 32GB of RAM. I have tried to make things nonbusy on the machine. E.g. created a dedicated user, for which I have disabled all startup/login items. And I only have the benchmarks running."]
    [:p [:a {:href "https://github.com/sharkdp/hyperfine"} "Hyperfine"] " is used to run each benchmark, where each language is given " [:strong "15 runs."]]
-   [:blockquote "Since there are " [:strong "only 15 runs per language"] " on a given benchmark, the ranking results can vary quite a lot between batches when contendants are close. Here's a " [:a {:href "https://pez.github.io/languages-visualizations/v2025.01.04-25-runs/"} "snapshot of a batch with 25 runs per language"] " (which still may be too little to really decide ranking)."]
+   [:blockquote "Since there are " [:strong "only 15 runs per language"] " on a given benchmark, and the benchmark is not run in anything like a real-time environment the ranking results can vary quite a lot between batches when contendants are close. Therefore languages that are roughly the same speed, as determined by an overlap from their standar deviations, they will, by default, be rendered as moving at the same speed. It can get a bit misleading if a long string of languages perform at roughly the same speed increasingly, but where the first and last language in the string do not really perform at roughly the same speed, ¯\\_(ツ)_/¯ "]
    [:p "See also the " [:a {:href "https://github.com/bddicken/languages"} "Languages"] " repository for the source code for each language implementation. There you'll also find all:"]
    [:ul
     [:li [:a {:href "https://github.com/bddicken/languages/blob/main/compile.sh"} "Compilation command lines"]]
@@ -49,7 +49,7 @@
    [:p "The " [:strong "Execution time"] " animation speed setting makes the balls/logos travel one distance across the track in the same time as they executed the active benchmark."]
    [:p "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time."]))
 
-(defn app [{:keys [benchmark snapshot-mode? filter-champions? min-track-time-ms] :as app-state}
+(defn app [{:keys [benchmark snapshot-mode? filter-champions? add-overlaps? min-track-time-ms] :as app-state}
            active-benchmarks]
   [:article
    [:h1 "Languages"]
@@ -64,6 +64,11 @@
                  :on {:change [[:ax/set-hash :event/target.value]]}}]
         (benchmark-option conf/benchmark-names)])]
     [:div.benchmark-options
+     [:label.benchmark-label
+      [:input {:type :checkbox
+               :checked add-overlaps?
+               :on {:change [[:ax/toggle-overlaps add-overlaps?]]}}]
+      [:span "Add std-dev overlaps"]]
      [:label.benchmark-label
       [:input {:type :checkbox
                :checked filter-champions?

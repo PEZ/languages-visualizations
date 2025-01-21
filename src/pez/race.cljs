@@ -15,7 +15,8 @@
                            :snapshot-mode? false
                            :filter-champions? false
                            :min-track-time-choice "600" #_"fastest-language"
-                           :benchmarks bd/benchmarks}))
+                           :benchmarks bd/benchmarks
+                           :add-overlaps? true}))
 
 (def app-el (js/document.getElementById "app"))
 
@@ -75,8 +76,13 @@
   (best-languages {:benchmark :loops})
   :rcf)
 
+(defn- add-default-speed-mean [benchmark lang]
+  (assoc-in lang [benchmark :speed-mean]
+            (get-in lang [benchmark :mean])))
+
 (defn sorted-languages [{:keys [benchmark] :as app-state}]
-  (sort-by #(get-in % [benchmark :mean]) (best-languages app-state)))
+  (map (partial add-default-speed-mean benchmark)
+       (sort-by #(get-in % [benchmark :mean]) (best-languages app-state))))
 
 (defn find-missing-languages [benchmarks]
   (let [config-languages (set (map :language-file-name conf/languages))
@@ -101,11 +107,9 @@
      :middle-x (/ width 2)
      :middle-y (/ height 2)}))
 
-(defn add-overlaps [{:keys [benchmark] :as app-state}]
-  (let [langs-with-stats (mapv #(assoc-in % [benchmark :speed-mean]
-                                          (get-in % [benchmark :mean]))
-                               (filter #(get-in % [benchmark :mean])
-                                       (sorted-languages app-state)))
+(defn- add-overlaps [{:keys [benchmark] :as app-state}]
+  (let [langs-with-stats (filter #(get-in % [benchmark :mean])
+                                 (sorted-languages app-state))
         pairs (partition 2 1 langs-with-stats)]
     (reduce (fn [langs [lang1 lang2]]
               (let [mean1 (get-in (first (filter #(= % lang1) langs)) [benchmark :speed-mean])
@@ -127,7 +131,7 @@
             langs-with-stats
             pairs)))
 
-(defn setup [{:keys [benchmark min-track-time-choice] :as app-state}]
+(defn setup [{:keys [benchmark min-track-time-choice add-overlaps?] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
   (let [arena (arena (q/width) (q/height))
@@ -156,7 +160,9 @@
                                          :y (+ 110 (* i 45))
                                          :logo-image (q/load-image (:logo lang))})))
                              (range)
-                             (add-overlaps app-state))})))
+                             (if add-overlaps?
+                               (add-overlaps app-state)
+                               (sorted-languages app-state)))})))
 
 (comment
   (setup :loops)
@@ -328,6 +334,10 @@
 
                                       (= :ax/toggle-champions-mode action-name)
                                       {:new-state (update state :filter-champions? not)
+                                       :effects [[:fx/run-sketch]]}
+
+                                      (= :ax/toggle-overlaps action-name)
+                                      {:new-state (update state :add-overlaps? not)
                                        :effects [[:fx/run-sketch]]}
 
                                       (= :ax/share action-name)
