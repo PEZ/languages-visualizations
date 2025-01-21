@@ -9,8 +9,7 @@
    [pez.views :as views]
    [quil.core :as q]
    [quil.middleware :as m]
-   [replicant.dom :as d]
-   [clojure.string :as cstr]))
+   [replicant.dom :as d]))
 
 (defonce !app-state (atom {:benchmark :loops
                            :snapshot-mode? false
