@@ -91,7 +91,7 @@
   :rcf)
 
 (defn dims [app-state]
-  [(min drawing-width (.-offsetWidth app-el)) (+ 80 (* 45 (count (sorted-languages app-state))))])
+  [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (sorted-languages app-state))))])
 
 (defn arena [width height]
   (let [finish-line-x (- width half-ball-width 5)]
