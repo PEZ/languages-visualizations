@@ -116,20 +116,18 @@
                                  min-time
                                  (parse-long min-track-time-choice))
             :languages (mapv (fn [i lang]
-                               (let [benchmark-time (get-in lang [benchmark :mean])
-                                     speed (/ min-time benchmark-time)]
+                               (let [{:keys [mean stddev]} (get lang benchmark)
+                                     speed (/ min-time mean)]
                                  (merge lang
                                         {:speed speed
                                          :runs 0
                                          :track-x start-line-x
                                          :greeting "Hello, World!"
-                                         :benchmark-time benchmark-time
-                                         :benchmark-time-str (str (-> benchmark-time
-                                                                      (.toFixed 1)
-                                                                      (.padStart 10))
-                                                                  "ms")
+                                         :benchmark-time mean
+                                         :benchmark-time-str (str (-> mean (.toFixed 1)))
+                                         :std-dev-str (str (-> stddev (.toFixed 1)))
                                          :x 0
-                                         :y (+ 90 (* i 45))
+                                         :y (+ 110 (* i 45))
                                          :logo-image (q/load-image (:logo lang))})))
                              (range)
                              (sorted-languages app-state))})))
@@ -179,7 +177,7 @@
 
 (declare event-handler)
 
-(defn draw! [{:keys [benchmark-title middle-x
+(defn draw! [{:keys [benchmark-title middle-x width
                      take-snapshot? app-state] :as draw-state}]
   (when take-snapshot?
     (event-handler {} [[:ax/take-snapshot app-state]]))
@@ -193,20 +191,21 @@
   (q/text-size 16)
   (q/text-style :normal)
   (q/text "How fast is your favorite language?" middle-x 45)
+  (q/text-style :normal)
+  (q/text-align :right :center)
+  (q/text "±" 50 65)
+  (q/text "ms" language-labels-x 65)
   (doseq [lang (:languages draw-state)]
-    (let [{:keys [language-name logo-image y track-x runs benchmark-time-str]} lang]
-      (q/text-style :normal)
-      (q/text-align :right :center)
+    (let [{:keys [language-name logo-image y track-x runs benchmark-time-str std-dev-str]} lang]
       (q/fill darkgrey)
       (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
+      (q/text-num runs (- width 5) y)
       (q/fill offwhite)
       (q/text-size 14)
       (q/text language-name language-labels-x y)
       (q/fill darkgrey)
-      (q/text-align :left)
-      (q/text benchmark-time-str 5 (- y 20))
-      (q/text-align :right)
-      (q/text-num runs language-labels-x (- y 20))
+      (q/text std-dev-str 50 (- y 20))
+      (q/text benchmark-time-str language-labels-x (- y 20))
       (q/image logo-image track-x y ball-width ball-width))))
 
 (defn save-image [{:keys [benchmark filter-champions?]}]
@@ -249,9 +248,10 @@
     (reduce (fn [acc [benchmark _timestamp _commit-sha
                       _is-checked _user _model _ram _os
                       _arch language _run_ms mean-ms
-                      _std-dev-ms _min-ms _max-ms _runs]]
+                      std-dev-ms _min-ms _max-ms _runs]]
               (let [language-slug (string/replace language #"[^a-zA-Z0-9]" "_")]
-                (assoc-in acc [language-slug (keyword benchmark)] {:mean (parse-double mean-ms)})))
+                (assoc-in acc [language-slug (keyword benchmark)] {:mean (parse-double mean-ms)
+                                                                   :stddev (parse-double std-dev-ms)})))
             {}
             rows)))
 
