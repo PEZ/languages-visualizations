@@ -256,7 +256,7 @@
                           (js/encodeURIComponent text)
                           "&url="
                           (js/encodeURIComponent url)))))
-(defn run-sketch []
+(defn run-sketch! []
   ; TODO: Figure out if there's a way to set the current applet with public API
   #_{:clj-kondo/ignore [:unresolved-namespace]}
   (set! quil.sketch/*applet*
@@ -374,7 +374,7 @@
           (cond
             (= :fx/console.log effect-name) (apply js/console.log args)
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
-            (= :fx/run-sketch effect-name) (run-sketch)
+            (= :fx/run-sketch effect-name) (run-sketch!)
             (= :fx/take-snapshot effect-name) (save-image (first args))
             (= :fx/share effect-name) (apply share! args)))))))
 
@@ -389,7 +389,7 @@
       (event-handler {} [[:ax/set-benchmark benchmark]])
       (event-handler {} [[:ax/set-benchmark :loops]]))))
 
-(defn ^:dev/after-load start []
+(defn ^:dev/after-load start-app! []
   (js/console.log "start")
   (render-app! app-el @!app-state))
 
@@ -403,11 +403,11 @@
                                 (let [[w h] (dims @!app-state)]
                                   (q/resize-sketch w h))))
   (d/set-dispatch! event-handler)
-  (start)
   (handle-hash @!app-state)
   (js/window.addEventListener "hashchange" #(handle-hash @!app-state))
-  (run-sketch))
+  (start-app!)
+  (run-sketch!))
 
 (defn ^{:export true
-        :dev/before-load true} stop []
+        :dev/before-load true} stop! []
   (js/console.log "stop"))
