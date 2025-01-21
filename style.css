@@ -109,6 +109,14 @@ button.cta.secondary:focus {
   height: 100px;
 }
 
+select {
+  /* max-width 90%, elipsis text labels */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 95%;
+}
+
 @media (min-width: 1200px) {
   .report {
     display: flex;
