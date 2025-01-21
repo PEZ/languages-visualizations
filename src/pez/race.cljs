@@ -277,13 +277,17 @@
                   (string/split #"\n")
                   rest)
         rows (map #(string/split % #",") lines)]
-    (reduce (fn [acc [benchmark _timestamp _commit-sha
-                      _is-checked _user _model _ram _os
-                      _arch language _run_ms mean-ms
-                      std-dev-ms _min-ms _max-ms _runs]]
-              (let [language-slug (string/replace language #"[^a-zA-Z0-9]" "_")]
-                (assoc-in acc [language-slug (keyword benchmark)] {:mean (parse-double mean-ms)
-                                                                   :stddev (parse-double std-dev-ms)})))
+    (reduce (fn [acc [benchmark _timestamp commit-sha
+                      _is-checked user model ram os
+                      arch language run-ms mean-ms
+                      std-dev-ms _min-ms _max-ms runs]]
+              (let [language-slug (string/replace language #"[^a-zA-Z0-9]" "_")
+                    run-key (str user "," model "," ram "," os "," arch "," commit-sha "," run-ms)]
+                (assoc-in acc
+                          [run-key language-slug (keyword benchmark)]
+                          {:mean (parse-double mean-ms)
+                           :stddev (parse-double std-dev-ms)
+                           :runs (parse-long runs)})))
             {}
             rows)))
 
@@ -308,6 +312,7 @@
 
 (defn- action-handler [{state :new-state :as result} replicant-data action]
   (when js/goog.DEBUG
+    (def state state)
     (js/console.debug "Triggered action" action))
   (let [[action-name & args :as enriched] (enrich-action-from-app-state
                                            state
@@ -345,11 +350,24 @@
 
                                       (= :ax/add-benchmark-run action-name)
                                       (let [csv (-> (first args) .-value)]
-                                        {:new-state (assoc state :benchmarks (csv->benchmark-data csv))
-                                         :effects [[:fx/run-sketch]]})
+                                        {:new-state (-> state (assoc :benchmark-runs
+                                                                     (csv->benchmark-data csv)))})
+
+                                      (= :ax/select-benchmark-run action-name)
+                                      (let [selected-run (first args)]
+                                        (if (= "" selected-run)
+                                          {:effects [[:fx/dispatch nil [[:ax/reset-benchmark-data]]]]}
+                                          {:new-state (-> state
+                                                          (assoc :benchmarks (get
+                                                                              (:benchmark-runs state)
+                                                                              selected-run))
+                                                          (assoc :selected-run selected-run))
+                                           :effects [[:fx/run-sketch]]}))
 
                                       (= :ax/reset-benchmark-data action-name)
-                                      {:new-state (assoc state :benchmarks bd/benchmarks)
+                                      {:new-state (-> state
+                                                      (assoc :benchmarks bd/benchmarks)
+                                                      (assoc :selected-run ""))
                                        :effects [[:fx/run-sketch]]}
 
                                       (= :ax/assoc action-name)
@@ -376,7 +394,8 @@
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
             (= :fx/run-sketch effect-name) (run-sketch!)
             (= :fx/take-snapshot effect-name) (save-image (first args))
-            (= :fx/share effect-name) (apply share! args)))))))
+            (= :fx/share effect-name) (apply share! args)
+            (= :fx/dispatch effect-name) (event-handler (first args) (second args))))))))
 
 (defn render-app! [el {:keys [benchmarks] :as state}]
   (d/render el (views/app state (active-benchmarks benchmarks))))

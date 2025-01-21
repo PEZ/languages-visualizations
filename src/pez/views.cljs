@@ -3,7 +3,19 @@
    [pez.config :as conf]
    [pez.benchmark-data :as bd]))
 
-(defn- info-view [_state]
+(defn- benchmark-runs-view [{:keys [benchmark-runs selected-run]}]
+  (when benchmark-runs
+    [:div.benchmark-options
+     [:select {:on {:change [[:ax/select-benchmark-run :event/target.value]]}}
+      [:option {:value ""
+                :selected (= selected-run "")}
+       "Default run"]
+      (map (fn [run-key]
+             [:option {:value run-key
+                       :selected (= selected-run run-key)} run-key])
+           (keys benchmark-runs))]]))
+
+(defn- info-view [app-state]
   (list
    [:div.buttons
     [:button.cta [:a {:href "https://github.com/PEZ/languages-visualizations/"
@@ -32,10 +44,9 @@
     [:textarea {:replicant/on-mount [[:ax/assoc :element/csv-input :dom/node]]}
      bd/csv]]
    [:div.buttons
-    [:button {:on {:click [[:ax/add-benchmark-run [:db/get :element/csv-input]]]}}
-     "Load CSV"]
-    [:button {:on {:click [[:ax/reset-benchmark-data]]}}
-     "Reset original data"]]
+    [:button.cta {:on {:click [[:ax/add-benchmark-run [:db/get :element/csv-input]]]}}
+     "Load CSV"]]
+   (benchmark-runs-view app-state)
    [:h3 "Language selection"]
    [:p "The selection of languages are the subset of languages that are added to the project for which I have a working toolchain on my benchmarking machine. The languages need to pass the simple output check, and the implementation need to seem compliant (to me). I may also have skipped some of the slower languages because I don't want to wait forever to run it all. I want to include more languages, it is mostly a matter of how much time I can spend on investigating toolchain issues."]
    [:h4 "Where's Levenshtein Pascal?"]
@@ -49,11 +60,13 @@
    [:p "The " [:strong "Execution time"] " animation speed setting makes the balls/logos travel one distance across the track in the same time as they executed the active benchmark."]
    [:p "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time."]))
 
-(defn app [{:keys [benchmark snapshot-mode? filter-champions? add-overlaps? min-track-time-ms] :as app-state}
+(defn app [{:keys [benchmark snapshot-mode? filter-champions?
+                   add-overlaps? min-track-time-ms] :as app-state}
            active-benchmarks]
   [:article
    [:h1 "Languages"]
    [:section
+    (benchmark-runs-view app-state)
     [:div.benchmark-options
      (for [benchmark-option active-benchmarks]
        [:label.benchmark-label
