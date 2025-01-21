@@ -1,0 +1,126 @@
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+#app {
+  display: flex;
+  justify-content: center;
+}
+
+.benchmark-options, .buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  max-width: 600px;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.benchmark-label {
+  display: flex;
+  align-items: flex-start;
+  justify-items: flex-start;
+}
+
+.benchmark-label input {
+  margin-right: 5px;
+}
+
+section {
+  margin-top: 1rem;
+  max-width: 700px;
+}
+
+blockquote {
+  font-style: italic;
+  color: #555;
+  border-left: 4px solid #ccc;
+  padding-left: 1rem;
+  margin: 1rem 0;
+}
+
+code {
+  background-color: #eee;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  color: rgb(192, 49, 49);
+}
+
+button.cta {
+  background-color: #007bff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.cta, .cta a {
+  font-size: 1rem;
+  color: white;
+  text-decoration: none;
+}
+
+button.cta:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+button.cta:active {
+  background-color: #004494;
+  transform: scale(1);
+}
+
+button.cta:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
+}
+
+button.cta.secondary {
+  background-color: #6c757d;
+}
+
+button.cta.secondary:hover {
+  background-color: #5a6268;
+}
+
+button.cta.secondary:active {
+  background-color: #545b62;
+}
+
+button.cta.secondary:focus {
+  box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.5);
+}
+
+.kbd {
+  background-color: #eee;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  border-width: 0.5px;
+  border-color: black;
+  border-style: solid;
+  font-family: monospace;
+  font-style: normal;
+}
+
+.info textarea {
+  width: 100%;
+  height: 100px;
+}
+
+select {
+  /* max-width 90%, elipsis text labels */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 95%;
+}
+
+@media (min-width: 1200px) {
+  .report {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+  }
+}
