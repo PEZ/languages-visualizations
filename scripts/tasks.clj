@@ -10,10 +10,10 @@
 
 (defn stats-s->stats-ms [stats-s]
   {:max (* 1000 (:max stats-s))
-   :mean (* 1000 (:max stats-s))
-   :median (* 1000 (:max stats-s))
-   :min (* 1000 (:max stats-s))
-   :stddev (* 1000 (:max stats-s))
+   :mean (* 1000 (:mean stats-s))
+   :median (* 1000 (:median stats-s))
+   :min (* 1000 (:min stats-s))
+   :stddev (* 1000 (:stddev stats-s))
    :runs (count (:times stats-s))})
 
 (defn file-path->stats-ms [file-path]
