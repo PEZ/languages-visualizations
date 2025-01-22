@@ -5,7 +5,12 @@
 
 (defn- benchmark-runs-view [{:keys [benchmark-runs selected-run]}]
   (when benchmark-runs
-    [:div.benchmark-options
+    [:div.benchmark-options {:replicant/key "benchmark-runs-view"
+                             :style {:max-height "60px"
+                                     :transition "max-height 0.35s"
+                                     :overflow :hidden}
+                             :replicant/mounting {:style {:max-height 0}}
+                             :replicant/unmounting {:style {:max-height 0}}}
      [:select {:on {:change [[:ax/select-benchmark-run :event/target.value]]}}
       [:option {:value ""
                 :selected (= selected-run "")}
