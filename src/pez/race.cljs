@@ -300,6 +300,7 @@
      (if (keyword? x)
        (cond (= :event/target.value x) (some-> js-event .-target .-value)
              (= :dom/node x) node
+             (= :dom/node.value x) (.-value node)
              :else x)
        x))
    actions))
@@ -322,59 +323,65 @@
                                            (enrich-action-from-replicant-data
                                             replicant-data action))
         _ (when js/goog.DEBUG (js/console.debug "Enriched action" enriched))
-        {:keys [new-state effects]} (cond
-                                      (= :ax/set-hash action-name)
-                                      {:effects [[:fx/set-hash (first args)]]}
+        {:keys [new-state effects]}
+        (cond
+          (= :ax/set-hash action-name)
+          {:effects [[:fx/set-hash (first args)]]}
 
-                                      (= :ax/take-snapshot action-name)
-                                      {:effects [[:fx/take-snapshot state]]}
+          (= :ax/take-snapshot action-name)
+          {:effects [[:fx/take-snapshot state]]}
 
-                                      (= :ax/set-benchmark action-name)
-                                      {:new-state (assoc state :benchmark (keyword (first args)))
-                                       :effects [[:fx/run-sketch]]}
+          (= :ax/set-benchmark action-name)
+          {:new-state (assoc state :benchmark (keyword (first args)))
+           :effects [[:fx/run-sketch]]}
 
-                                      (= :ax/set-min-track-time-choice action-name)
-                                      {:new-state (assoc state :min-track-time-choice (first args))
-                                       :effects [[:fx/run-sketch]]}
+          (= :ax/set-min-track-time-choice action-name)
+          {:new-state (assoc state :min-track-time-choice (first args))
+           :effects [[:fx/run-sketch]]}
 
-                                      (= :ax/toggle-snapshot-mode action-name)
-                                      {:new-state (update state :snapshot-mode? not)}
+          (= :ax/toggle-snapshot-mode action-name)
+          {:new-state (update state :snapshot-mode? not)}
 
-                                      (= :ax/toggle-champions-mode action-name)
-                                      {:new-state (update state :filter-champions? not)
-                                       :effects [[:fx/run-sketch]]}
+          (= :ax/toggle-champions-mode action-name)
+          {:new-state (update state :filter-champions? not)
+           :effects [[:fx/run-sketch]]}
 
-                                      (= :ax/toggle-overlaps action-name)
-                                      {:new-state (update state :add-overlaps? not)
-                                       :effects [[:fx/run-sketch]]}
+          (= :ax/toggle-overlaps action-name)
+          {:new-state (update state :add-overlaps? not)
+           :effects [[:fx/run-sketch]]}
 
-                                      (= :ax/share action-name)
-                                      {:effects [[:fx/share (first args) (second args)]]}
+          (= :ax/share action-name)
+          {:effects [[:fx/share (first args) (second args)]]}
 
-                                      (= :ax/add-benchmark-run action-name)
-                                      (let [csv (-> (first args) .-value)]
-                                        {:new-state (-> state (assoc :benchmark-runs
-                                                                     (csv->benchmark-data csv)))})
+          (= :ax/add-benchmark-run action-name)
+          (let [runs (csv->benchmark-data (first args))
+                run-keys (sort (keys runs))]
+            {:new-state (-> state
+                            (update :benchmark-runs merge runs))
+             :effects [[:fx/dispatch nil [[:ax/select-benchmark-run (first run-keys)]]]]})
 
-                                      (= :ax/select-benchmark-run action-name)
-                                      (let [selected-run (first args)]
-                                        (if (= "" selected-run)
-                                          {:effects [[:fx/dispatch nil [[:ax/reset-benchmark-data]]]]}
-                                          {:new-state (-> state
-                                                          (assoc :benchmarks (get
-                                                                              (:benchmark-runs state)
-                                                                              selected-run))
-                                                          (assoc :selected-run selected-run))
-                                           :effects [[:fx/run-sketch]]}))
+          (= :ax/select-benchmark-run action-name)
+          (let [selected-run (first args)]
+            (if (= "" selected-run)
+              {:effects [[:fx/dispatch nil [[:ax/reset-benchmark-data]]]]}
+              {:new-state (-> state
+                              (assoc :benchmarks (get
+                                                  (:benchmark-runs state)
+                                                  selected-run))
+                              (assoc :selected-run selected-run))
+               :effects [[:fx/run-sketch]]}))
 
-                                      (= :ax/reset-benchmark-data action-name)
-                                      {:new-state (-> state
-                                                      (assoc :benchmarks bd/benchmarks)
-                                                      (assoc :selected-run ""))
-                                       :effects [[:fx/run-sketch]]}
+          (= :ax/reset-benchmark-data action-name)
+          {:new-state (-> state
+                          (assoc :benchmarks bd/benchmarks)
+                          (assoc :selected-run ""))
+           :effects [[:fx/run-sketch]]}
 
-                                      (= :ax/assoc action-name)
-                                      {:new-state (apply assoc state args)})]
+          (= :ax/fetch-gist action-name)
+          {:effects [[:fx/fetch-gist (first args)]]}
+
+          (= :ax/assoc action-name)
+          {:new-state (apply assoc state args)})]
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -398,17 +405,33 @@
             (= :fx/run-sketch effect-name) (run-sketch!)
             (= :fx/take-snapshot effect-name) (save-image (first args))
             (= :fx/share effect-name) (apply share! args)
-            (= :fx/dispatch effect-name) (event-handler (first args) (second args))))))))
+            (= :fx/dispatch effect-name) (event-handler (first args) (second args))
+            (= :fx/fetch-gist effect-name) (-> (js/fetch (first args))
+                                               (.then #(.text %))
+                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))))))))
+
+(comment
+  @!app-state
+  :rcf)
+
+
 
 (defn render-app! [el {:keys [benchmarks] :as state}]
   (d/render el (views/app state (active-benchmarks benchmarks))))
 
 (defn handle-hash [{:keys [benchmarks]}]
-  (let [hash (-> js/window .-location .-hash)
-        benchmark (when (seq hash)
-                    (keyword (subs hash 1)))]
-    (if (contains? (set (active-benchmarks benchmarks)) benchmark)
+  (let [location-hash (-> js/window .-location .-hash)
+        benchmark (when (seq location-hash)
+                    (keyword (subs location-hash 1)))]
+    (cond
+      (contains? (set (active-benchmarks benchmarks)) benchmark)
       (event-handler {} [[:ax/set-benchmark benchmark]])
+
+      (string/starts-with? location-hash "#https://gist.github.com")
+      (event-handler {} [[:ax/fetch-gist (str "https://api.allorigins.win/raw?url="
+                                              (js/encodeURIComponent (str (subs location-hash 1) "/raw")))]])
+
+      :else
       (event-handler {} [[:ax/set-benchmark :loops]]))))
 
 (defn ^:dev/after-load start-app! []

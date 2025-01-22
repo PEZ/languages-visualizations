@@ -20,7 +20,7 @@
                        :selected (= selected-run run-key)} run-key])
            (keys benchmark-runs))]]))
 
-(defn- info-view [app-state]
+(defn- info-view [{:keys [benchmark/csv-input] :as app-state}]
   (list
    [:div.buttons
     [:button.cta [:a {:href "https://github.com/PEZ/languages-visualizations/"
@@ -46,10 +46,11 @@
    [:p "The " [:button {:on {:click [[:ax/set-hash "hello-world"]]}} "hello-world"] " benchmark is included as a sort of measurement of start times. An inexact way to compensate for start times is to subtract hello-world times from the other benchmarks."]
    [:p "I have created a new benchmark runner, where the interesting part of each program is benchmarked in-process, thus removing the start-time (and any non-interesting setup) from the results. Here's a PR for adding this runner: " [:a {:href "https://github.com/bddicken/languages/pull/365"} "https://github.com/bddicken/languages/pull/365"] ". With Clojure, Java, C, and also Babashka ready. This data is from a run on the same machine as described above. Why not try it?"]
    [:p
-    [:textarea {:replicant/on-mount [[:ax/assoc :element/csv-input :dom/node]]}
+    [:textarea {:replicant/on-mount [[:ax/assoc :benchmark/csv-input :dom/node.value]]
+                :on {:change [[:ax/assoc :benchmark/csv-input :event/target.value]]}}
      bd/csv]]
    [:div.buttons
-    [:button.cta {:on {:click [[:ax/add-benchmark-run [:db/get :element/csv-input]]]}}
+    [:button.cta {:on {:click [[:ax/add-benchmark-run csv-input]]}}
      "Load CSV"]]
    (benchmark-runs-view app-state)
    [:h3 "Language selection"]
