@@ -318,7 +318,7 @@
                                            state
                                            (enrich-action-from-replicant-data
                                             replicant-data action))
-        _ (js/console.debug "Enriched action" enriched)
+        _ (when js/goog.DEBUG (js/console.debug "Enriched action" enriched))
         {:keys [new-state effects]} (cond
                                       (= :ax/set-hash action-name)
                                       {:effects [[:fx/set-hash (first args)]]}
