@@ -227,13 +227,13 @@
   (q/text-align :right :center)
   (q/text "±" 50 65)
   (q/text "ms" language-labels-x 65)
+  (q/text-size 14)
   (doseq [lang (:languages draw-state)]
     (let [{:keys [language-name logo-image y track-x runs benchmark-time-str std-dev-str]} lang]
       (q/fill darkgrey)
       (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
       (q/text-num runs (- width 5) y)
       (q/fill offwhite)
-      (q/text-size 14)
       (q/text language-name language-labels-x y)
       (q/fill darkgrey)
       (q/text std-dev-str 50 (- y 20))
