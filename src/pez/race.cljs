@@ -273,23 +273,26 @@
            :middleware [m/fun-mode]))))
 
 (defn csv->benchmark-data [csv-text]
-  (let [lines (-> csv-text
-                  (string/split #"\n")
-                  rest)
+  (let [lines (as-> csv-text $
+                  (string/split $ #"\n")
+                  (remove (partial re-find #"^benchmark,timestamp|^\s*$") $))
         rows (map #(string/split % #",") lines)]
-    (reduce (fn [acc [benchmark _timestamp commit-sha
-                      _is-checked user model ram os
-                      arch language run-ms mean-ms
-                      std-dev-ms _min-ms _max-ms runs]]
-              (let [language-slug (string/replace language #"[^a-zA-Z0-9]" "_")
-                    run-key (str user "," model "," ram "," os "," arch "," commit-sha "," run-ms)]
-                (assoc-in acc
-                          [run-key language-slug (keyword benchmark)]
-                          {:mean (parse-double mean-ms)
-                           :stddev (parse-double std-dev-ms)
-                           :runs (parse-long runs)})))
-            {}
-            rows)))
+    (try
+      (reduce (fn [acc [benchmark _timestamp commit-sha
+                        _is-checked user model ram os
+                        arch language run-ms mean-ms
+                        std-dev-ms _min-ms _max-ms runs]]
+                (let [language-slug (string/replace language #"[^a-zA-Z0-9]" "_")
+                      run-key (str user "," model "," ram "," os "," arch "," commit-sha "," run-ms)]
+                  (assoc-in acc
+                            [run-key language-slug (keyword benchmark)]
+                            {:mean (parse-double mean-ms)
+                             :stddev (parse-double std-dev-ms)
+                             :runs (parse-long runs)})))
+              {}
+              rows)
+      (catch :default e
+        (js/alert (str "Error while parsing CSV. " e))))))
 
 (defn- enrich-action-from-replicant-data [{:replicant/keys [js-event node]} actions]
   (walk/postwalk
