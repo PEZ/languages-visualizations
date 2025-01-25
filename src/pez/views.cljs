@@ -18,7 +18,7 @@
       (map (fn [run-key]
              [:option {:value run-key
                        :selected (= selected-run run-key)} run-key])
-           (keys benchmark-runs))]]))
+           (sort > (keys benchmark-runs)))]]))
 
 (defn- info-view [{:keys [benchmark/csv-input] :as app-state}]
   (list

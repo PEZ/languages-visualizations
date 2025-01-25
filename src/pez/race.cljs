@@ -278,12 +278,12 @@
                   (remove (partial re-find #"^benchmark,timestamp|^\s*$") $))
         rows (map #(string/split % #",") lines)]
     (try
-      (reduce (fn [acc [benchmark _timestamp commit-sha
+      (reduce (fn [acc [benchmark timestamp commit-sha
                         _is-checked user model ram os
                         arch language run-ms mean-ms
                         std-dev-ms _min-ms _max-ms runs]]
                 (let [language-slug (string/replace language #"[^a-zA-Z0-9]" "_")
-                      run-key (str user "," model "," ram "," os "," arch "," commit-sha "," run-ms)]
+                      run-key (str user "," timestamp "," model "," ram "," os "," arch "," commit-sha "," run-ms)]
                   (assoc-in acc
                             [run-key language-slug (keyword benchmark)]
                             {:mean (parse-double mean-ms)
@@ -355,7 +355,7 @@
 
           (= :ax/add-benchmark-run action-name)
           (let [runs (csv->benchmark-data (first args))
-                run-keys (sort (keys runs))]
+                run-keys (sort > (keys runs))]
             {:new-state (-> state
                             (update :benchmark-runs merge runs))
              :effects [[:fx/dispatch nil [[:ax/select-benchmark-run (first run-keys)]]]]})
