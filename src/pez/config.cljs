@@ -47,6 +47,10 @@
     :language-name "CPP"
     :language-file-name "CPP"
     :logo "images/cpp.png"}
+   {:language :c++
+    :language-name "C++"
+    :language-file-name "C__"
+    :logo "images/cpp.png"}
    {:language :clojure
     :language-name "Clojure"
     :language-file-name "Clojure"
