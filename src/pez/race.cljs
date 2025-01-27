@@ -16,7 +16,8 @@
                            :filter-champions? false
                            :min-track-time-choice "600" #_"fastest-language"
                            :benchmarks bd/benchmarks
-                           :add-overlaps? true}))
+                           :add-overlaps? true
+                           :paused false}))
 
 (def app-el (js/document.getElementById "app"))
 
@@ -380,6 +381,14 @@
           (= :ax/fetch-gist action-name)
           {:effects [[:fx/fetch-gist (first args)]]}
 
+          (= :ax/pause-sketch action-name)
+          {:new-state (assoc state :paused? true)
+           :effects [[:fx/pause-sketch]]}
+
+          (= :ax/resume-sketch action-name)
+          {:new-state (assoc state :paused? false)
+           :effects [[:fx/resume-sketch]]}
+
           (= :ax/assoc action-name)
           {:new-state (apply assoc state args)})]
     (cond-> result
@@ -408,7 +417,10 @@
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
             (= :fx/fetch-gist effect-name) (-> (js/fetch (first args))
                                                (.then #(.text %))
-                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))))))))
+                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))
+            (= :fx/pause-sketch effect-name) (q/no-loop)
+            (= :fx/resume-sketch effect-name) (q/start-loop)
+            ))))))
 
 (comment
   @!app-state

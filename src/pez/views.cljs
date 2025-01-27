@@ -67,7 +67,7 @@
    [:p "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time."]))
 
 (defn app [{:keys [benchmark snapshot-mode? filter-champions?
-                   add-overlaps? min-track-time-ms] :as app-state}
+                   add-overlaps? min-track-time-ms paused?] :as app-state}
            active-benchmarks]
   [:article
    [:h1 "Languages"]
@@ -117,7 +117,13 @@
        [:option {:value 200} "200"]
        [:option {:value 150} "150"]
        [:option {:value 75} "75"]
-       [:option {:value 5} "5"]]]]]
+       [:option {:value 5} "5"]]]
+     [:button {:on {:click [(if paused?
+                              [:ax/resume-sketch]
+                              [:ax/pause-sketch])]}}
+      (if paused?
+        "Run"
+        "Freeze")]]]
    [:div.report
     [:section#race]
     [:section.info
