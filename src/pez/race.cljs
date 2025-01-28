@@ -17,7 +17,7 @@
                            :min-track-time-choice "600" #_"fastest-language"
                            :benchmarks bd/benchmarks
                            :add-overlaps? true
-                           :paused false}))
+                           :paused? false}))
 
 (def app-el (js/document.getElementById "app"))
 
@@ -411,7 +411,8 @@
           (cond
             (= :fx/console.log effect-name) (apply js/console.log args)
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
-            (= :fx/run-sketch effect-name) (run-sketch!)
+            (= :fx/run-sketch effect-name) (do (event-handler nil [[:ax/assoc :paused? false]])
+                                               (run-sketch!))
             (= :fx/take-snapshot effect-name) (save-image (first args))
             (= :fx/share effect-name) (apply share! args)
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
@@ -419,8 +420,7 @@
                                                (.then #(.text %))
                                                (.then #(event-handler {} [[:ax/add-benchmark-run %]])))
             (= :fx/pause-sketch effect-name) (q/no-loop)
-            (= :fx/resume-sketch effect-name) (q/start-loop)
-            ))))))
+            (= :fx/resume-sketch effect-name) (q/start-loop)))))))
 
 (comment
   @!app-state
@@ -463,7 +463,7 @@
   (handle-hash @!app-state)
   (js/window.addEventListener "hashchange" #(handle-hash @!app-state))
   (start-app!)
-  (run-sketch!))
+  (event-handler nil [[:ax/run-sketch]]))
 
 (defn ^{:export true
         :dev/before-load true} stop! []
