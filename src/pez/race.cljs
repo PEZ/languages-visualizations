@@ -17,7 +17,8 @@
                            :min-track-time-choice "600" #_"fastest-language"
                            :benchmarks bd/benchmarks
                            :add-overlaps? true
-                           :paused? false}))
+                           :paused? false
+                           :total-paused-time 0}))
 
 (def app-el (js/document.getElementById "app"))
 
@@ -139,6 +140,7 @@
         min-time (apply min (benchmark-times app-state))]
     (merge arena
            {:t 0
+            :position-time-str ""
             :app-state app-state
             :benchmark benchmark
             :race-started? false
@@ -179,9 +181,14 @@
         take-snapshot? (and snapshot-mode?
                             (= 1 (:runs first-lang))
                             (not (:snapshot-taken? draw-state)))]
+    (def position-time position-time)
     (merge draw-state
            arena
            {:t elapsed-ms
+            :position-time position-time
+            :position-time-str (if position-time
+                                 (.toFixed position-time 1)
+                                 "")
             :app-state app-state
             :race-started? race-started?
             :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
@@ -210,7 +217,7 @@
 
 (declare event-handler)
 
-(defn draw! [{:keys [benchmark-title middle-x width
+(defn draw! [{:keys [benchmark-title middle-x width position-time-str
                      take-snapshot? app-state] :as draw-state}]
   (when take-snapshot?
     (event-handler {} [[:ax/take-snapshot app-state]]))
@@ -228,6 +235,7 @@
   (q/text-align :right :center)
   (q/text "±" 50 65)
   (q/text "ms" language-labels-x 65)
+  (q/text position-time-str (- width 5) 65)
   (q/text-size 14)
   (doseq [lang (:languages draw-state)]
     (let [{:keys [language-name logo-image y track-x runs benchmark-time-str std-dev-str]} lang]
@@ -268,8 +276,13 @@
            :renderer :p2d
            :setup (fn [] (setup @!app-state))
            :update (fn [state]
-                     (let [elapsed-ms (- (js/performance.now) start-time)]
-                       (update-draw-state state (assoc @!app-state :elapsed-ms elapsed-ms))))
+                     (let [app-state @!app-state
+                           now (js/performance.now)
+                           paused-time (if (:paused? app-state)
+                                         (- now (:paused-at app-state))
+                                         0)
+                           elapsed-ms (- now start-time paused-time (:total-paused-time app-state))]
+                       (update-draw-state state (assoc app-state :elapsed-ms elapsed-ms))))
            :draw draw!
            :middleware [m/fun-mode]))))
 
@@ -332,24 +345,30 @@
           (= :ax/take-snapshot action-name)
           {:effects [[:fx/take-snapshot state]]}
 
+          (= :ax/run-sketch action-name)
+          {:new-state (assoc state
+                             :total-paused-time 0
+                             :paused-at (js/performance.now))
+           :effects [[:fx/run-sketch]]}
+
           (= :ax/set-benchmark action-name)
           {:new-state (assoc state :benchmark (keyword (first args)))
-           :effects [[:fx/run-sketch]]}
+           :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
           (= :ax/set-min-track-time-choice action-name)
           {:new-state (assoc state :min-track-time-choice (first args))
-           :effects [[:fx/run-sketch]]}
+           :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
           (= :ax/toggle-snapshot-mode action-name)
           {:new-state (update state :snapshot-mode? not)}
 
           (= :ax/toggle-champions-mode action-name)
-          {:new-state (update state :filter-champions? not)
-           :effects [[:fx/run-sketch]]}
+          {:new-state (-> state (update :filter-champions? not))
+           :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
           (= :ax/toggle-overlaps action-name)
-          {:new-state (update state :add-overlaps? not)
-           :effects [[:fx/run-sketch]]}
+          {:new-state (-> state (update :add-overlaps? not))
+           :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
           (= :ax/share action-name)
           {:effects [[:fx/share (first args) (second args)]]}
@@ -370,24 +389,28 @@
                                                   (:benchmark-runs state)
                                                   selected-run))
                               (assoc :selected-run selected-run))
-               :effects [[:fx/run-sketch]]}))
+               :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}))
 
           (= :ax/reset-benchmark-data action-name)
           {:new-state (-> state
                           (assoc :benchmarks bd/benchmarks)
                           (assoc :selected-run ""))
-           :effects [[:fx/run-sketch]]}
+           :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
           (= :ax/fetch-gist action-name)
           {:effects [[:fx/fetch-gist (first args)]]}
 
           (= :ax/pause-sketch action-name)
-          {:new-state (assoc state :paused? true)
-           :effects [[:fx/pause-sketch]]}
+          {:new-state (assoc state
+                             :paused? true
+                             :paused-at (js/performance.now))}
 
           (= :ax/resume-sketch action-name)
-          {:new-state (assoc state :paused? false)
-           :effects [[:fx/resume-sketch]]}
+          (let [total-paused-time (or (:total-paused-time state) 0)
+                paused-time (- (js/performance.now) (:paused-at state))]
+            {:new-state (assoc state
+                               :paused? false
+                               :total-paused-time (+ paused-time total-paused-time))})
 
           (= :ax/assoc action-name)
           {:new-state (apply assoc state args)})]
@@ -411,24 +434,13 @@
           (cond
             (= :fx/console.log effect-name) (apply js/console.log args)
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
-            (= :fx/run-sketch effect-name) (do (event-handler
-                                                nil
-                                                [[:ax/assoc
-                                                  :paused? false
-                                                  :paused-at (js/performance.now)]])
-                                               (run-sketch!))
+            (= :fx/run-sketch effect-name) (run-sketch!)
             (= :fx/take-snapshot effect-name) (save-image (first args))
             (= :fx/share effect-name) (apply share! args)
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
             (= :fx/fetch-gist effect-name) (-> (js/fetch (first args))
                                                (.then #(.text %))
-                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))
-            (= :fx/pause-sketch effect-name) (do (event-handler
-                                                  nil
-                                                  [[:ax/assoc
-                                                    :paused-at (js/performance.now)]])
-                                               (q/no-loop))
-            (= :fx/resume-sketch effect-name) (q/start-loop)))))))
+                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))))))))
 
 (comment
   @!app-state

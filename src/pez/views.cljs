@@ -118,12 +118,12 @@
        [:option {:value 150} "150"]
        [:option {:value 75} "75"]
        [:option {:value 5} "5"]]]
-     #_[:button {:on {:click [(if paused?
+     [:button {:on {:click [(if paused?
                               [:ax/resume-sketch]
                               [:ax/pause-sketch])]}}
       (if paused?
-        "Run"
-        "Freeze")]]]
+        "Resume"
+        "Pause")]]]
    [:div.report
     [:section#race]
     [:section.info
