@@ -140,7 +140,7 @@
         min-time (apply min (benchmark-times app-state))]
     (merge arena
            {:t 0
-            :position-time-str ""
+            :display-time-str ""
             :app-state app-state
             :benchmark benchmark
             :min-time min-time
@@ -182,14 +182,13 @@
         take-snapshot? (and snapshot-mode?
                             (= 1 (:runs first-lang))
                             (not (:snapshot-taken? draw-state)))]
-    (def position-time position-time)
     (merge draw-state
            arena
            {:t elapsed-ms
             :position-time position-time
-            :position-time-str (if position-time
-                                 (.toFixed (/ position-time (/ min-track-time-ms min-time)) 1)
-                                 "")
+            :display-time-str (if position-time
+                                (.toFixed (/ position-time (/ min-track-time-ms min-time)) 1)
+                                "")
             :app-state app-state
             :race-started? race-started?
             :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
@@ -218,7 +217,7 @@
 
 (declare event-handler)
 
-(defn draw! [{:keys [benchmark-title middle-x width position-time-str
+(defn draw! [{:keys [benchmark-title middle-x width display-time-str
                      take-snapshot? app-state] :as draw-state}]
   (when take-snapshot?
     (event-handler {} [[:ax/take-snapshot app-state]]))
@@ -236,7 +235,7 @@
   (q/text-align :right :center)
   (q/text "±" 50 65)
   (q/text "ms" language-labels-x 65)
-  (q/text position-time-str (- width 5) 65)
+  (q/text display-time-str (- width 5) 65)
   (q/text-size 14)
   (doseq [lang (:languages draw-state)]
     (let [{:keys [language-name logo-image y track-x runs benchmark-time-str std-dev-str]} lang]
@@ -289,8 +288,8 @@
 
 (defn csv->benchmark-data [csv-text]
   (let [lines (as-> csv-text $
-                  (string/split $ #"\n")
-                  (remove (partial re-find #"^benchmark,timestamp|^\s*$") $))
+                (string/split $ #"\n")
+                (remove (partial re-find #"^benchmark,timestamp|^\s*$") $))
         rows (map #(string/split % #",") lines)]
     (try
       (reduce (fn [acc [benchmark timestamp commit-sha
