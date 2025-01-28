@@ -118,7 +118,7 @@
        [:option {:value 150} "150"]
        [:option {:value 75} "75"]
        [:option {:value 5} "5"]]]
-     [:button {:on {:click [(if paused?
+     #_[:button {:on {:click [(if paused?
                               [:ax/resume-sketch]
                               [:ax/pause-sketch])]}}
       (if paused?

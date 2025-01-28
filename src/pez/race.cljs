@@ -411,7 +411,11 @@
           (cond
             (= :fx/console.log effect-name) (apply js/console.log args)
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
-            (= :fx/run-sketch effect-name) (do (event-handler nil [[:ax/assoc :paused? false]])
+            (= :fx/run-sketch effect-name) (do (event-handler
+                                                nil
+                                                [[:ax/assoc
+                                                  :paused? false
+                                                  :paused-at (js/performance.now)]])
                                                (run-sketch!))
             (= :fx/take-snapshot effect-name) (save-image (first args))
             (= :fx/share effect-name) (apply share! args)
@@ -419,7 +423,11 @@
             (= :fx/fetch-gist effect-name) (-> (js/fetch (first args))
                                                (.then #(.text %))
                                                (.then #(event-handler {} [[:ax/add-benchmark-run %]])))
-            (= :fx/pause-sketch effect-name) (q/no-loop)
+            (= :fx/pause-sketch effect-name) (do (event-handler
+                                                  nil
+                                                  [[:ax/assoc
+                                                    :paused-at (js/performance.now)]])
+                                               (q/no-loop))
             (= :fx/resume-sketch effect-name) (q/start-loop)))))))
 
 (comment
