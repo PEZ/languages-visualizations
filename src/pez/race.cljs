@@ -143,6 +143,7 @@
             :position-time-str ""
             :app-state app-state
             :benchmark benchmark
+            :min-time min-time
             :race-started? false
             :benchmark-title (benchmark conf/benchmark-names)
             :min-track-time-ms (if (= "fastest-language" min-track-time-choice)
@@ -172,7 +173,7 @@
   (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
-(defn update-draw-state [{:keys [track-length min-track-time-ms] :as draw-state}
+(defn update-draw-state [{:keys [track-length min-track-time-ms min-time] :as draw-state}
                          {:keys [elapsed-ms snapshot-mode?] :as app-state}]
   (let [arena (arena (q/width) (q/height))
         race-started? (> elapsed-ms pre-startup-wait-ms)
@@ -187,7 +188,7 @@
            {:t elapsed-ms
             :position-time position-time
             :position-time-str (if position-time
-                                 (.toFixed position-time 1)
+                                 (.toFixed (/ position-time (/ min-track-time-ms min-time)) 1)
                                  "")
             :app-state app-state
             :race-started? race-started?
