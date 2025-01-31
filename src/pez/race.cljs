@@ -6,7 +6,6 @@
    [gadget.inspector :as inspector]
    [pez.benchmark-data :as bd]
    [pez.config :as conf]
-   [pez.throttle :as throttle]
    [pez.views :as views]
    [quil.core :as q]
    [quil.middleware :as m]
@@ -333,12 +332,12 @@
 (defn- action-handler [{state :new-state :as result} replicant-data action]
   (when js/goog.DEBUG
     (def state state)
-    #_(js/console.debug "Triggered action" action))
+    (js/console.debug "Triggered action" action))
   (let [[action-name & args :as enriched] (enrich-action-from-app-state
                                            state
                                            (enrich-action-from-replicant-data
                                             replicant-data action))
-       ; _ (when js/goog.DEBUG (js/console.debug "Enriched action" enriched))
+       _ (when js/goog.DEBUG (js/console.debug "Enriched action" enriched))
         {:keys [new-state effects]}
         (cond
           (= :ax/set-hash action-name)
@@ -442,7 +441,7 @@
     (when effects
       (doseq [effect effects]
         (when js/goog.DEBUG
-          #_(js/console.debug "Triggered effect" effect))
+          (js/console.debug "Triggered effect" effect))
         (let [[effect-name & args] effect]
           (cond
             (= :fx/console.log effect-name) (apply js/console.log args)
