@@ -2,7 +2,7 @@
 
 (defonce !throttles (atom {}))
 
-(defn dispatch! [{:keys [id timeout thunk leading?]}]
+(defn dispatch! [{:keys [id timeout thunk]}]
   (let [maybe-schedule (fn [current-throttles]
                          (if (contains? current-throttles id)
                            current-throttles

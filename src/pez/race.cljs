@@ -224,10 +224,11 @@
                      take-snapshot? display-time app-state] :as draw-state}]
   (when take-snapshot?
     (event-handler {} [[:ax/take-snapshot app-state]]))
-  (event-handler {} [[:ax/throttle
-                      {:id ::elapsed
-                       :actions [[:ax/assoc :display-time display-time]]
-                       :timeout 1000}]])
+  (when display-time
+    (event-handler {} [[:ax/throttle
+                        {:id ::elapsed
+                         :actions [[:ax/assoc :display-time display-time]]
+                         :timeout 1000}]]))
   (q/background offwhite)
   (q/stroke-weight 0)
   (q/text-align :center)
