@@ -173,8 +173,7 @@
         paused? (:paused? app-state)
         manual-display-time (:manual-display-time app-state)
         display-time (if paused?
-                       (or manual-display-time
-                           (rt/t->display-time app-state now))
+                       (or manual-display-time 0)
                        (rt/t->display-time app-state now))
         elapsed-ms (rt/display-time->elapsed-ms app-state display-time)
         race-started? (>= elapsed-ms pre-startup-wait-ms)
@@ -409,8 +408,7 @@
 
 
           (= :ax/resume-sketch action-name)
-          (let [mdt (or (:manual-display-time state)
-                        (rt/t->display-time state (js/performance.now)))
+          (let [mdt (or (:manual-display-time state) 0)
                 now (js/performance.now)
                 new-elapsed-ms (rt/display-time->elapsed-ms state mdt)
                 new-start-time (- now new-elapsed-ms)]
