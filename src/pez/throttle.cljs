@@ -1,16 +1,16 @@
 (ns pez.throttle)
 
-(def !throttled-events (atom {}))
+(defonce !throttles (atom {}))
 
-(defn dispatch! [{:keys [id timeout thunk]}]
-  (let [f (fn [events]
-            (if (contains? events id)
-              events
-              (assoc events id
-                     {:timeout (js/setTimeout
-                                (fn []
-                                  (swap! !throttled-events dissoc id))
-                                timeout)})))
-        [previous _] (swap-vals! !throttled-events f)]
-    (when-not (contains? previous id)
+(defn dispatch! [{:keys [id timeout thunk leading?]}]
+  (let [maybe-schedule (fn [current-throttles]
+                         (if (contains? current-throttles id)
+                           current-throttles
+                           (assoc current-throttles id
+                                  {:timeout (js/setTimeout
+                                             (fn []
+                                               (swap! !throttles dissoc id))
+                                             timeout)})))
+        [previous-throttles _] (swap-vals! !throttles maybe-schedule)]
+    (when-not (contains? previous-throttles id)
       (thunk))))
