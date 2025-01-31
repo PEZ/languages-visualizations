@@ -1,7 +1,8 @@
 (ns pez.views
   (:require
    [pez.config :as conf]
-   [pez.benchmark-data :as bd]))
+   [pez.benchmark-data :as bd]
+   [pez.race-time :as rt]))
 
 (defn- benchmark-runs-view [{:keys [benchmark-runs selected-run]}]
   (when benchmark-runs
@@ -67,7 +68,8 @@
    [:p "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time."]))
 
 (defn app [{:keys [benchmark snapshot-mode? filter-champions?
-                   add-overlaps? min-track-time-ms paused?] :as app-state}
+                   add-overlaps? min-track-time-ms paused?
+                   manual-display-time] :as app-state}
            active-benchmarks]
   [:article
    [:h1 "Languages"]
@@ -123,7 +125,12 @@
                               [:ax/pause-sketch])]}}
       (if paused?
         "Resume"
-        "Pause")]]]
+        "Pause")]
+     (when paused?
+       (list
+        [:input {:type :numeric
+                 :value manual-display-time
+                 :on {:blur [[:ax/set-display-time :event/target.value]]}}]))]]
    [:div.report
     [:section#race]
     [:section.info

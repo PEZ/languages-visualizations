@@ -6,6 +6,7 @@
    [gadget.inspector :as inspector]
    [pez.benchmark-data :as bd]
    [pez.config :as conf]
+   [pez.race-time :as rt]
    [pez.views :as views]
    [quil.core :as q]
    [quil.middleware :as m]
@@ -18,7 +19,7 @@
                            :benchmarks bd/benchmarks
                            :add-overlaps? true
                            :paused? false
-                           :total-paused-time 0}))
+                           :manual-display-time nil}))
 
 (def app-el (js/document.getElementById "app"))
 
@@ -72,7 +73,6 @@
       (filter (fn [lang]
                 (get-in lang [benchmark :mean]))
               langs))))
-
 
 (comment
   (best-languages {:benchmark :loops})
@@ -168,52 +168,43 @@
   (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
-(defn elapsed-ms [{:keys [start-time paused? paused-at total-paused-time]} now]
-  (let [pause-duration (if paused?
-                         (- now paused-at)
-                         0)]
-    (- now start-time (+ total-paused-time pause-duration))))
-
-(defn display-time [{:keys [min-track-time-ms min-time] :as app-state} now]
-  (let [elapsed (elapsed-ms app-state now)]
-    (if (or (nil? min-time) (zero? min-time))
-      0
-      (/ elapsed (/ min-track-time-ms min-time)))))
-
-
-
 (defn update-draw-state [draw-state app-state now]
   (let [arena (arena (q/width) (q/height))
-        race-started? (> (elapsed-ms app-state now) pre-startup-wait-ms)
-        position-time (- (elapsed-ms app-state now) pre-startup-wait-ms)
-        display-time (display-time app-state now)
+        paused? (:paused? app-state)
+        manual-display-time (:manual-display-time app-state)
+        display-time (if paused?
+                       (or manual-display-time
+                           (rt/now->display-time app-state now))
+                       (rt/now->display-time app-state now))
+        elapsed-ms (rt/display-time->elapsed-ms app-state display-time)
+        race-started? (>= elapsed-ms pre-startup-wait-ms)
+        position-time (max 0 (- elapsed-ms pre-startup-wait-ms))
         take-snapshot? (and (:snapshot-mode? app-state)
                             (= 1 (:runs (first (:languages draw-state))))
                             (not (:snapshot-taken? draw-state)))]
     (merge draw-state
            arena
-           {:t (elapsed-ms app-state now)
+           {:t (rt/now->elapsed-ms app-state now) ; Not used, but nice for logging
             :position-time position-time
             :display-time display-time
             :display-time-str (.toFixed display-time 1)
             :app-state app-state
             :race-started? race-started?
             :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
-            :take-snapshot? take-snapshot?}
-           {:languages (mapv (fn [{:keys [speed] :as lang}]
-                               (merge lang
-                                      (when race-started?
-                                        (let [normalized-time (/ position-time (:min-track-time-ms app-state))
-                                              scaled-time (* normalized-time speed)
-                                              distance (* (:track-length arena) scaled-time)
-                                              loop-distance (mod distance (* 2 (:track-length arena)))
-                                              x (if (> loop-distance (:track-length arena))
-                                                  (- (* 2 (:track-length arena)) loop-distance)
-                                                  loop-distance)]
-                                          {:track-x (+ start-line-x x)
-                                           :runs (quot distance (:track-length arena))}))))
-                             (:languages draw-state))})))
-
+            :take-snapshot? take-snapshot?
+            :languages
+            (mapv (fn [{:keys [speed] :as lang}]
+                    (merge lang
+                           (let [normalized-time (/ position-time (:min-track-time-ms app-state))
+                                 scaled-time (* normalized-time speed)
+                                 distance (* (:track-length arena) scaled-time)
+                                 loop-distance (mod distance (* 2 (:track-length arena)))
+                                 x (if (> loop-distance (:track-length arena))
+                                     (- (* 2 (:track-length arena)) loop-distance)
+                                     loop-distance)]
+                             {:track-x (+ start-line-x x)
+                              :runs (quot distance (:track-length arena))})))
+                  (:languages draw-state))})))
 
 (comment
   (q/no-loop)
@@ -273,6 +264,7 @@
                           (js/encodeURIComponent text)
                           "&url="
                           (js/encodeURIComponent url)))))
+
 (defn run-sketch! []
   ; TODO: Figure out if there's a way to set the current applet with public API
   #_{:clj-kondo/ignore [:unresolved-namespace]}
@@ -337,7 +329,7 @@
                                            state
                                            (enrich-action-from-replicant-data
                                             replicant-data action))
-       _ (when js/goog.DEBUG (js/console.debug "Enriched action" enriched))
+        _ (when js/goog.DEBUG (js/console.debug "Enriched action" enriched))
         {:keys [new-state effects]}
         (cond
           (= :ax/set-hash action-name)
@@ -353,11 +345,20 @@
                                     min-time
                                     (parse-long (:min-track-time-choice state)))
                 display-time 0]
+
+            (js/console.log "Initializing run-sketch!"
+                            "now=" now
+                            "min-time=" min-time
+                            "min-track-time-ms=" min-track-time-ms
+                            "display-time=" display-time)
+
             {:new-state (assoc state
                                :start-time now
-                               :total-paused-time 0
-                               :paused-at now
+                               ;; CHANGED: No total-paused-time, also clear manual-display-time
+                               :manual-display-time nil
+                               :paused? false
                                :min-time min-time
+                               :pre-startup-wait-ms pre-startup-wait-ms
                                :min-track-time-ms min-track-time-ms
                                :display-time display-time)
              :effects [[:fx/run-sketch]]})
@@ -412,23 +413,49 @@
           {:effects [[:fx/fetch-gist (first args)]]}
 
           (= :ax/pause-sketch action-name)
-          {:new-state (assoc state
-                             :paused? true
-                             :paused-at (js/performance.now))}
+          (let [current-dt (rt/now->display-time state (js/performance.now))]
+            {:new-state (-> state
+                            (assoc :paused? true)
+                            (assoc :manual-display-time current-dt))})
+
 
           (= :ax/resume-sketch action-name)
-          (let [total-paused-time (or (:total-paused-time state) 0)
-                paused-time (- (js/performance.now) (:paused-at state))]
-            {:new-state (assoc state
-                               :paused? false
-                               :total-paused-time (+ paused-time total-paused-time))})
+          (let [mdt (or (:manual-display-time state)
+                        (rt/now->display-time state (js/performance.now)))
+                now (js/performance.now)
+                new-elapsed-ms (rt/display-time->elapsed-ms state mdt)
+                new-start-time (- now new-elapsed-ms)]
+            {:new-state (-> state
+                            (assoc :paused? false)
+                            (assoc :manual-display-time nil)
+                            (assoc :start-time new-start-time))})
+
+          (= :ax/set-display-time action-name)
+          (let [new-display-time (parse-double (first args))]
+            (if (js/isNaN new-display-time)
+              {:new-state state}
+              (if (:paused? state)
+                {:new-state (assoc state :manual-display-time new-display-time)}
+                (let [current-time (js/performance.now)
+                      new-elapsed-ms (rt/display-time->elapsed-ms state new-display-time)
+                      time-shift (- new-elapsed-ms (rt/now->elapsed-ms state current-time))
+                      new-start-time (+ (- current-time new-elapsed-ms) time-shift)]
+                  {:new-state (assoc state
+                                     :start-time new-start-time)}))))
 
           (= :ax/assoc action-name)
           {:new-state (apply assoc state args)})]
 
+    (when js/goog.DEBUG
+      (js/console.debug "Final new-state:" new-state))
+
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
+
+(comment
+  (:display-time state)
+  :rcf)
 
 (defn- event-handler [replicant-data actions]
   (let [{:keys [new-state effects]} (reduce (fn [result action]
@@ -453,12 +480,6 @@
             (= :fx/fetch-gist effect-name) (-> (js/fetch (first args))
                                                (.then #(.text %))
                                                (.then #(event-handler {} [[:ax/add-benchmark-run %]])))))))))
-
-(comment
-  (:display-time state)
-  :rcf)
-
-
 
 (defn render-app! [el {:keys [benchmarks] :as state}]
   (d/render el (views/app state (active-benchmarks benchmarks))))
@@ -499,5 +520,3 @@
 (defn ^{:export true
         :dev/before-load true} stop! []
   (js/console.log "stop"))
-
-
