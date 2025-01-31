@@ -134,22 +134,17 @@
             langs-with-stats
             pairs)))
 
-(defn setup [{:keys [benchmark min-track-time-choice add-overlaps?] :as app-state}]
+(defn setup [{:keys [benchmark add-overlaps? min-time] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
-  (let [arena (arena (q/width) (q/height))
-        min-time (apply min (benchmark-times app-state))]
+  (let [arena (arena (q/width) (q/height))]
     (merge arena
            {:t 0
             :display-time-str ""
             :app-state app-state
             :benchmark benchmark
-            :min-time min-time
             :race-started? false
             :benchmark-title (benchmark conf/benchmark-names)
-            :min-track-time-ms (if (= "fastest-language" min-track-time-choice)
-                                 min-time
-                                 (parse-long min-track-time-choice))
             :languages (mapv (fn [i lang]
                                (let [{:keys [mean stddev speed-mean]} (get lang benchmark)
                                      speed (/ min-time speed-mean)]
@@ -174,24 +169,34 @@
   (-> 234.0 (.toFixed 1) (.padStart 7))
   :rcf)
 
-(defn update-draw-state [{:keys [track-length min-track-time-ms min-time] :as draw-state}
-                         {:keys [elapsed-ms snapshot-mode?] :as app-state}]
+(defn elapsed-ms [{:keys [start-time paused? paused-at total-paused-time]} now]
+  (let [pause-duration (if paused?
+                         (- now paused-at)
+                         0)]
+    (- now start-time (+ total-paused-time pause-duration))))
+
+(defn display-time [{:keys [min-track-time-ms min-time] :as app-state} now]
+  (let [elapsed (elapsed-ms app-state now)]
+    (if (or (nil? min-time) (zero? min-time))
+      0
+      (/ elapsed (/ min-track-time-ms min-time)))))
+
+
+
+(defn update-draw-state [draw-state app-state now]
   (let [arena (arena (q/width) (q/height))
-        race-started? (> elapsed-ms pre-startup-wait-ms)
-        position-time (- elapsed-ms pre-startup-wait-ms)
-        display-time (/ position-time (/ min-track-time-ms min-time))
-        first-lang (first (:languages draw-state))
-        take-snapshot? (and snapshot-mode?
-                            (= 1 (:runs first-lang))
+        race-started? (> (elapsed-ms app-state now) pre-startup-wait-ms)
+        position-time (- (elapsed-ms app-state now) pre-startup-wait-ms)
+        display-time (display-time app-state now)
+        take-snapshot? (and (:snapshot-mode? app-state)
+                            (= 1 (:runs (first (:languages draw-state))))
                             (not (:snapshot-taken? draw-state)))]
     (merge draw-state
            arena
-           {:t elapsed-ms
+           {:t (elapsed-ms app-state now)
             :position-time position-time
             :display-time display-time
-            :display-time-str (if position-time
-                                (.toFixed display-time 1)
-                                "")
+            :display-time-str (.toFixed display-time 1)
             :app-state app-state
             :race-started? race-started?
             :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
@@ -199,16 +204,17 @@
            {:languages (mapv (fn [{:keys [speed] :as lang}]
                                (merge lang
                                       (when race-started?
-                                        (let [normalized-time (/ position-time min-track-time-ms)
+                                        (let [normalized-time (/ position-time (:min-track-time-ms app-state))
                                               scaled-time (* normalized-time speed)
-                                              distance (* track-length scaled-time)
-                                              loop-distance (mod distance (* 2 track-length))
-                                              x (if (> loop-distance track-length)
-                                                  (- (* 2 track-length) loop-distance)
+                                              distance (* (:track-length arena) scaled-time)
+                                              loop-distance (mod distance (* 2 (:track-length arena)))
+                                              x (if (> loop-distance (:track-length arena))
+                                                  (- (* 2 (:track-length arena)) loop-distance)
                                                   loop-distance)]
                                           {:track-x (+ start-line-x x)
-                                           :runs (quot distance track-length)}))))
+                                           :runs (quot distance (:track-length arena))}))))
                              (:languages draw-state))})))
+
 
 (comment
   (q/no-loop)
@@ -220,15 +226,10 @@
 
 (declare event-handler)
 
-(defn draw! [{:keys [benchmark-title middle-x width display-time-str elapsed-ms
-                     take-snapshot? display-time app-state] :as draw-state}]
+(defn draw! [{:keys [benchmark-title middle-x width display-time-str
+                     take-snapshot? app-state] :as draw-state}]
   (when take-snapshot?
     (event-handler {} [[:ax/take-snapshot app-state]]))
-  (when display-time
-    (event-handler {} [[:ax/throttle
-                        {:id ::elapsed
-                         :actions [[:ax/assoc :display-time display-time]]
-                         :timeout 1000}]]))
   (q/background offwhite)
   (q/stroke-weight 0)
   (q/text-align :center)
@@ -277,22 +278,15 @@
   ; TODO: Figure out if there's a way to set the current applet with public API
   #_{:clj-kondo/ignore [:unresolved-namespace]}
   (set! quil.sketch/*applet*
-        (let [start-time (js/performance.now)]
-          (q/sketch
-           :host "race"
-           :size (dims @!app-state)
-           :renderer :p2d
-           :setup (fn [] (setup @!app-state))
-           :update (fn [state]
-                     (let [app-state @!app-state
-                           now (js/performance.now)
-                           paused-time (if (:paused? app-state)
-                                         (- now (:paused-at app-state))
-                                         0)
-                           elapsed-ms (- now start-time paused-time (:total-paused-time app-state))]
-                       (update-draw-state state (assoc app-state :elapsed-ms elapsed-ms))))
-           :draw draw!
-           :middleware [m/fun-mode]))))
+        (q/sketch
+         :host "race"
+         :size (dims @!app-state)
+         :renderer :p2d
+         :setup (fn [] (setup @!app-state))
+         :update (fn [state]
+                   (update-draw-state state @!app-state (js/performance.now)))
+         :draw draw!
+         :middleware [m/fun-mode])))
 
 (defn csv->benchmark-data [csv-text]
   (let [lines (as-> csv-text $
@@ -354,10 +348,20 @@
           {:effects [[:fx/take-snapshot state]]}
 
           (= :ax/run-sketch action-name)
-          {:new-state (assoc state
-                             :total-paused-time 0
-                             :paused-at (js/performance.now))
-           :effects [[:fx/run-sketch]]}
+          (let [now (js/performance.now)
+                min-time (apply min (benchmark-times state))
+                min-track-time-ms (if (= "fastest-language" (:min-track-time-choice state))
+                                    min-time
+                                    (parse-long (:min-track-time-choice state)))
+                display-time 0]
+            {:new-state (assoc state
+                               :start-time now
+                               :total-paused-time 0
+                               :paused-at now
+                               :min-time min-time
+                               :min-track-time-ms min-track-time-ms
+                               :display-time display-time)
+             :effects [[:fx/run-sketch]]})
 
           (= :ax/set-benchmark action-name)
           {:new-state (assoc state :benchmark (keyword (first args)))
@@ -421,11 +425,7 @@
                                :total-paused-time (+ paused-time total-paused-time))})
 
           (= :ax/assoc action-name)
-          {:new-state (apply assoc state args)
-           :effects [(into [:fx/console.log :ax/assoc] args)]}
-
-          (= :ax/throttle action-name)
-          {:effects [[:fx/throttle (first args)]]})]
+          {:new-state (apply assoc state args)})]
 
     (cond-> result
       new-state (assoc :new-state new-state)
@@ -453,13 +453,7 @@
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
             (= :fx/fetch-gist effect-name) (-> (js/fetch (first args))
                                                (.then #(.text %))
-                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))
-            (= :fx/throttle effect-name) (let [{:keys [id actions timeout]}
-                                               (first args)]
-                                           (throttle/dispatch!
-                                            {:id id
-                                             :timeout timeout
-                                             :thunk #(event-handler nil actions)}))))))))
+                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))))))))
 
 (comment
   (:display-time state)
