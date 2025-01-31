@@ -128,9 +128,10 @@
         "Pause")]
      (when paused?
        (list
-        [:input {:type :numeric
+        [:input {:type :number
                  :value manual-display-time
-                 :on {:blur [[:ax/set-display-time :event/target.value]]}}]))]]
+                 :step 1
+                 :on {:input [[:ax/set-display-time :event/target.value]]}}]))]]
    [:div.report
     [:section#race]
     [:section.info
