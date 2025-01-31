@@ -29,7 +29,7 @@
 (def half-ball-width (/ ball-width 2))
 (def start-line-x (+ language-labels-x half-ball-width 10))
 
-(def pre-startup-wait-ms 500)
+(def pre-startup-wait-ms 1000)
 
 (defn active-benchmarks [benchmarks]
   (sort-by #(.indexOf [:loops :fibonacci :levenshtein :hello-world] %)
@@ -186,7 +186,6 @@
            arena
            {:t (rt/t->elapsed-ms app-state now) ; Not used, but nice for logging
             :position-time position-time
-            :display-time display-time
             :display-time-str (.toFixed display-time 1)
             :app-state app-state
             :race-started? race-started?
@@ -351,7 +350,6 @@
                                    :min-track-time-ms min-track-time-ms)
                 display-time (rt/t->display-time start-state now)]
             {:new-state (assoc start-state
-                               :display-time display-time
                                :manual-display-time display-time)
              :effects [[:fx/run-sketch]]})
 
@@ -442,10 +440,6 @@
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
-
-(comment
-  (:display-time state)
-  :rcf)
 
 (defn- event-handler [replicant-data actions]
   (let [{:keys [new-state effects]} (reduce (fn [result action]
