@@ -9,7 +9,7 @@
 (defn now->display-time
   [{:keys [min-track-time-ms min-time pre-startup-wait-ms] :as app-state} now]
   (let [elapsed       (now->elapsed-ms app-state now)
-        position-time (max 0 (- elapsed pre-startup-wait-ms))]
+        position-time (- elapsed pre-startup-wait-ms)]
     (/ position-time
        (/ min-track-time-ms min-time))))
 

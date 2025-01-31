@@ -29,7 +29,7 @@
 (def half-ball-width (/ ball-width 2))
 (def start-line-x (+ language-labels-x half-ball-width 10))
 
-(def pre-startup-wait-ms 1500)
+(def pre-startup-wait-ms 500)
 
 (defn active-benchmarks [benchmarks]
   (sort-by #(.indexOf [:loops :fibonacci :levenshtein :hello-world] %)
@@ -344,23 +344,15 @@
                 min-track-time-ms (if (= "fastest-language" (:min-track-time-choice state))
                                     min-time
                                     (parse-long (:min-track-time-choice state)))
-                display-time 0]
-
-            (js/console.log "Initializing run-sketch!"
-                            "now=" now
-                            "min-time=" min-time
-                            "min-track-time-ms=" min-track-time-ms
-                            "display-time=" display-time)
-
-            {:new-state (assoc state
-                               :start-time now
-                               ;; CHANGED: No total-paused-time, also clear manual-display-time
-                               :manual-display-time nil
-                               :paused? false
-                               :min-time min-time
-                               :pre-startup-wait-ms pre-startup-wait-ms
-                               :min-track-time-ms min-track-time-ms
-                               :display-time display-time)
+                start-state (assoc state
+                                   :start-time now
+                                   :min-time min-time
+                                   :pre-startup-wait-ms pre-startup-wait-ms
+                                   :min-track-time-ms min-track-time-ms)
+                display-time (rt/now->display-time start-state now)]
+            {:new-state (assoc start-state
+                               :display-time display-time
+                               :manual-display-time display-time)
              :effects [[:fx/run-sketch]]})
 
           (= :ax/set-benchmark action-name)
@@ -388,25 +380,24 @@
           (= :ax/add-benchmark-run action-name)
           (let [runs (csv->benchmark-data (first args))
                 run-keys (sort > (keys runs))]
-            {:new-state (-> state
-                            (update :benchmark-runs merge runs))
+            {:new-state (update state :benchmark-runs merge runs)
              :effects [[:fx/dispatch nil [[:ax/select-benchmark-run (first run-keys)]]]]})
 
           (= :ax/select-benchmark-run action-name)
           (let [selected-run (first args)]
             (if (= "" selected-run)
               {:effects [[:fx/dispatch nil [[:ax/reset-benchmark-data]]]]}
-              {:new-state (-> state
-                              (assoc :benchmarks (get
-                                                  (:benchmark-runs state)
-                                                  selected-run))
-                              (assoc :selected-run selected-run))
+              {:new-state (assoc state
+                                 :benchmarks (get
+                                              (:benchmark-runs state)
+                                              selected-run)
+                                 :selected-run selected-run)
                :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}))
 
           (= :ax/reset-benchmark-data action-name)
-          {:new-state (-> state
-                          (assoc :benchmarks bd/benchmarks)
-                          (assoc :selected-run ""))
+          {:new-state (assoc state
+                             :benchmarks bd/benchmarks
+                             :selected-run "")
            :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
           (= :ax/fetch-gist action-name)
@@ -414,9 +405,9 @@
 
           (= :ax/pause-sketch action-name)
           (let [current-dt (rt/now->display-time state (js/performance.now))]
-            {:new-state (-> state
-                            (assoc :paused? true)
-                            (assoc :manual-display-time current-dt))})
+            {:new-state (assoc state
+                               :paused? true
+                               :manual-display-time current-dt)})
 
 
           (= :ax/resume-sketch action-name)
@@ -425,10 +416,9 @@
                 now (js/performance.now)
                 new-elapsed-ms (rt/display-time->elapsed-ms state mdt)
                 new-start-time (- now new-elapsed-ms)]
-            {:new-state (-> state
-                            (assoc :paused? false)
-                            (assoc :manual-display-time nil)
-                            (assoc :start-time new-start-time))})
+            {:new-state (assoc state
+                               :paused? false
+                               :start-time new-start-time)})
 
           (= :ax/set-display-time action-name)
           (let [new-display-time (parse-double (first args))]
