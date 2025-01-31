@@ -6,6 +6,7 @@
    [gadget.inspector :as inspector]
    [pez.benchmark-data :as bd]
    [pez.config :as conf]
+   [pez.throttle :as throttle]
    [pez.views :as views]
    [quil.core :as q]
    [quil.middleware :as m]
@@ -178,6 +179,7 @@
   (let [arena (arena (q/width) (q/height))
         race-started? (> elapsed-ms pre-startup-wait-ms)
         position-time (- elapsed-ms pre-startup-wait-ms)
+        display-time (/ position-time (/ min-track-time-ms min-time))
         first-lang (first (:languages draw-state))
         take-snapshot? (and snapshot-mode?
                             (= 1 (:runs first-lang))
@@ -186,8 +188,9 @@
            arena
            {:t elapsed-ms
             :position-time position-time
+            :display-time display-time
             :display-time-str (if position-time
-                                (.toFixed (/ position-time (/ min-track-time-ms min-time)) 1)
+                                (.toFixed display-time 1)
                                 "")
             :app-state app-state
             :race-started? race-started?
@@ -217,10 +220,14 @@
 
 (declare event-handler)
 
-(defn draw! [{:keys [benchmark-title middle-x width display-time-str
-                     take-snapshot? app-state] :as draw-state}]
+(defn draw! [{:keys [benchmark-title middle-x width display-time-str elapsed-ms
+                     take-snapshot? display-time app-state] :as draw-state}]
   (when take-snapshot?
     (event-handler {} [[:ax/take-snapshot app-state]]))
+  (event-handler {} [[:ax/throttle
+                      {:id ::elapsed
+                       :actions [[:ax/assoc :display-time display-time]]
+                       :timeout 1000}]])
   (q/background offwhite)
   (q/stroke-weight 0)
   (q/text-align :center)
@@ -331,12 +338,12 @@
 (defn- action-handler [{state :new-state :as result} replicant-data action]
   (when js/goog.DEBUG
     (def state state)
-    (js/console.debug "Triggered action" action))
+    #_(js/console.debug "Triggered action" action))
   (let [[action-name & args :as enriched] (enrich-action-from-app-state
                                            state
                                            (enrich-action-from-replicant-data
                                             replicant-data action))
-        _ (when js/goog.DEBUG (js/console.debug "Enriched action" enriched))
+       ; _ (when js/goog.DEBUG (js/console.debug "Enriched action" enriched))
         {:keys [new-state effects]}
         (cond
           (= :ax/set-hash action-name)
@@ -413,7 +420,12 @@
                                :total-paused-time (+ paused-time total-paused-time))})
 
           (= :ax/assoc action-name)
-          {:new-state (apply assoc state args)})]
+          {:new-state (apply assoc state args)
+           :effects [(into [:fx/console.log :ax/assoc] args)]}
+
+          (= :ax/throttle action-name)
+          {:effects [[:fx/throttle (first args)]]})]
+
     (cond-> result
       new-state (assoc :new-state new-state)
       effects (update :effects into effects))))
@@ -429,7 +441,7 @@
     (when effects
       (doseq [effect effects]
         (when js/goog.DEBUG
-          (js/console.debug "Triggered effect" effect))
+          #_(js/console.debug "Triggered effect" effect))
         (let [[effect-name & args] effect]
           (cond
             (= :fx/console.log effect-name) (apply js/console.log args)
@@ -440,10 +452,16 @@
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
             (= :fx/fetch-gist effect-name) (-> (js/fetch (first args))
                                                (.then #(.text %))
-                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))))))))
+                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))
+            (= :fx/throttle effect-name) (let [{:keys [id actions timeout]}
+                                               (first args)]
+                                           (throttle/dispatch!
+                                            {:id id
+                                             :timeout timeout
+                                             :thunk #(event-handler nil actions)}))))))))
 
 (comment
-  @!app-state
+  (:display-time state)
   :rcf)
 
 
@@ -482,9 +500,10 @@
   (d/set-dispatch! event-handler)
   (handle-hash @!app-state)
   (js/window.addEventListener "hashchange" #(handle-hash @!app-state))
-  (start-app!)
-  (event-handler nil [[:ax/run-sketch]]))
+  (start-app!))
 
 (defn ^{:export true
         :dev/before-load true} stop! []
   (js/console.log "stop"))
+
+
