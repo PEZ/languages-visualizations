@@ -174,8 +174,8 @@
         manual-display-time (:manual-display-time app-state)
         display-time (if paused?
                        (or manual-display-time
-                           (rt/now->display-time app-state now))
-                       (rt/now->display-time app-state now))
+                           (rt/t->display-time app-state now))
+                       (rt/t->display-time app-state now))
         elapsed-ms (rt/display-time->elapsed-ms app-state display-time)
         race-started? (>= elapsed-ms pre-startup-wait-ms)
         position-time (max 0 (- elapsed-ms pre-startup-wait-ms))
@@ -184,7 +184,7 @@
                             (not (:snapshot-taken? draw-state)))]
     (merge draw-state
            arena
-           {:t (rt/now->elapsed-ms app-state now) ; Not used, but nice for logging
+           {:t (rt/t->elapsed-ms app-state now) ; Not used, but nice for logging
             :position-time position-time
             :display-time display-time
             :display-time-str (.toFixed display-time 1)
@@ -349,7 +349,7 @@
                                    :min-time min-time
                                    :pre-startup-wait-ms pre-startup-wait-ms
                                    :min-track-time-ms min-track-time-ms)
-                display-time (rt/now->display-time start-state now)]
+                display-time (rt/t->display-time start-state now)]
             {:new-state (assoc start-state
                                :display-time display-time
                                :manual-display-time display-time)
@@ -404,7 +404,7 @@
           {:effects [[:fx/fetch-gist (first args)]]}
 
           (= :ax/pause-sketch action-name)
-          (let [current-dt (rt/now->display-time state (js/performance.now))]
+          (let [current-dt (rt/t->display-time state (js/performance.now))]
             {:new-state (assoc state
                                :paused? true
                                :manual-display-time current-dt)})
@@ -412,7 +412,7 @@
 
           (= :ax/resume-sketch action-name)
           (let [mdt (or (:manual-display-time state)
-                        (rt/now->display-time state (js/performance.now)))
+                        (rt/t->display-time state (js/performance.now)))
                 now (js/performance.now)
                 new-elapsed-ms (rt/display-time->elapsed-ms state mdt)
                 new-start-time (- now new-elapsed-ms)]
@@ -428,7 +428,7 @@
                 {:new-state (assoc state :manual-display-time new-display-time)}
                 (let [current-time (js/performance.now)
                       new-elapsed-ms (rt/display-time->elapsed-ms state new-display-time)
-                      time-shift (- new-elapsed-ms (rt/now->elapsed-ms state current-time))
+                      time-shift (- new-elapsed-ms (rt/t->elapsed-ms state current-time))
                       new-start-time (+ (- current-time new-elapsed-ms) time-shift)]
                   {:new-state (assoc state
                                      :start-time new-start-time)}))))
