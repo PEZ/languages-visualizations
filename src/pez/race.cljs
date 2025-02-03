@@ -280,20 +280,32 @@
 (defn csv->benchmark-data [csv-text]
   (let [lines (as-> csv-text $
                 (string/split $ #"\n")
-                (remove (partial re-find #"^benchmark,timestamp|^\s*$") $))
-        rows (map #(string/split % #",") lines)]
+                (remove (partial re-find #"^\s*$") $))
+        header (first lines)
+        headers (->> (string/split header #",")
+                     (map keyword))
+        rows (map #(zipmap headers (string/split % #",")) (rest lines))]
     (try
-      (reduce (fn [acc [benchmark timestamp commit-sha
-                        _is-checked user model ram os
-                        arch language run-ms mean-ms
-                        std-dev-ms _min-ms _max-ms runs]]
+      (reduce (fn [acc {:keys [benchmark timestamp
+                               user model ram language
+                               std-dev-ms runs] :as row}]
                 (let [language-slug (string/replace language #"[^a-zA-Z0-9]" "_")
-                      run-key (str user "," timestamp "," model "," ram "," os "," arch "," commit-sha "," run-ms)]
-                  (assoc-in acc
-                            [run-key language-slug (keyword benchmark)]
-                            {:mean (parse-double mean-ms)
-                             :stddev (parse-double std-dev-ms)
-                             :runs (parse-long runs)})))
+                      run-key (str user ", " timestamp ", " model ", " ram)]
+                  (-> acc
+                      (assoc-in [run-key :measurements language-slug (keyword benchmark)]
+                                {:mean (parse-double
+                                        (or (:mean-ms row)
+                                            (:mean_ms row)))
+                                 :stddev (parse-double std-dev-ms)
+                                 :runs (parse-long runs)})
+                      (assoc-in [run-key :meta] (dissoc row
+                                                        :language :runs :benchmark
+                                                        :run-ms :run_ms
+                                                        :is-checked :is_checked
+                                                        :mean-ms :mean_ms
+                                                        :min-ms :min_ms
+                                                        :max-ms :max_ms
+                                                        :std-dev-ms)))))
               {}
               rows)
       (catch :default e
@@ -385,9 +397,9 @@
             (if (= "" selected-run)
               {:effects [[:fx/dispatch nil [[:ax/reset-benchmark-data]]]]}
               {:new-state (assoc state
-                                 :benchmarks (get
+                                 :benchmarks (get-in
                                               (:benchmark-runs state)
-                                              selected-run)
+                                              [selected-run :measurements])
                                  :selected-run selected-run)
                :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}))
 
