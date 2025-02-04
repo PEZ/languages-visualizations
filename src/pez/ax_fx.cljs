@@ -65,7 +65,8 @@
                 display-time (race/t->display-time start-state now)]
             {:new-state (assoc start-state
                                :manual-display-time display-time)
-             :effects [[:fx/run-sketch]]})
+             :effects [[:fx/dispatch nil [[:ax/pause-sketch]]]
+                       [:fx/run-sketch]]})
 
           (= :ax/set-benchmark action-name)
           {:new-state (assoc state :benchmark (keyword (first args)))
