@@ -11,16 +11,15 @@
   (- t start-time))
 
 (defn t->display-time
-  [{:keys [min-track-time-ms min-time pre-startup-wait-ms] :as app-state} t]
-  (let [elapsed       (t->elapsed-ms app-state t)
-        position-time (- elapsed pre-startup-wait-ms)]
-    (/ position-time
+  [{:keys [min-track-time-ms min-time] :as app-state} t]
+  (let [elapsed       (t->elapsed-ms app-state t)]
+    (/ elapsed
        (/ min-track-time-ms min-time))))
 
 (defn display-time->elapsed-ms
-  [{:keys [min-track-time-ms min-time pre-startup-wait-ms]} display-time]
+  [{:keys [min-track-time-ms min-time]} display-time]
   (let [position-time (* min-track-time-ms (/ display-time min-time))
-        elapsed       (+ pre-startup-wait-ms position-time)]
+        elapsed       position-time]
     elapsed))
 
 (def drawing-width 700)
@@ -28,8 +27,6 @@
 (def ball-width 44)
 (def half-ball-width (/ ball-width 2))
 (def start-line-x (+ language-labels-x half-ball-width 10))
-
-(def pre-startup-wait-ms 1000)
 
 (defn dims [{:keys [app-el] :as app-state}]
   [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (benchmark/sorted-languages app-state))))])
@@ -41,7 +38,6 @@
      :track-length (- finish-line-x start-line-x)
      :middle-x (/ width 2)
      :middle-y (/ height 2)}))
-
 
 (defn setup [{:keys [benchmark add-overlaps? min-time] :as app-state}]
   (q/frame-rate 120)
@@ -86,8 +82,8 @@
                        (or manual-display-time 0)
                        (t->display-time app-state now))
         elapsed-ms (display-time->elapsed-ms app-state display-time)
-        race-started? (>= elapsed-ms pre-startup-wait-ms)
-        position-time (max 0 (- elapsed-ms pre-startup-wait-ms))
+        race-started? true
+        position-time elapsed-ms
         take-snapshot? (and (:snapshot-mode? app-state)
                             (= 1 (:runs (first (:languages draw-state))))
                             (not (:snapshot-taken? draw-state)))]
