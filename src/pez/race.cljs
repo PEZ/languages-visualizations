@@ -37,40 +37,6 @@
      :middle-x (/ width 2)
      :middle-y (/ height 2)}))
 
-(defn setup [{:keys [benchmark add-overlaps? min-time] :as app-state}]
-  (q/frame-rate 120)
-  (q/image-mode :center)
-  (let [arena (arena (q/width) (q/height))]
-    (merge arena
-           {:t 0
-            :display-time-str ""
-            :app-state app-state
-            :benchmark benchmark
-            :benchmark-title (benchmark conf/benchmark-names)
-            :languages (mapv (fn [i lang]
-                               (let [{:keys [mean stddev speed-mean]} (get lang benchmark)
-                                     speed (/ min-time speed-mean)]
-                                 (merge lang
-                                        {:speed speed
-                                         :runs 0
-                                         :track-x start-line-x
-                                         :greeting "Hello, World!"
-                                         :benchmark-time mean
-                                         :benchmark-time-str (str (-> mean (.toFixed 1)))
-                                         :std-dev-str (str (-> stddev (.toFixed 1)))
-                                         :x 0
-                                         :y (+ 110 (* i 45))
-                                         :logo-image (q/load-image (:logo lang))})))
-                             (range)
-                             (if add-overlaps?
-                               (benchmark/add-overlaps app-state)
-                               (benchmark/sorted-languages app-state)))})))
-
-(comment
-  (setup :loops)
-  (-> 234.0 (.toFixed 1) (.padStart 7))
-  :rcf)
-
 (defn update-draw-state [draw-state app-state now]
   (let [arena (arena (q/width) (q/height))
         paused? (:paused? app-state)
@@ -99,9 +65,43 @@
                                  x (if (> loop-distance (:track-length arena))
                                      (- (* 2 (:track-length arena)) loop-distance)
                                      loop-distance)]
-                             {:track-x (+ start-line-x x)
+                             {:x (+ start-line-x x)
                               :runs (quot distance (:track-length arena))})))
                   (:languages draw-state))})))
+
+(defn setup [{:keys [benchmark add-overlaps? min-time] :as app-state}]
+  (q/frame-rate 120)
+  (q/image-mode :center)
+  (let [arena (arena (q/width) (q/height))]
+    (merge arena
+           {:t 0
+            :display-time-str ""
+            :app-state app-state
+            :benchmark benchmark
+            :benchmark-title (benchmark conf/benchmark-names)
+            :languages (mapv (fn [i lang]
+                               (let [{:keys [mean stddev speed-mean]} (get lang benchmark)
+                                     speed (/ min-time speed-mean)]
+                                 (merge lang
+                                        {:speed speed
+                                         :runs 0
+                                         :greeting "Hello, World!"
+                                         :benchmark-time mean
+                                         :benchmark-time-str (str (-> mean (.toFixed 1)))
+                                         :std-dev-str (str (-> stddev (.toFixed 1)))
+                                         :x start-line-x
+                                         :y (+ 110 (* i 45))
+                                         :logo-image (q/load-image (:logo lang))})))
+                             (range)
+                             (if add-overlaps?
+                               (benchmark/add-overlaps app-state)
+                               (benchmark/sorted-languages app-state)))})))
+
+(comment
+  (setup :loops)
+  (-> 234.0 (.toFixed 1) (.padStart 7))
+  :rcf)
+
 
 (comment
   (q/no-loop)
@@ -134,7 +134,7 @@
   (q/text display-time-str (- width 5) 65)
   (q/text-size 14)
   (doseq [lang (:languages draw-state)]
-    (let [{:keys [language-name logo-image y track-x runs benchmark-time-str std-dev-str]} lang]
+    (let [{:keys [language-name logo-image x y runs benchmark-time-str std-dev-str]} lang]
       (q/fill darkgrey)
       (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
       (q/text-num runs (- width 5) y)
@@ -143,7 +143,7 @@
       (q/fill darkgrey)
       (q/text std-dev-str 50 (- y 20))
       (q/text benchmark-time-str language-labels-x (- y 20))
-      (q/image logo-image track-x y ball-width ball-width))))
+      (q/image logo-image x y ball-width ball-width))))
 
 (defn save-image! [{:keys [benchmark filter-champions?]}]
   (let [iso-date (.substring (.toISOString (js/Date.)) 0 10)]
