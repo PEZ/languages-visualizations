@@ -12,15 +12,13 @@
 
 (defn t->display-time
   [{:keys [min-track-time-ms min-time] :as app-state} t]
-  (let [elapsed       (t->elapsed-ms app-state t)]
+  (let [elapsed (t->elapsed-ms app-state t)]
     (/ elapsed
        (/ min-track-time-ms min-time))))
 
 (defn display-time->elapsed-ms
   [{:keys [min-track-time-ms min-time]} display-time]
-  (let [position-time (* min-track-time-ms (/ display-time min-time))
-        elapsed       position-time]
-    elapsed))
+  (* min-track-time-ms (/ display-time min-time)))
 
 (def drawing-width 700)
 (def language-labels-x 140)
@@ -81,14 +79,12 @@
                        (or manual-display-time 0)
                        (t->display-time app-state now))
         elapsed-ms (display-time->elapsed-ms app-state display-time)
-        position-time elapsed-ms
         take-snapshot? (and (:snapshot-mode? app-state)
                             (= 1 (:runs (first (:languages draw-state))))
                             (not (:snapshot-taken? draw-state)))]
     (merge draw-state
            arena
            {:t (t->elapsed-ms app-state now) ; Not used, but nice for logging
-            :position-time position-time
             :display-time-str (.toFixed display-time 1)
             :app-state app-state
             :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
@@ -96,7 +92,7 @@
             :languages
             (mapv (fn [{:keys [speed] :as lang}]
                     (merge lang
-                           (let [normalized-time (/ position-time (:min-track-time-ms app-state))
+                           (let [normalized-time (/ elapsed-ms (:min-track-time-ms app-state))
                                  scaled-time (* normalized-time speed)
                                  distance (* (:track-length arena) scaled-time)
                                  loop-distance (mod distance (* 2 (:track-length arena)))
