@@ -61,12 +61,11 @@
                 start-state (assoc state
                                    :start-time now
                                    :min-time min-time
-                                   :min-track-time-ms min-track-time-ms)
-                display-time (race/t->display-time start-state now)]
+                                   :min-track-time-ms min-track-time-ms)]
             {:new-state (assoc start-state
-                               :manual-display-time display-time)
-             :effects [[:fx/dispatch nil [[:ax/pause-sketch]]]
-                       [:fx/run-sketch]]})
+                               :paused? true
+                               :manual-display-time min-time)
+             :effects [[:fx/run-sketch]]})
 
           (= :ax/set-benchmark action-name)
           {:new-state (assoc state :benchmark (keyword (first args)))
