@@ -6,7 +6,7 @@
  {:app {:target :browser
         :output-dir "public/js/compiled"
         :asset-path "/js/compiled"
-        :modules {:race {:init-fn pez.race/init!}}
+        :modules {:app {:init-fn pez.app/init!}}
         :dev {:compiler-options
               {:closure-defines {'goog.DEBUG true}}}}
   :test
