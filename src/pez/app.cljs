@@ -3,6 +3,7 @@
    [clojure.string :as string]
    [clojure.walk :as walk]
    [gadget.inspector :as inspector]
+   [pez.benchmark :as benchmark]
    [pez.benchmark-data :as bd]
    [pez.db :as db]
    [pez.race :as race]
@@ -19,40 +20,6 @@
                           (js/encodeURIComponent text)
                           "&url="
                           (js/encodeURIComponent url)))))
-
-(defn csv->benchmark-data [csv-text]
-  (let [lines (as-> csv-text $
-                (string/split $ #"\n")
-                (remove (partial re-find #"^\s*$") $))
-        header (first lines)
-        headers (->> (string/split header #",")
-                     (map keyword))
-        rows (map #(zipmap headers (string/split % #",")) (rest lines))]
-    (try
-      (reduce (fn [acc {:keys [benchmark timestamp
-                               user model ram language
-                               std-dev-ms runs] :as row}]
-                (let [language-slug (string/replace language #"[^a-zA-Z0-9]" "_")
-                      run-key (str user ", " timestamp ", " model ", " ram)]
-                  (-> acc
-                      (assoc-in [run-key :measurements language-slug (keyword benchmark)]
-                                {:mean (parse-double
-                                        (or (:mean-ms row)
-                                            (:mean_ms row)))
-                                 :stddev (parse-double std-dev-ms)
-                                 :runs (parse-long runs)})
-                      (assoc-in [run-key :meta] (dissoc row
-                                                        :language :runs :benchmark
-                                                        :run-ms :run_ms
-                                                        :is-checked :is_checked
-                                                        :mean-ms :mean_ms
-                                                        :min-ms :min_ms
-                                                        :max-ms :max_ms
-                                                        :std-dev-ms)))))
-              {}
-              rows)
-      (catch :default e
-        (js/alert (str "Error while parsing CSV. " e))))))
 
 (defn- enrich-action-from-replicant-data [{:replicant/keys [js-event node]} actions]
   (walk/postwalk
@@ -93,7 +60,7 @@
 
           (= :ax/run-sketch action-name)
           (let [now (js/performance.now)
-                min-time (apply min (race/benchmark-times state))
+                min-time (apply min (benchmark/benchmark-times state))
                 min-track-time-ms (if (= "fastest-language" (:min-track-time-choice state))
                                     min-time
                                     (parse-long (:min-track-time-choice state)))
@@ -130,7 +97,7 @@
           {:effects [[:fx/share (first args) (second args)]]}
 
           (= :ax/add-benchmark-run action-name)
-          (let [runs (csv->benchmark-data (first args))
+          (let [runs (benchmark/csv->benchmark-data (first args))
                 run-keys (sort > (keys runs))]
             {:new-state (update state :benchmark-runs merge runs)
              :effects [[:fx/dispatch nil [[:ax/select-benchmark-run (first run-keys)]]]]})
@@ -219,14 +186,14 @@
                                                (.then #(event-handler {} [[:ax/add-benchmark-run %]])))))))))
 
 (defn render-app! [el {:keys [benchmarks] :as state}]
-  (d/render el (views/app state (race/active-benchmarks benchmarks))))
+  (d/render el (views/app state (benchmark/active-benchmarks benchmarks))))
 
 (defn handle-hash [{:keys [benchmarks]}]
   (let [location-hash (-> js/window .-location .-hash)
         benchmark (when (seq location-hash)
                     (keyword (subs location-hash 1)))]
     (cond
-      (contains? (set (race/active-benchmarks benchmarks)) benchmark)
+      (contains? (set (benchmark/active-benchmarks benchmarks)) benchmark)
       (event-handler {} [[:ax/set-benchmark benchmark]])
 
       (string/starts-with? location-hash "#https://gist.github.com")

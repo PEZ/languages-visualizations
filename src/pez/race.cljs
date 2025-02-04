@@ -1,6 +1,6 @@
 (ns pez.race
   (:require
-   [clojure.set :as set]
+   [pez.benchmark :as benchmark]
    [pez.config :as conf]
    [pez.db :as db]
    [quil.core :as q]
@@ -31,75 +31,8 @@
 
 (def pre-startup-wait-ms 1000)
 
-(defn active-benchmarks [benchmarks]
-  (sort-by #(.indexOf [:loops :fibonacci :levenshtein :hello-world] %)
-           (reduce-kv (fn [acc _k v]
-                        (into acc (remove (fn [benchmark]
-                                            (.endsWith (name benchmark) "-hello-world"))
-                                          (keys v))))
-                      #{}
-                      benchmarks)))
-
-(defn benchmark-times [{:keys [benchmark benchmarks]}]
-  (let [benchmarks (filter (comp benchmark second) benchmarks)]
-    (->> benchmarks
-         vals
-         (map benchmark)
-         (map :mean))))
-
-(comment
-  (benchmark-times {:benchmark :loops})
-  :rcf)
-
-(defn languages [{:keys [benchmarks]}]
-  (mapv (fn [{:keys [language-file-name] :as lang}]
-          (merge lang
-                 (benchmarks language-file-name)))
-        conf/languages))
-
-(defn fastest-implementation [{:keys [benchmark]} implementations]
-  (apply min-key benchmark implementations))
-
-(defn best-languages [{:keys [benchmark filter-champions?] :as app-state}]
-  (let [langs (languages app-state)]
-    (if filter-champions?
-      (->> langs
-           (group-by :language)
-           vals
-           (map (fn [champions]
-                  (fastest-implementation app-state (filter #(get-in % [benchmark :mean]) champions))))
-           (filter (fn [lang]
-                     (get-in lang [benchmark :mean]))))
-      (filter (fn [lang]
-                (get-in lang [benchmark :mean]))
-              langs))))
-
-(comment
-  (best-languages {:benchmark :loops})
-  :rcf)
-
-(defn- add-default-speed-mean [benchmark lang]
-  (assoc-in lang [benchmark :speed-mean]
-            (get-in lang [benchmark :mean])))
-
-(defn sorted-languages [{:keys [benchmark] :as app-state}]
-  (map (partial add-default-speed-mean benchmark)
-       (sort-by #(get-in % [benchmark :mean]) (best-languages app-state))))
-
-(defn find-missing-languages [benchmarks]
-  (let [config-languages (set (map :language-file-name conf/languages))
-        benchmark-languages (set (keys benchmarks))]
-    (set/difference benchmark-languages config-languages)))
-
-(comment
-  (languages (:benchmarks @db/!app-state))
-  (sorted-languages {:benchmark :loops
-                     :benchmarks @db/!app-state})
-  (find-missing-languages (:benchmarks @db/!app-state))
-  :rcf)
-
 (defn dims [{:keys [app-el] :as app-state}]
-  [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (sorted-languages app-state))))])
+  [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (benchmark/sorted-languages app-state))))])
 
 (defn arena [width height]
   (let [finish-line-x (- width half-ball-width 5)]
@@ -109,29 +42,6 @@
      :middle-x (/ width 2)
      :middle-y (/ height 2)}))
 
-(defn- add-overlaps [{:keys [benchmark] :as app-state}]
-  (let [langs-with-stats (filter #(get-in % [benchmark :mean])
-                                 (sorted-languages app-state))
-        pairs (partition 2 1 langs-with-stats)]
-    (reduce (fn [langs [lang1 lang2]]
-              (let [mean1 (get-in (first (filter #(= % lang1) langs)) [benchmark :speed-mean])
-                    std-dev1 (get-in lang1 [benchmark :stddev])
-                    mean2 (get-in lang2 [benchmark :mean])
-                    std-dev2 (get-in lang2 [benchmark :stddev])
-                    interval1 [(max 0 (- mean1 std-dev1)) (+ mean1 std-dev1)]
-                    interval2 [(max 0 (- mean2 std-dev2)) (+ mean2 std-dev2)]
-                    overlap? (and (<= (first interval1) (second interval2))
-                                  (>= (second interval1) (first interval2)))]
-                (if overlap?
-                  (let [shared-mean mean2]
-                    (mapv #(if (or (= % lang1)
-                                   (= (get-in % [benchmark :speed-mean]) mean1))
-                             (assoc-in % [benchmark :speed-mean] shared-mean)
-                             %)
-                          langs))
-                  langs)))
-            langs-with-stats
-            pairs)))
 
 (defn setup [{:keys [benchmark add-overlaps? min-time] :as app-state}]
   (q/frame-rate 120)
@@ -160,8 +70,8 @@
                                          :logo-image (q/load-image (:logo lang))})))
                              (range)
                              (if add-overlaps?
-                               (add-overlaps app-state)
-                               (sorted-languages app-state)))})))
+                               (benchmark/add-overlaps app-state)
+                               (benchmark/sorted-languages app-state)))})))
 
 (comment
   (setup :loops)
