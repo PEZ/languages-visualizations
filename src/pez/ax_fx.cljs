@@ -76,9 +76,6 @@
           {:new-state (assoc state :min-track-time-choice (first args))
            :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
-          (= :ax/toggle-snapshot-mode action-name)
-          {:new-state (update state :snapshot-mode? not)}
-
           (= :ax/toggle-champions-mode action-name)
           {:new-state (-> state (update :filter-champions? not))
            :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}

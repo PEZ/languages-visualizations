@@ -44,17 +44,12 @@
         display-time (if paused?
                        (or manual-display-time 0)
                        (t->display-time app-state now))
-        elapsed-ms (display-time->elapsed-ms app-state display-time)
-        take-snapshot? (and (:snapshot-mode? app-state)
-                            (= 1 (:runs (first (:languages draw-state))))
-                            (not (:snapshot-taken? draw-state)))]
+        elapsed-ms (display-time->elapsed-ms app-state display-time)]
     (merge draw-state
            arena
            {:t (t->elapsed-ms app-state now) ; Not used, but nice for logging
             :display-time-str (.toFixed display-time 1)
             :app-state app-state
-            :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
-            :take-snapshot? take-snapshot?
             :languages
             (mapv (fn [{:keys [speed] :as lang}]
                     (merge lang
@@ -111,12 +106,7 @@
 (def darkgrey 120)
 (def black 40)
 
-(declare event-handler)
-
-(defn draw! [{:keys [benchmark-title middle-x width display-time-str
-                     take-snapshot? app-state] :as draw-state}]
-  (when take-snapshot?
-    (event-handler {} [[:ax/take-snapshot app-state]]))
+(defn draw! [{:keys [benchmark-title middle-x width display-time-str] :as draw-state}] 
   (q/background offwhite)
   (q/stroke-weight 0)
   (q/text-align :center)

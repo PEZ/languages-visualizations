@@ -81,10 +81,9 @@
    [:p "Some languages have several ways to compile and package the executables. I call them “champions” for their language. When " [:strong "Chamions"] " mode is enabled only the best champion is selected for a given benchmark. E.g. Clojure is represented by “Clojure” and “Clojure Native”, where the former is running the Clojure program using the " [:code "java"] " command, and the latter is a compiled binary (using GraalVM native-image). Unless something really strange is going on, only “Clojure Native” will ever show up in the visualizations, because Clojure takes a lot of time to start in a regular JVM environment. (Which typically doesn't matter in the real world, and all that.)"]
    [:blockquote "Something strange " [:em "is"] " going on with “Kotlin”, where the “Kotlin Native” " [:button {:on {:click [[:ax/set-hash "loops"]]}} "loops"] " results are very slow, and never beats the “Kotlin JVM” results (not even close)."]
    [:h3 "Usage tips"]
-   [:p "The " [:strong "Execution time"] " animation speed setting makes the balls/logos travel one distance across the track in the same time as they executed the active benchmark."]
-   [:p "Save the winning frame as a PNG by enabling " [:strong "Auto-snapshot winner"] ". Then switch benchmark to make it restart the race. The snapshot will be taken when the fastest language reaches the right wall the first time."]))
+   [:p "The " [:strong "Execution time"] " animation speed setting makes the balls/logos travel one distance across the track in the same time as they executed the active benchmark."]))
 
-(defn app [{:keys [benchmark snapshot-mode? filter-champions?
+(defn app [{:keys [benchmark filter-champions?
                    add-overlaps? min-track-time-ms paused?
                    manual-display-time] :as app-state}
            active-benchmarks]
@@ -114,11 +113,6 @@
       [:span "Champions"]]
      [:button {:on {:click [[:ax/take-snapshot benchmark]]}}
       "Snapshot"]
-     [:label.benchmark-label
-      [:input {:type :checkbox
-               :checked snapshot-mode?
-               :on {:change [[:ax/toggle-snapshot-mode snapshot-mode?]]}}]
-      [:span "Auto-snapshot winner"]]
      [:label.benchmark-label
       "ms/track length: "
       [:select {:value min-track-time-ms
