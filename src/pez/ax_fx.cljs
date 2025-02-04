@@ -61,7 +61,6 @@
                 start-state (assoc state
                                    :start-time now
                                    :min-time min-time
-                                   :pre-startup-wait-ms race/pre-startup-wait-ms
                                    :min-track-time-ms min-track-time-ms)
                 display-time (race/t->display-time start-state now)]
             {:new-state (assoc start-state

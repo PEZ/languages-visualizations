@@ -48,7 +48,6 @@
             :display-time-str ""
             :app-state app-state
             :benchmark benchmark
-            :race-started? false
             :benchmark-title (benchmark conf/benchmark-names)
             :languages (mapv (fn [i lang]
                                (let [{:keys [mean stddev speed-mean]} (get lang benchmark)
@@ -82,7 +81,6 @@
                        (or manual-display-time 0)
                        (t->display-time app-state now))
         elapsed-ms (display-time->elapsed-ms app-state display-time)
-        race-started? true
         position-time elapsed-ms
         take-snapshot? (and (:snapshot-mode? app-state)
                             (= 1 (:runs (first (:languages draw-state))))
@@ -93,7 +91,6 @@
             :position-time position-time
             :display-time-str (.toFixed display-time 1)
             :app-state app-state
-            :race-started? race-started?
             :snapshot-taken? (or (:snapshot-taken? draw-state) take-snapshot?)
             :take-snapshot? take-snapshot?
             :languages
