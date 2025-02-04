@@ -27,7 +27,7 @@
 (def start-line-x (+ language-labels-x half-ball-width 10))
 
 (defn dims [{:keys [app-el] :as app-state}]
-  [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (benchmark/sorted-languages app-state))))])
+  [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (benchmark/sorted-languages < app-state))))])
 
 (defn arena [width height]
   (let [finish-line-x (- width half-ball-width 5)]
@@ -90,7 +90,7 @@
                              (range)
                              (if add-overlaps?
                                (benchmark/add-overlaps app-state)
-                               (benchmark/sorted-languages app-state)))})))
+                               (benchmark/sorted-languages < app-state)))})))
 
 (comment
   (setup :loops)

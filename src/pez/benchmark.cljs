@@ -80,46 +80,39 @@
   (assoc-in lang [benchmark :speed-mean]
             (get-in lang [benchmark :mean])))
 
-(defn sorted-languages [{:keys [benchmark] :as app-state}]
+(defn sorted-languages [cmp {:keys [benchmark] :as app-state}]
   (map (partial add-default-speed-mean benchmark)
-       (sort-by #(get-in % [benchmark :mean]) (best-languages app-state))))
+       (sort-by #(get-in % [benchmark :mean]) cmp (best-languages app-state))))
 
 (defn find-missing-languages [benchmarks]
   (let [config-languages (set (map :language-file-name conf/languages))
         benchmark-languages (set (keys benchmarks))]
     (set/difference benchmark-languages config-languages)))
 
-(comment
-  (require '[pez.db :as db])
-  (languages (:benchmarks @db/!app-state))
-  (sorted-languages {:benchmark :loops
-                     :benchmarks @db/!app-state})
-  (find-missing-languages (:benchmarks @db/!app-state))
-  :rcf)
-
 (defn add-overlaps [{:keys [benchmark] :as app-state}]
   (let [langs-with-stats (filter #(get-in % [benchmark :mean])
-                                 (sorted-languages app-state))
+                                 (sorted-languages > app-state))
         pairs (partition 2 1 langs-with-stats)]
-    (reduce (fn [langs [lang1 lang2]]
-              (let [mean1 (get-in (first (filter #(= % lang1) langs)) [benchmark :speed-mean])
-                    std-dev1 (get-in lang1 [benchmark :stddev])
-                    mean2 (get-in lang2 [benchmark :mean])
-                    std-dev2 (get-in lang2 [benchmark :stddev])
-                    interval1 [(max 0 (- mean1 std-dev1)) (+ mean1 std-dev1)]
-                    interval2 [(max 0 (- mean2 std-dev2)) (+ mean2 std-dev2)]
-                    overlap? (and (<= (first interval1) (second interval2))
-                                  (>= (second interval1) (first interval2)))]
-                (if overlap?
-                  (let [shared-mean mean2]
-                    (mapv #(if (or (= % lang1)
-                                   (= (get-in % [benchmark :speed-mean]) mean1))
-                             (assoc-in % [benchmark :speed-mean] shared-mean)
-                             %)
-                          langs))
-                  langs)))
-            langs-with-stats
-            pairs)))
+    (reverse
+     (reduce (fn [langs [lang1 lang2]]
+               (let [mean1 (get-in (first (filter #(= % lang1) langs)) [benchmark :speed-mean])
+                     std-dev1 (get-in lang1 [benchmark :stddev])
+                     mean2 (get-in lang2 [benchmark :mean])
+                     std-dev2 (get-in lang2 [benchmark :stddev])
+                     interval1 [(max 0 (- mean1 std-dev1)) (+ mean1 std-dev1)]
+                     interval2 [(max 0 (- mean2 std-dev2)) (+ mean2 std-dev2)]
+                     overlap? (and (<= (first interval1) (second interval2))
+                                   (>= (second interval1) (first interval2)))]
+                 (if overlap?
+                   (let [shared-mean mean2]
+                     (mapv #(if (or (= % lang1)
+                                    (= (get-in % [benchmark :speed-mean]) mean1))
+                              (assoc-in % [benchmark :speed-mean] shared-mean)
+                              %)
+                           langs))
+                   langs)))
+             langs-with-stats
+             pairs))))
 
 (defn active-benchmarks [benchmarks]
   (sort-by #(.indexOf [:loops :fibonacci :levenshtein :hello-world] %)
