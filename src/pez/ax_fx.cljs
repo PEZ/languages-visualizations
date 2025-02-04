@@ -38,6 +38,14 @@
         _ (when js/goog.DEBUG (js/console.debug "Enriched action" enriched))
         {:keys [new-state effects]}
         (cond
+          (= :ax/init action-name)
+          (let [proxied-gist-url (str "https://api.allorigins.win/raw?url="
+                                      (js/encodeURIComponent (str (:default-gist state) "/raw")))]
+            {:effects [[:fx/fetch-gist proxied-gist-url [[:ax/handle-hash]]]]})
+
+          (= :ax/handle-hash action-name)
+          {:effects [[:fx/handle-hash state]]}
+
           (= :ax/set-hash action-name)
           {:effects [[:fx/set-hash (first args)]]}
 
@@ -101,7 +109,7 @@
 
           (= :ax/reset-benchmark-data action-name)
           {:new-state (assoc state
-                             :benchmarks bd/benchmarks
+                             :benchmarks bd/legacy
                              :selected-run "")
            :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
@@ -162,11 +170,13 @@
         (let [[effect-name & args] effect]
           (cond
             (= :fx/console.log effect-name) (apply js/console.log args)
+            (= :fx/handle-hash effect-name) (browser/handle-hash event-handler (first args))
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
             (= :fx/run-sketch effect-name) (race/run-sketch!)
             (= :fx/take-snapshot effect-name) (race/save-image! (first args))
-            (= :fx/share effect-name) (apply browser/share! args)
+            (= :fx/share effect-name) (apply browser/share! event-handler args)
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
             (= :fx/fetch-gist effect-name) (-> (js/fetch (first args))
                                                (.then #(.text %))
-                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]])))))))))
+                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]]))
+                                               (.then #(event-handler {} (second args))))))))))

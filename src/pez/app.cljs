@@ -1,6 +1,5 @@
 (ns pez.app
   (:require
-   [clojure.string :as string]
    [gadget.inspector :as inspector]
    [pez.ax-fx :as ax-fx]
    [pez.benchmark :as benchmark]
@@ -13,21 +12,6 @@
 
 (defn render-app! [el {:keys [benchmarks] :as state}]
   (d/render el (views/app state (benchmark/active-benchmarks benchmarks))))
-
-(defn handle-hash [{:keys [benchmarks]}]
-  (let [location-hash (-> js/window .-location .-hash)
-        benchmark (when (seq location-hash)
-                    (keyword (subs location-hash 1)))]
-    (cond
-      (contains? (set (benchmark/active-benchmarks benchmarks)) benchmark)
-      (ax-fx/event-handler {} [[:ax/set-benchmark benchmark]])
-
-      (string/starts-with? location-hash "#https://gist.github.com")
-      (ax-fx/event-handler {} [[:ax/fetch-gist (str "https://api.allorigins.win/raw?url="
-                                              (js/encodeURIComponent (str (subs location-hash 1) "/raw")))]])
-
-      :else
-      (ax-fx/event-handler {} [[:ax/set-benchmark :loops]]))))
 
 (defn ^:dev/after-load start-app! []
   (js/console.log "start")
@@ -44,8 +28,8 @@
                                 (let [[w h] (race/dims @db/!app-state)]
                                   (race/resize-sketch! w h))))
   (d/set-dispatch! ax-fx/event-handler)
-  (handle-hash @db/!app-state)
-  (js/window.addEventListener "hashchange" #(handle-hash @db/!app-state))
+  (ax-fx/event-handler {} [[:ax/init]])
+  (js/window.addEventListener "hashchange" #(ax-fx/event-handler {} [[:ax/handle-hash]]))
   (start-app!))
 
 (defn ^{:export true

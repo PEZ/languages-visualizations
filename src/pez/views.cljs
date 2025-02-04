@@ -4,40 +4,39 @@
    [pez.benchmark-data :as bd]))
 
 (defn- benchmark-runs-view [{:keys [benchmark-runs selected-run meta-visible?]}]
-  (when benchmark-runs
-    (list
-     [:div.benchmark-options {:replicant/key "benchmark-runs-view"
-                              :style {:max-height "60px"
-                                      :transition "max-height 0.35s"
-                                      :overflow :hidden}
-                              :replicant/mounting {:style {:max-height 0}}
-                              :replicant/unmounting {:style {:max-height 0}}}
-      [:select {:on {:change [[:ax/select-benchmark-run :event/target.value]]}}
-       [:option {:value ""
-                 :selected (= selected-run "")}
-        "Default run"]
-       (map (fn [run-key]
-              [:option {:value run-key
-                        :selected (= selected-run run-key)} run-key])
-            (sort > (keys benchmark-runs)))]
+  (list
+   [:div.benchmark-options {:replicant/key "benchmark-runs-view"
+                            :style {:max-height "60px"
+                                    :transition "max-height 0.35s"
+                                    :overflow :hidden}
+                            :replicant/mounting {:style {:max-height 0}}
+                            :replicant/unmounting {:style {:max-height 0}}}
+    [:select {:on {:change [[:ax/select-benchmark-run :event/target.value]]}}
+     (map (fn [run-key]
+            [:option {:value run-key
+                      :selected (= selected-run run-key)} run-key])
+          (sort > (keys benchmark-runs)))
+     [:option {:value ""
+               :selected (= selected-run "")}
+      "Legacy run (start times included)"]]
 
 
 
-      [:button {:on {:click [[:ax/assoc :meta-visible? (not meta-visible?)]]}}
-       "ℹ︎"]]
-     (when meta-visible?
-       [:div {:replicant/key "benchmark-runs-info"
-              :style {:max-height "300px"
-                      :transition "max-height 0.35s"
-                      :overflow-y :hidden}
-              :replicant/mounting {:style {:max-height 0}}
-              :replicant/unmounting {:style {:max-height 0}}}
-        [:table
-         [:tbody
-          (for [[k v] (get-in benchmark-runs [selected-run :meta])]
-            [:tr
-             [:td [:strong (name k)]]
-             [:td (str v)]])]]]))))
+    [:button {:on {:click [[:ax/assoc :meta-visible? (not meta-visible?)]]}}
+     "ℹ︎"]]
+   (when meta-visible?
+     [:div {:replicant/key "benchmark-runs-info"
+            :style {:max-height "300px"
+                    :transition "max-height 0.35s"
+                    :overflow-y :hidden}
+            :replicant/mounting {:style {:max-height 0}}
+            :replicant/unmounting {:style {:max-height 0}}}
+      [:table
+       [:tbody
+        (for [[k v] (get-in benchmark-runs [selected-run :meta])]
+          [:tr
+           [:td [:strong (name k)]]
+           [:td (str v)]])]]])))
 
 (defn- info-view [{:keys [benchmark/csv-input] :as app-state}]
   (list

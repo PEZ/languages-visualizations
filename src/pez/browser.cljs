@@ -1,4 +1,7 @@
-(ns pez.browser)
+(ns pez.browser 
+  (:require
+   [clojure.string :as string]
+   [pez.benchmark :as benchmark]))
 
 (defn share! [site text]
   (let [url (-> js/window .-location .-href)]
@@ -8,3 +11,18 @@
                           (js/encodeURIComponent text)
                           "&url="
                           (js/encodeURIComponent url)))))
+
+(defn handle-hash [event-handler {:keys [benchmarks]}]
+  (let [location-hash (-> js/window .-location .-hash)
+        benchmark (when (seq location-hash)
+                    (keyword (subs location-hash 1)))]
+    (cond
+      (contains? (set (benchmark/active-benchmarks benchmarks)) benchmark)
+      (event-handler {} [[:ax/set-benchmark benchmark]])
+
+      (string/starts-with? location-hash "#https://gist.github.com")
+      (event-handler {} [[:ax/fetch-gist (str "https://api.allorigins.win/raw?url="
+                                                    (js/encodeURIComponent (str (subs location-hash 1) "/raw")))]])
+
+      :else
+      (event-handler {} [[:ax/set-benchmark :loops]]))))

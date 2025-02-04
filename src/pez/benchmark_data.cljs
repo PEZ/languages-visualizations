@@ -1,6 +1,6 @@
 (ns pez.benchmark-data)
 
-(def benchmarks
+(def legacy
   {"Julia"             {:levenshtein {:max    976.887292
                                       :mean   967.1210026666669
                                       :median 969.815375
