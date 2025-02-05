@@ -39,9 +39,7 @@
         {:keys [new-state effects]}
         (cond
           (= :ax/init action-name)
-          (let [proxied-gist-url (str "https://api.allorigins.win/raw?url="
-                                      (js/encodeURIComponent (str (:default-gist state) "/raw")))]
-            {:effects [[:fx/fetch-gist proxied-gist-url [[:ax/handle-hash]]]]})
+          {:effects [[:fx/fetch-gist (:default-gist state) [[:ax/handle-hash]]]]}
 
           (= :ax/handle-hash action-name)
           {:effects [[:fx/handle-hash state]]}
@@ -87,7 +85,7 @@
           {:effects [[:fx/share (first args) (second args)]]}
 
           (= :ax/add-benchmark-run action-name)
-          (let [runs (benchmark/csv->benchmark-data (first args))
+          (let [runs (benchmark/csv->benchmark-data (first args) (second args))
                 run-keys (sort > (keys runs))]
             {:new-state (update state :benchmark-runs merge runs)
              :effects [[:fx/dispatch nil [[:ax/select-benchmark-run (first run-keys)]]]]})
@@ -172,7 +170,9 @@
             (= :fx/take-snapshot effect-name) (race/save-image! (first args))
             (= :fx/share effect-name) (apply browser/share! event-handler args)
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
-            (= :fx/fetch-gist effect-name) (-> (js/fetch (first args))
+            (= :fx/fetch-gist effect-name) (-> (str "https://api.allorigins.win/raw?url="
+                                                    (js/encodeURIComponent (str (first args) "/raw")))
+                                               js/fetch
                                                (.then #(.text %))
-                                               (.then #(event-handler {} [[:ax/add-benchmark-run %]]))
+                                               (.then #(event-handler {} [[:ax/add-benchmark-run % (first args)]]))
                                                (.then #(event-handler {} (second args))))))))))

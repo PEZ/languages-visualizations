@@ -4,7 +4,7 @@
    [clojure.string :as string]
    [pez.config :as conf]))
 
-(defn csv->benchmark-data [csv-text]
+(defn csv->benchmark-data [csv-text gist]
   (let [lines (as-> csv-text $
                 (string/split $ #"\n")
                 (remove (partial re-find #"^\s*$") $))
@@ -25,14 +25,16 @@
                                             (:mean_ms row)))
                                  :stddev (parse-double std-dev-ms)
                                  :runs (parse-long runs)})
-                      (assoc-in [run-key :meta] (dissoc row
-                                                        :language :runs :benchmark
-                                                        :run-ms :run_ms
-                                                        :is-checked :is_checked
-                                                        :mean-ms :mean_ms
-                                                        :min-ms :min_ms
-                                                        :max-ms :max_ms
-                                                        :std-dev-ms)))))
+                      (assoc-in [run-key :meta]
+                                (merge {:gist gist}
+                                       (dissoc row
+                                               :language :runs :benchmark
+                                               :run-ms :run_ms
+                                               :is-checked :is_checked
+                                               :mean-ms :mean_ms
+                                               :min-ms :min_ms
+                                               :max-ms :max_ms
+                                               :std-dev-ms))))))
               {}
               rows)
       (catch :default e

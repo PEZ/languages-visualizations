@@ -25,18 +25,20 @@
     [:button {:on {:click [[:ax/assoc :meta-visible? (not meta-visible?)]]}}
      "ℹ︎"]]
    (when meta-visible?
-     [:div {:replicant/key "benchmark-runs-info"
-            :style {:max-height "300px"
-                    :transition "max-height 0.35s"
-                    :overflow-y :hidden}
-            :replicant/mounting {:style {:max-height 0}}
-            :replicant/unmounting {:style {:max-height 0}}}
+     [:div.meta {:replicant/key "benchmark-runs-info"
+                 :style {:max-height "300px"
+                         :transition "max-height 0.35s"
+                         :overflow-y :hidden}
+                 :replicant/mounting {:style {:max-height 0}}
+                 :replicant/unmounting {:style {:max-height 0}}}
       [:table
        [:tbody
         (for [[k v] (get-in benchmark-runs [selected-run :meta])]
           [:tr
            [:td [:strong (name k)]]
-           [:td (str v)]])]]])))
+           [:td (if (= :gist k)
+                  [:a {:href v :target :_blank} (subs v 24)]
+                  v)]])]]])))
 
 (defn- info-view [{:keys [benchmark/csv-input] :as app-state}]
   (list
@@ -68,7 +70,7 @@
                 :on {:change [[:ax/assoc :benchmark/csv-input :event/target.value]]}}
      bd/csv]]
    [:div.buttons
-    [:button.cta {:on {:click [[:ax/add-benchmark-run csv-input]]}}
+    [:button.cta {:on {:click [[:ax/add-benchmark-run csv-input nil]]}}
      "Load CSV"]]
    (benchmark-runs-view app-state)
    [:h3 "Language selection"]

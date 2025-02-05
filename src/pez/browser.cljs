@@ -21,8 +21,7 @@
       (event-handler {} [[:ax/set-benchmark benchmark]])
 
       (string/starts-with? location-hash "#https://gist.github.com")
-      (event-handler {} [[:ax/fetch-gist (str "https://api.allorigins.win/raw?url="
-                                                    (js/encodeURIComponent (str (subs location-hash 1) "/raw")))]])
+      (event-handler {} [[:ax/fetch-gist (subs location-hash 1)]])
 
       :else
       (event-handler {} [[:ax/set-benchmark :loops]]))))
