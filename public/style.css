@@ -93,6 +93,11 @@ button.cta.secondary:focus {
   box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.5);
 }
 
+button.no-bg {
+  background-color: transparent;
+  border: none;
+}
+
 .kbd {
   background-color: #eee;
   padding: 0.1rem 0.3rem;

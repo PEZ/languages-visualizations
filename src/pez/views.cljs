@@ -22,8 +22,8 @@
 
 
 
-    [:button {:on {:click [[:ax/assoc :meta-visible? (not meta-visible?)]]}}
-     "ℹ︎"]]
+    [:button.no-bg {:on {:click [[:ax/assoc :meta-visible? (not meta-visible?)]]}}
+     [:i.fas.fa-info-circle]]]
    (when meta-visible?
      [:div.meta {:replicant/key "benchmark-runs-info"
                  :style {:max-height "300px"
@@ -113,8 +113,9 @@
                :checked filter-champions?
                :on {:change [[:ax/toggle-champions-mode filter-champions?]]}}]
       [:span "Champions"]]
-     [:button {:on {:click [[:ax/take-snapshot benchmark]]}}
-      "Snapshot"]
+     [:button {:on {:click [[:ax/take-snapshot benchmark]]}
+               :title "Take a snapshot"}
+      [:i.fas.fa-camera]]
      [:label.benchmark-label
       "ms/track length: "
       [:select {:value min-track-time-ms
@@ -132,19 +133,22 @@
        [:option {:value 200} "200"]
        [:option {:value 150} "150"]
        [:option {:value 75} "75"]
-       [:option {:value 5} "5"]]]
+       [:option {:value 5} "5"]]]]
+    [:div.benchmark-options
      [:button {:on {:click [(if paused?
                               [:ax/resume-sketch]
-                              [:ax/pause-sketch])]}}
+                              [:ax/pause-sketch])]}
+               :title (if paused?
+                        "Play"
+                        "Pause")}
       (if paused?
-        "Resume"
-        "Pause")]
+        [:i.fas.fa-play]
+        [:i.fas.fa-pause])]
      (when paused?
-       (list
-        [:input {:type :number
-                 :value manual-display-time
-                 :step 1
-                 :on {:input [[:ax/set-display-time :event/target.value]]}}]))]]
+       [:input {:type :number
+                :value manual-display-time
+                :step 1
+                :on {:input [[:ax/set-display-time :event/target.value]]}}])]]
    [:div.report
     [:section
      [:div#race]]
