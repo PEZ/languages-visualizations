@@ -36,12 +36,12 @@
         (for [[k v] (get-in benchmark-runs [selected-run :meta])]
           [:tr
            [:td [:strong (name k)]]
-           [:td (cond 
+           [:td (cond
                   (= :gist k) [:a {:href v :target :_blank} (subs v 24)]
                   (#{:commit_sha :commit-sha} k) [:a {:href (str "https://github.com/bddicken/languages/tree/" v) :target :_blank} v]
                   :else v)]])]]])))
 
-(defn- info-view [{:keys [benchmark/csv-input] :as app-state}]
+(defn- info-view [{:keys [benchmark/csv-input add-overlaps? filter-champions?] :as app-state}]
   (list
    [:div.buttons
     [:button.cta [:a {:href "https://github.com/PEZ/languages-visualizations/"
@@ -51,21 +51,27 @@
      "Share on X"]
     [:button.cta {:on {:click [[:ax/share :site/linkedin "Visualizations of the Languages benchmark project."]]}}
      "Share to LinkedIn"]]
-   [:h2 "A visualization experiment"]
+   [:h2 "A Languages Benchmark Visualizer"]
    [:p "This is a visualization of results running the benchmarks setup by Benjamin Dicken's " [:a {:href "https://github.com/bddicken/languages"} "Languages"] " project. Source: " [:a {:href "https://github.com/PEZ/languages-visualizations"} "github.com/PEZ/languages-visualizations"]]
-   [:h3 "How I run the benchmarks"]
-   [:p "The benchmarks are run on a Macbook Pro M1 Max with 32GB of RAM. I have tried to make things nonbusy on the machine. E.g. created a dedicated user, for which I have disabled all startup/login items. And I only have the benchmarks running."]
-   [:p [:a {:href "https://github.com/sharkdp/hyperfine"} "Hyperfine"] " is used to run each benchmark, where each language is given " [:strong "15 runs."]]
-   [:blockquote "Since there are " [:strong "only 15 runs per language"] " on a given benchmark, and the benchmark is not run in anything like a real-time environment the ranking results can vary quite a lot between batches when contendants are close. Therefore languages that are roughly the same speed, as determined by an overlap from their standar deviations, they will, by default, be rendered as moving at the same speed. It can get a bit misleading if a long string of languages perform at roughly the same speed increasingly, but where the first and last language in the string do not really perform at roughly the same speed, ¯\\_(ツ)_/¯ "]
-   [:p "See also the " [:a {:href "https://github.com/bddicken/languages"} "Languages"] " repository for the source code for each language implementation. There you'll also find all:"]
-   [:ul
-    [:li [:a {:href "https://github.com/bddicken/languages/blob/main/compile.sh"} "Compilation command lines"]]
-    [:li [:a {:href "https://github.com/bddicken/languages/blob/main/run.sh"} "Runner command lines"]]]
-   [:h4 "Start time impact"]
-   [:p "The start times of executables/environments can vary a lot between languages. Since the benchmarks are run out of process, the " [:strong "benchmark results include the start times"] ". For some benchmark that takes, say 300ms to complete for a language that has start time of, say 100ms, this of course skews the results a lot."]
-   [:p "To somewhat mitigate, I've been trying to provide " [:strong "native"] " compilations, to the " [:strong "Languages"] " repository, for as many languages as I can understand how to do that. For e.g. Clojure this brings down the start time from 440ms to 12ms, a quite significant difference when Clojure runs the tests in 40-650ms. But even with that, C starts 10ms faster than Clojure, which is not insignificant in benchmarks like these."]
-   [:p "The " [:button {:on {:click [[:ax/set-hash "hello-world"]]}} "hello-world"] " benchmark is included as a sort of measurement of start times. An inexact way to compensate for start times is to subtract hello-world times from the other benchmarks."]
-   [:p "I have created a new benchmark runner, where the interesting part of each program is benchmarked in-process, thus removing the start-time (and any non-interesting setup) from the results. Here's a PR for adding this runner: " [:a {:href "https://github.com/bddicken/languages/pull/365"} "https://github.com/bddicken/languages/pull/365"] ". With Clojure, Java, C, and also Babashka ready. This data is from a run on the same machine as described above. Why not try it?"]
+   [:h3 "How benchmarks are run"]
+   [:p "See the " [:a {:href "https://github.com/bddicken/languages"} "Languages"] " repository for the source code for each language implementation. There you'll also find all " [:a {:href "https://github.com/bddicken/languages/blob/main/languages.sh"} "Compilation, and run command lines"]]
+   [:p "The runner script runs each language's program for respective benchmark an equal amount of time, prepended by an equal amount of warmup time. Per default the run time is 10 seconds and warmup is 2 seconds. Each program is run as many times as fits in the run time window, and from those runs a mean time is calculated, which is the result for the particular language for a particular benchmark. A standard deviation is also calculated."]
+   [:p "Each benchmark run is augmented with information about the CPU, RAM, OS, and some more info."]
+   [:h4 "What about start time impact?"]
+   [:p "There is no start time included in the results. The benchmarked functions are measured in process, and we only measure the benchmarked functions. Sometimes the measurements are around a function that collects data from the benchmarked function, for correctness check purposes. Care is taken to make this collecting function have as little impact as possible on the results."]
+   [:p "An exception to the in-process measurement is the  " [:button {:on {:click [[:ax/set-hash "hello-world"]]}} "hello-world"] " benchmark. For that " [:a {:href "https://github.com/sharkdp/hyperfine"} "Hyperfine"] " is used, running a " [:strong "Hello World"] " program some 20 times. Because the purpose of the hello-world benchmark is to give an idea of the start time for a minimal program."]
+   [:blockquote "Since the benchmark runtimes are only 10 seconds for  a given benchmark, and the benchmark typically is not run in anything like a real-time environment, the ranking results can vary quite a lot between batches when contendants are close. Therefore languages that are roughly the same speed, as determined by an overlap from their standard deviations, will, by default, be rendered as moving at the same speed. It can get a bit misleading if a long string of languages perform at roughly the same speed increasingly, but where the first and last language in the string do not really perform at roughly the same speed, ¯\\_(ツ)_/¯. You can toggle this grouping:"
+    [:label
+     [:input {:type :checkbox
+              :checked add-overlaps?
+              :on {:change [[:ax/toggle-overlaps add-overlaps?]]}}]
+     [:span "Group similar perf"]]]
+
+   [:h3 "Loading benchmark run data"]
+   [:p "There are two ways to load the visualizer with data from benchmark runs:"]
+   [:ol
+    [:li "Append a GitHub gist url to the url of the app. Like so: " [:a {:href "https://pez.github.io/languages-visualizations/#https://gist.github.com/PEZ/411e2da1af3bbe21c4ad1d626451ec1d"} "https://pez.github.io/languages-visualizations/#https://gist.github.com/PEZ/411e2da1af3bbe21c4ad1d626451ec1d"] " Where the gist contains CSV output from a benchmark run, duh. Like " [:a {:href "https://gist.github.com/PEZ/411e2da1af3bbe21c4ad1d626451ec1d"} "the gist in the example"] " (It's currently the same gist as the app loads on start.)"]
+    [:li "Paste benchmark run result (CSV) here:"]]
    [:p
     [:textarea {:replicant/on-mount [[:ax/assoc :benchmark/csv-input :dom/node.value]]
                 :on {:change [[:ax/assoc :benchmark/csv-input :event/target.value]]}}
@@ -75,16 +81,16 @@
      "Load CSV"]]
    (benchmark-runs-view app-state)
    [:h3 "Language selection"]
-   [:p "The selection of languages are the subset of languages that are added to the project for which I have a working toolchain on my benchmarking machine. The languages need to pass the simple output check, and the implementation need to seem compliant (to me). I may also have skipped some of the slower languages because I don't want to wait forever to run it all. I want to include more languages, it is mostly a matter of how much time I can spend on investigating toolchain issues."]
-   [:h4 "Where's Levenshtein Pascal?"]
-   [:p "The suspiciously stellar performance of Pascal in the " [:button {:on {:click [[:ax/set-hash "levenshtein"]]}} "levenshtein"] " test was explained by FreePascal defaulting to " [:code "ShortString"] "which effectively truncates the strings at 256 characters, and many strings in the test are much longer than that. " [:a {:href "https://github.com/bddicken/languages/issues/347"} "https://github.com/bddicken/languages/issues/347"] " I'll reinsitate Pascal when the program is fixed."]
+   [:p "The selection of languages are the subset of languages that are added to the project for which I have a working toolchain on my benchmarking machine. The languages need to pass the simple output check, and the implementation need to seem compliant (to me). I want to include more languages. Please consider adding languages to the benchmark project. 🙏♥️"]
    [:h4 "You favorite language is missing?"]
-   [:p "If you lack some language in the visualizations, let me know in an issue " [:a {:href "https://github.com/PEZ/languages-visualizations"} "on the project"] ". If you include instructions on how to get the toolchain installed on a Mac silicon (without any Docker involved) it increases the chances that I get the language included."]
+   [:p "If you lack some language in the visualizations that you know there are implementations for, let me know in an issue " [:a {:href "https://github.com/PEZ/languages-visualizations"} "on the project"] ". If you include instructions on how to get the toolchain installed on a Mac silicon (without any Docker involved) it increases the chances that I get the language included."]
    [:h3 "Champions mode"]
-   [:p "Some languages have several ways to compile and package the executables. I call them “champions” for their language. When " [:strong "Chamions"] " mode is enabled only the best champion is selected for a given benchmark. E.g. Clojure is represented by “Clojure” and “Clojure Native”, where the former is running the Clojure program using the " [:code "java"] " command, and the latter is a compiled binary (using GraalVM native-image). Unless something really strange is going on, only “Clojure Native” will ever show up in the visualizations, because Clojure takes a lot of time to start in a regular JVM environment. (Which typically doesn't matter in the real world, and all that.)"]
-   [:blockquote "Something strange " [:em "is"] " going on with “Kotlin”, where the “Kotlin Native” " [:button {:on {:click [[:ax/set-hash "loops"]]}} "loops"] " results are very slow, and never beats the “Kotlin JVM” results (not even close)."]
-   [:h3 "Usage tips"]
-   [:p "The " [:strong "Execution time"] " animation speed setting makes the balls/logos travel one distance across the track in the same time as they executed the active benchmark."]))
+   [:p "Some languages have several ways to compile and package the executables. I call them “champions” for their language. When " [:strong "Champions"] " mode is enabled only the best champion is selected for a given benchmark. E.g. Clojure is represented by “Clojure” and “Clojure Native”, where the former is running the Clojure program using the " [:code "java"] " command, and the latter is a compiled binary (using GraalVM native-image). Toggle at will: "
+    [:label
+     [:input {:type :checkbox
+              :checked filter-champions?
+              :on {:change [[:ax/toggle-champions-mode filter-champions?]]}}]
+     [:span "Champions"]]]))
 
 (defn app [{:keys [benchmark filter-champions?
                    add-overlaps? min-track-time-ms paused?
