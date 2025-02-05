@@ -36,9 +36,10 @@
         (for [[k v] (get-in benchmark-runs [selected-run :meta])]
           [:tr
            [:td [:strong (name k)]]
-           [:td (if (= :gist k)
-                  [:a {:href v :target :_blank} (subs v 24)]
-                  v)]])]]])))
+           [:td (cond 
+                  (= :gist k) [:a {:href v :target :_blank} (subs v 24)]
+                  (#{:commit_sha :commit-sha} k) [:a {:href (str "https://github.com/bddicken/languages/tree/" v) :target :_blank} v]
+                  :else v)]])]]])))
 
 (defn- info-view [{:keys [benchmark/csv-input] :as app-state}]
   (list
