@@ -19,7 +19,7 @@ I hope you fork this project and have some fun with it. 😄
 
 ## How to have some fun
 
-You'll need the [Clojure](https://clojure.org) CLI tool (`clojure`), and NodeJS.
+You'll need the [Clojure](https://clojure.org) CLI tool (`clojure`), Java, and NodeJS.
 
 1. `npm i`
 1. Start the app: `npx shadow-cljs watch app`
