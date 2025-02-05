@@ -110,11 +110,17 @@ button.cta.secondary:focus {
 }
 
 select {
-  /* max-width 90%, elipsis text labels */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 95%;
+  max-width: 90%;
+}
+
+.meta td {
+  max-width: 65vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (min-width: 1200px) {
@@ -122,5 +128,8 @@ select {
     display: flex;
     flex-direction: row;
     gap: 2rem;
+  }
+  .meta td {
+    max-width: 40vw;
   }
 }
