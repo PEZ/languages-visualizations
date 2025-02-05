@@ -70,7 +70,7 @@
    [:h3 "Loading benchmark run data"]
    [:p "There are two ways to load the visualizer with data from benchmark runs:"]
    [:ol
-    [:li "Append a GitHub gist url to the url of the app. Like so: " [:a {:href "https://pez.github.io/languages-visualizations/#https://gist.github.com/PEZ/411e2da1af3bbe21c4ad1d626451ec1d"} "https://pez.github.io/languages-visualizations/#https://gist.github.com/PEZ/411e2da1af3bbe21c4ad1d626451ec1d"] " Where the gist contains CSV output from a benchmark run, duh. Like " [:a {:href "https://gist.github.com/PEZ/411e2da1af3bbe21c4ad1d626451ec1d"} "the gist in the example"] " (It's currently the same gist as the app loads on start.)"]
+    [:li "Append a GitHub gist url to the url of the app. Like so: " [:a {:href "https://pez.github.io/languages-visualizations/#https://gist.github.com/PEZ/6ded27ce37722f6dd00fca314a65a781"} "https://pez.github.io/languages-visualizations/#https://gist.github.com/PEZ/6ded27ce37722f6dd00fca314a65a781"] " Where the gist contains CSV output from a benchmark run, duh. Like " [:a {:href "https://gist.github.com/PEZ/6ded27ce37722f6dd00fca314a65a781"} "the gist used in this example"]]
     [:li "Paste benchmark run result (CSV) here:"]]
    [:p
     [:textarea {:replicant/on-mount [[:ax/assoc :benchmark/csv-input :dom/node.value]]
