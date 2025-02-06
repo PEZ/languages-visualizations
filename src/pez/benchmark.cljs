@@ -120,14 +120,11 @@
              langs
              pairs))))
 
-(defn active-benchmarks
-  "Returns a sorted set of active benchmarks.
-   - Filters out benchmarks ending with `-hello-world` and sorts them by a predefined order."
+(defn ordered-active-benchmarks
+  "Returns the active benchmarks in a predetermined order"
   [benchmarks]
   (sort-by #(.indexOf [:loops :fibonacci :levenshtein :hello-world] %)
            (reduce-kv (fn [acc _k v]
-                        (into acc (remove (fn [benchmark]
-                                            (.endsWith (name benchmark) "-hello-world"))
-                                          (keys v))))
+                        (into acc (keys v)))
                       #{}
                       benchmarks)))

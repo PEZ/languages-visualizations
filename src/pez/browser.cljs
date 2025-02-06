@@ -1,4 +1,4 @@
-(ns pez.browser 
+(ns pez.browser
   (:require
    [clojure.string :as string]
    [pez.benchmark :as benchmark]))
@@ -17,7 +17,7 @@
         benchmark (when (seq location-hash)
                     (keyword (subs location-hash 1)))]
     (cond
-      (contains? (set (benchmark/active-benchmarks benchmarks)) benchmark)
+      (contains? (set (benchmark/ordered-active-benchmarks benchmarks)) benchmark)
       (event-handler {} [[:ax/set-benchmark benchmark]])
 
       (string/starts-with? location-hash "#https://gist.github.com")

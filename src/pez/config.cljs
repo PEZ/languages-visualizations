@@ -1,7 +1,7 @@
 (ns pez.config)
 
 (def benchmark-names
-  {:loops "1 Billion Loops"
+  {:loops "100 Million Loops"
    :fibonacci "Naïve Fibonacci"
    :levenshtein "Levenshtein Distance"
    :hello-world "Hello World!"})
