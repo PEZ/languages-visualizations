@@ -170,8 +170,8 @@
             (= :fx/take-snapshot effect-name) (race/save-image! (first args))
             (= :fx/share effect-name) (apply browser/share! event-handler args)
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
-            (= :fx/fetch-gist effect-name) (-> (str "https://corsproxy.io/?url="
-                                                    #_"https://thingproxy.freeboard.io/fetch/"
+            (= :fx/fetch-gist effect-name) (-> (str #_"https://corsproxy.io/?url="
+                                                    "https://thingproxy.freeboard.io/fetch/"
                                                     #_"https://api.allorigins.win/raw?url="
                                                     (js/encodeURIComponent (str (first args) "/raw")))
                                                js/fetch
