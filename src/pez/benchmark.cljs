@@ -74,12 +74,12 @@
             (get-in lang [benchmark :mean])))
 
 (defn sorted-languages [cmp {:keys [benchmark] :as app-state}]
-  (map (partial add-default-speed-mean benchmark)
-       (sort-by #(get-in % [benchmark :mean]) cmp (best-languages app-state))))
+  (sort-by #(get-in % [benchmark :mean]) cmp (best-languages app-state)))
 
 (defn add-overlaps [{:keys [benchmark] :as app-state}]
-  (let [langs-with-stats (filter #(get-in % [benchmark :mean])
-                                 (sorted-languages > app-state))
+  (let [langs-with-stats (->> (sorted-languages > app-state)
+                              (filter #(get-in % [benchmark :mean]))
+                              (map (partial add-default-speed-mean benchmark)))
         pairs (partition 2 1 langs-with-stats)]
     (reverse
      (reduce (fn [langs [lang1 lang2]]
