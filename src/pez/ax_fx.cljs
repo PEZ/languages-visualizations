@@ -1,4 +1,4 @@
-(ns pez.ax-fx 
+(ns pez.ax-fx
   (:require
    [clojure.walk :as walk]
    [pez.benchmark :as benchmark]
@@ -170,9 +170,14 @@
             (= :fx/take-snapshot effect-name) (race/save-image! (first args))
             (= :fx/share effect-name) (apply browser/share! event-handler args)
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
-            (= :fx/fetch-gist effect-name) (-> (str "https://api.allorigins.win/raw?url="
+            (= :fx/fetch-gist effect-name) (-> (str "https://corsproxy.io/?url="
+                                                    #_"https://thingproxy.freeboard.io/fetch/"
+                                                    #_"https://api.allorigins.win/raw?url="
                                                     (js/encodeURIComponent (str (first args) "/raw")))
                                                js/fetch
-                                               (.then #(.text %))
+                                               (.then (fn [response]
+                                                        (if (.-ok response)
+                                                          (.text response)
+                                                          (throw (js/Error. "Network response was not OK")))))
                                                (.then #(event-handler {} [[:ax/add-benchmark-run % (first args)]]))
                                                (.then #(event-handler {} (second args))))))))))
