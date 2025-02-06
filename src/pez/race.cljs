@@ -27,7 +27,7 @@
 (def start-line-x (+ language-labels-x half-ball-width 10))
 
 (defn dims [{:keys [app-el] :as app-state}]
-  [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (benchmark/sorted-languages < app-state))))])
+  [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (benchmark/best-languages < app-state))))])
 
 (defn arena [width height]
   (let [finish-line-x (- width half-ball-width 5)]
@@ -90,7 +90,7 @@
                              (range)
                              (if add-overlaps?
                                (benchmark/add-overlaps app-state)
-                               (benchmark/sorted-languages < app-state)))})))
+                               (benchmark/best-languages < app-state)))})))
 
 (comment
   (setup :loops)
@@ -106,7 +106,7 @@
 (def darkgrey 120)
 (def black 40)
 
-(defn draw! [{:keys [benchmark-title middle-x width display-time-str] :as draw-state}] 
+(defn draw! [{:keys [benchmark-title middle-x width display-time-str] :as draw-state}]
   (q/background offwhite)
   (q/stroke-weight 0)
   (q/text-align :center)

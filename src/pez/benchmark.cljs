@@ -46,41 +46,39 @@
          (map benchmark)
          (map :mean))))
 
-(defn languages [{:keys [benchmarks]}]
+(defn- languages [{:keys [benchmarks]}]
   (mapv (fn [{:keys [language-file-name] :as lang}]
           (merge lang
                  (benchmarks language-file-name)))
         conf/languages))
 
-(defn fastest-implementation [{:keys [benchmark]} implementations]
+(defn- fastest-implementation [{:keys [benchmark]} implementations]
   (->> implementations
        (sort-by #(get-in % [benchmark :mean]))
        first))
-
-(defn best-languages [{:keys [benchmark filter-champions?] :as app-state}]
-  (let [langs (->> (languages app-state)
-                   (filter (fn [lang]
-                             (get-in lang [benchmark :mean]))))]
-    (if filter-champions?
-      (->> langs
-           (group-by :language)
-           vals
-           (map (fn [champions]
-                  (fastest-implementation app-state champions))))
-      langs)))
 
 (defn- add-default-speed-mean [benchmark lang]
   (assoc-in lang [benchmark :speed-mean]
             (get-in lang [benchmark :mean])))
 
-(defn sorted-languages [cmp {:keys [benchmark] :as app-state}]
-  (sort-by #(get-in % [benchmark :mean]) cmp (best-languages app-state)))
+(defn- best-languages [cmp {:keys [benchmark filter-champions?] :as app-state}]
+  (let [candidates (->> (languages app-state)
+                        (filter (fn [lang]
+                                  (get-in lang [benchmark :mean]))))]
+    (sort-by #(get-in % [benchmark :mean]) cmp
+             (if filter-champions?
+               (->> candidates
+                    (group-by :language)
+                    vals
+                    (map (fn [champions]
+                           (fastest-implementation app-state champions))))
+               candidates))))
 
 (defn add-overlaps [{:keys [benchmark] :as app-state}]
-  (let [langs-with-stats (->> (sorted-languages > app-state)
-                              (filter #(get-in % [benchmark :mean]))
-                              (map (partial add-default-speed-mean benchmark)))
-        pairs (partition 2 1 langs-with-stats)]
+  (let [langs (->> (best-languages > app-state)
+                   (filter #(get-in % [benchmark :mean]))
+                   (map (partial add-default-speed-mean benchmark)))
+        pairs (partition 2 1 langs)]
     (reverse
      (reduce (fn [langs [lang1 lang2]]
                (let [mean1 (get-in (first (filter #(= % lang1) langs)) [benchmark :speed-mean])
@@ -99,7 +97,7 @@
                               %)
                            langs))
                    langs)))
-             langs-with-stats
+             langs
              pairs))))
 
 (defn active-benchmarks [benchmarks]
