@@ -30,6 +30,7 @@ body {
 section {
   margin-top: 1rem;
   max-width: 700px;
+  overflow-x: hidden;
 }
 
 blockquote {
@@ -110,7 +111,9 @@ button.no-bg {
 }
 
 .info textarea {
-  width: 100%;
+  width: -webkit-fill-available;
+  overflow-x: auto;
+  text-wrap: nowrap;
   height: 100px;
 }
 
@@ -136,5 +139,14 @@ select {
   }
   .meta td {
     max-width: 40vw;
+  }
+  section.info {
+    max-width: calc(100vw - 700px - 4rem);
+  }
+}
+
+@media (max-width: 800px) {
+  .report section {
+    width: calc(100vw - 1rem);
   }
 }
