@@ -9,14 +9,14 @@
    - Reduces the rows into a nested map structure, associating benchmark measurements and metadata.
    - The resulting map is keyed by a combination of user, timestamp, model, and RAM, with nested keys for measurements and metadata."
   [csv-text gist]
-  (let [lines (as-> csv-text $
-                (string/split $ #"\n")
-                (remove (partial re-find #"^\s*$") $))
-        header (first lines)
-        headers (->> (string/split header #",")
-                     (map keyword))
-        rows (map #(zipmap headers (string/split % #",")) (rest lines))]
-    (try
+  (try
+    (let [lines (as-> csv-text $
+                  (string/split $ #"\n")
+                  (remove (partial re-find #"^\s*$") $))
+          header (first lines)
+          headers (->> (string/split header #",")
+                       (map keyword))
+          rows (map #(zipmap headers (string/split % #",")) (rest lines))]
       (reduce (fn [acc {:keys [benchmark timestamp
                                user model ram language
                                std-dev-ms runs] :as row}]
@@ -40,9 +40,9 @@
                                                :max-ms :max_ms
                                                :std-dev-ms))))))
               {}
-              rows)
-      (catch :default e
-        (js/alert (str "Error while parsing CSV. " e))))))
+              rows))
+    (catch :default e
+      (js/alert (str "Error while parsing CSV. " e)))))
 
 (defn benchmark-times
   "Extracts the mean benchmark time for the active benchmark"
