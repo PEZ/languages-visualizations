@@ -39,7 +39,9 @@
         {:keys [new-state effects]}
         (cond
           (= :ax/init action-name)
-          {:effects [[:fx/fetch-gist (:default-gist state) [[:ax/handle-hash]]]]}
+          {:new-state (assoc state :gist-loading? true)
+           :effects [[:fx/dispatch nil [[:ax/run-sketch]]]
+                     [:fx/fetch-gist (:default-gist state) [[:ax/handle-hash]]]]}
 
           (= :ax/handle-hash action-name)
           {:effects [[:fx/handle-hash state]]}
@@ -108,7 +110,8 @@
            :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
           (= :ax/fetch-gist action-name)
-          {:effects [[:fx/fetch-gist (first args)]]}
+          {:new-state (assoc state :gist-loading? true)
+           :effects [[:fx/fetch-gist (first args)]]}
 
           (= :ax/pause-sketch action-name)
           (let [current-dt (race/t->display-time state (js/performance.now))]
@@ -171,8 +174,8 @@
             (= :fx/share effect-name) (apply browser/share! event-handler args)
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
             (= :fx/fetch-gist effect-name) (-> (str #_"https://corsproxy.io/?url="
-                                                    "https://thingproxy.freeboard.io/fetch/"
-                                                    #_"https://api.allorigins.win/raw?url="
+                                                    #_"https://thingproxy.freeboard.io/fetch/"
+                                                    "https://api.allorigins.win/raw?url="
                                                     (js/encodeURIComponent (str (first args) "/raw")))
                                                js/fetch
                                                (.then (fn [response]
@@ -180,4 +183,6 @@
                                                           (.text response)
                                                           (throw (js/Error. "Network response was not OK")))))
                                                (.then #(event-handler {} [[:ax/add-benchmark-run % (first args)]]))
-                                               (.then #(event-handler {} (second args))))))))))
+                                               (.then #(event-handler {} (second args)))
+                                               (.catch #(event-handler {} [[:ax/assoc :error "Error fetching gist"]]))
+                                               (.finally #(event-handler {} [[:ax/assoc :gist-loading? false]])))))))))

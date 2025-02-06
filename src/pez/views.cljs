@@ -3,7 +3,7 @@
    [pez.config :as conf]
    [pez.benchmark-data :as bd]))
 
-(defn- benchmark-runs-view [{:keys [benchmark-runs selected-run meta-visible?]}]
+(defn- benchmark-runs-view [{:keys [benchmark-runs selected-run meta-visible? gist-loading?]}]
   (list
    [:div.benchmark-options {:replicant/key "benchmark-runs-view"
                             :style {:max-height "60px"
@@ -19,11 +19,10 @@
      [:option {:value ""
                :selected (= selected-run "")}
       "Legacy run (start times included)"]]
-
-
-
     [:button.no-bg {:on {:click [[:ax/assoc :meta-visible? (not meta-visible?)]]}}
-     [:i.fas.fa-info-circle]]]
+     [:i.fas.fa-info-circle]]
+    (when gist-loading?
+      [:span [:i.fas.fa-spinner.fa-spin]])]
    (when meta-visible?
      [:div.meta {:replicant/key "benchmark-runs-info"
                  :style {:max-height "300px"
