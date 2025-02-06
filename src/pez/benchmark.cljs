@@ -3,7 +3,12 @@
    [clojure.string :as string]
    [pez.config :as conf]))
 
-(defn csv->benchmark-data [csv-text gist]
+(defn csv->benchmark-data
+  "Parses CSV text into benchmark data.
+   - Splits the CSV text into lines, extracts headers, and maps each row to a map of header-value pairs.
+   - Reduces the rows into a nested map structure, associating benchmark measurements and metadata.
+   - The resulting map is keyed by a combination of user, timestamp, model, and RAM, with nested keys for measurements and metadata."
+  [csv-text gist]
   (let [lines (as-> csv-text $
                 (string/split $ #"\n")
                 (remove (partial re-find #"^\s*$") $))
@@ -39,29 +44,39 @@
       (catch :default e
         (js/alert (str "Error while parsing CSV. " e))))))
 
-(defn benchmark-times [{:keys [benchmark benchmarks]}]
+(defn benchmark-times
+  "Extracts the mean benchmark time for the active benchmark"
+  [{:keys [benchmark benchmarks]}]
   (let [benchmarks (filter (comp benchmark second) benchmarks)]
     (->> benchmarks
          vals
          (map benchmark)
          (map :mean))))
 
-(defn- languages [{:keys [benchmarks]}]
+(defn- languages
+  "Merges benchmark data with language configurations"
+  [{:keys [benchmarks]}]
   (mapv (fn [{:keys [language-file-name] :as lang}]
           (merge lang
                  (benchmarks language-file-name)))
         conf/languages))
 
-(defn- fastest-implementation [{:keys [benchmark]} implementations]
+(defn- fastest-implementation
+  "Finds the fastest implementation for a given benchmark. Sorts implementations by their mean benchmark time and returns the first (fastest) one."
+  [{:keys [benchmark]} implementations]
   (->> implementations
        (sort-by #(get-in % [benchmark :mean]))
        first))
 
-(defn- add-default-speed-mean [benchmark lang]
+(defn- add-default-speed-mean
+  "Adds a `speed-mean` key to a language's benchmark data, copying the value from the `mean` key."
+  [benchmark lang]
   (assoc-in lang [benchmark :speed-mean]
             (get-in lang [benchmark :mean])))
 
-(defn- best-languages [cmp {:keys [benchmark filter-champions?] :as app-state}]
+(defn- best-languages
+  "Filters and groups languages based on benchmark data. If `filter-champions?` is true, groups languages by name and selects the fastest implementation for each group."
+  [cmp {:keys [benchmark filter-champions?] :as app-state}]
   (let [candidates (->> (languages app-state)
                         (filter (fn [lang]
                                   (get-in lang [benchmark :mean]))))]
@@ -74,7 +89,12 @@
                            (fastest-implementation app-state champions))))
                candidates))))
 
-(defn add-overlaps [{:keys [benchmark] :as app-state}]
+(defn add-overlaps
+  "Handles overlapping benchmark intervals between pairs of languages.
+   Overlaps are determined by the standard deviation of the mean values for a language.
+   - Adds a `speed-mean`, initializing it to each language's mean,
+   - Then updates it to the fastest language's mean, for all languages in any overlapping group."
+  [{:keys [benchmark] :as app-state}]
   (let [langs (->> (best-languages > app-state)
                    (filter #(get-in % [benchmark :mean]))
                    (map (partial add-default-speed-mean benchmark)))
@@ -100,7 +120,10 @@
              langs
              pairs))))
 
-(defn active-benchmarks [benchmarks]
+(defn active-benchmarks
+  "Returns a sorted set of active benchmarks.
+   - Filters out benchmarks ending with `-hello-world` and sorts them by a predefined order."
+  [benchmarks]
   (sort-by #(.indexOf [:loops :fibonacci :levenshtein :hello-world] %)
            (reduce-kv (fn [acc _k v]
                         (into acc (remove (fn [benchmark]
