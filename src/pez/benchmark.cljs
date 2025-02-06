@@ -68,18 +68,13 @@
        (sort-by #(get-in % [benchmark :mean]))
        first))
 
-(defn- add-default-speed-mean
-  "Adds a `speed-mean` key to a language's benchmark data, copying the value from the `mean` key."
-  [benchmark lang]
-  (assoc-in lang [benchmark :speed-mean]
-            (get-in lang [benchmark :mean])))
-
-(defn- best-languages
+(defn best-languages
   "Filters and groups languages based on benchmark data. If `filter-champions?` is true, groups languages by name and selects the fastest implementation for each group."
   [cmp {:keys [benchmark filter-champions?] :as app-state}]
   (let [candidates (->> (languages app-state)
                         (filter (fn [lang]
-                                  (get-in lang [benchmark :mean]))))]
+                                  (get-in lang [benchmark :mean])))
+                        (map #(assoc-in % [benchmark :speed-mean] (get-in % [benchmark :mean]))))]
     (sort-by #(get-in % [benchmark :mean]) cmp
              (if filter-champions?
                (->> candidates
@@ -96,8 +91,7 @@
    - Then updates it to the fastest language's mean, for all languages in any overlapping group."
   [{:keys [benchmark] :as app-state}]
   (let [langs (->> (best-languages > app-state)
-                   (filter #(get-in % [benchmark :mean]))
-                   (map (partial add-default-speed-mean benchmark)))
+                   (filter #(get-in % [benchmark :mean])))
         pairs (partition 2 1 langs)]
     (reverse
      (reduce (fn [langs [lang1 lang2]]
