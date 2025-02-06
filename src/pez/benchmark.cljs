@@ -1,6 +1,5 @@
-(ns pez.benchmark 
+(ns pez.benchmark
   (:require
-   [clojure.set :as set]
    [clojure.string :as string]
    [pez.config :as conf]))
 
@@ -47,10 +46,6 @@
          (map benchmark)
          (map :mean))))
 
-(comment
-  (benchmark-times {:benchmark :loops})
-  :rcf)
-
 (defn languages [{:keys [benchmarks]}]
   (mapv (fn [{:keys [language-file-name] :as lang}]
           (merge lang
@@ -58,25 +53,21 @@
         conf/languages))
 
 (defn fastest-implementation [{:keys [benchmark]} implementations]
-  (apply min-key benchmark implementations))
+  (->> implementations
+       (sort-by #(get-in % [benchmark :mean]))
+       first))
 
 (defn best-languages [{:keys [benchmark filter-champions?] :as app-state}]
-  (let [langs (languages app-state)]
+  (let [langs (->> (languages app-state)
+                   (filter (fn [lang]
+                             (get-in lang [benchmark :mean]))))]
     (if filter-champions?
       (->> langs
            (group-by :language)
            vals
            (map (fn [champions]
-                  (fastest-implementation app-state (filter #(get-in % [benchmark :mean]) champions))))
-           (filter (fn [lang]
-                     (get-in lang [benchmark :mean]))))
-      (filter (fn [lang]
-                (get-in lang [benchmark :mean]))
-              langs))))
-
-(comment
-  (best-languages {:benchmark :loops})
-  :rcf)
+                  (fastest-implementation app-state champions))))
+      langs)))
 
 (defn- add-default-speed-mean [benchmark lang]
   (assoc-in lang [benchmark :speed-mean]
@@ -85,11 +76,6 @@
 (defn sorted-languages [cmp {:keys [benchmark] :as app-state}]
   (map (partial add-default-speed-mean benchmark)
        (sort-by #(get-in % [benchmark :mean]) cmp (best-languages app-state))))
-
-(defn find-missing-languages [benchmarks]
-  (let [config-languages (set (map :language-file-name conf/languages))
-        benchmark-languages (set (keys benchmarks))]
-    (set/difference benchmark-languages config-languages)))
 
 (defn add-overlaps [{:keys [benchmark] :as app-state}]
   (let [langs-with-stats (filter #(get-in % [benchmark :mean])
