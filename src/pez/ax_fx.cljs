@@ -54,10 +54,17 @@
 
           (= :ax/run-sketch action-name)
           (let [now (js/performance.now)
-                min-time (apply min (benchmark/benchmark-times state))
-                min-track-time-ms (if (= "fastest-language" (:min-track-time-choice state))
-                                    min-time
-                                    (parse-long (:min-track-time-choice state)))
+                times (benchmark/benchmark-times state)
+                min-time (apply min times)
+                max-time (apply max times)
+                selected-run (:selected-run state)
+                benchmark-real-time-ms (parse-long (get-in state [:benchmark-runs selected-run :meta :run-ms] "10000"))
+                ratio (when (= "slowest-language" (:min-track-time-choice state))
+                        (/ benchmark-real-time-ms max-time))
+                min-track-time-ms (cond
+                                    (= "fastest-language" (:min-track-time-choice state)) min-time
+                                    (= "slowest-language" (:min-track-time-choice state)) (* ratio min-time)
+                                    :else (parse-long (:min-track-time-choice state)))
                 start-state (assoc state
                                    :start-time now
                                    :min-time min-time

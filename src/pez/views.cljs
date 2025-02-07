@@ -128,6 +128,7 @@
                 :on {:change [[:ax/set-min-track-time-choice :event/target.value]]}}
        [:option {:value 600} "600"]
        [:option {:value "fastest-language"} "Execution time"]
+       [:option {:value "slowest-language"} "Benchmark time"]
        [:option {:value 60000} "60000"]
        [:option {:value 9600} "9600"]
        [:option {:value 4800} "4800"]

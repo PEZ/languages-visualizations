@@ -33,7 +33,6 @@
                                 (merge {:gist gist}
                                        (dissoc row
                                                :language :runs :benchmark
-                                               :run-ms :run_ms
                                                :is-checked :is_checked
                                                :mean-ms :mean_ms
                                                :min-ms :min_ms
