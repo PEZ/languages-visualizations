@@ -84,12 +84,14 @@
    [:h4 "You favorite language is missing?"]
    [:p "If you lack some language in the visualizations that you know there are implementations for, let me know in an issue " [:a {:href "https://github.com/PEZ/languages-visualizations"} "on the project"] ". If you include instructions on how to get the toolchain installed on a Mac silicon (without any Docker involved) it increases the chances that I get the language included."]
    [:h3 "Champions mode"]
-   [:p "Some languages have several ways to compile and package the executables. I call them “champions” for their language. When " [:strong "Champions"] " mode is enabled only the best champion is selected for a given benchmark. E.g. Clojure is represented by “Clojure” and “Clojure Native”, where the former is running the Clojure program using the " [:code "java"] " command, and the latter is a compiled binary (using GraalVM native-image). Toggle at will: "
-    [:label
-     [:input {:type :checkbox
-              :checked filter-champions?
-              :on {:change [[:ax/toggle-champions-mode filter-champions?]]}}]
-     [:span "Champions"]]]))
+   [:p "Some languages have several ways to compile and package the executables. I call them “champions” for their language. When " [:strong "Champions"] " mode is enabled ("
+   [:label {:style {:text-wrap :nowrap}}
+    [:input {:type :checkbox
+             :checked filter-champions?
+             :on {:change [[:ax/toggle-champions-mode filter-champions?]]}}]
+    [:span "toggle at will"]]
+    ") only the best champion is selected for a given benchmark. E.g. Clojure is represented by “Clojure” and “Clojure Native”, where the former is running the Clojure program using the " [:code "java"] " command, and the latter is a compiled binary (using GraalVM native-image)."
+    ]))
 
 (defn app [{:keys [benchmark filter-champions?
                    add-overlaps? min-track-time-ms paused?

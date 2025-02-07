@@ -3,7 +3,7 @@
    [pez.benchmark-data :as bd]))
 
 (defonce !app-state (atom {:benchmark :loops
-                           :filter-champions? true
+                           :filter-champions? false
                            :min-track-time-choice "600" #_"fastest-language"
                            :benchmarks bd/legacy
                            :default-gist "https://gist.github.com/PEZ/411e2da1af3bbe21c4ad1d626451ec1d"
