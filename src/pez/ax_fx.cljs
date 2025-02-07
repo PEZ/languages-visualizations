@@ -137,7 +137,9 @@
                                :start-time new-start-time)})
 
           (= :ax/set-display-time action-name)
-          (let [new-display-time (parse-double (first args))]
+          (let [new-display-time (if (number? (first args))
+                                   (first args)
+                                   (parse-double (first args)))]
             (if (js/isNaN new-display-time)
               {:new-state state}
               (if (:paused? state)
@@ -176,7 +178,7 @@
             (= :fx/console.log effect-name) (apply js/console.log args)
             (= :fx/handle-hash effect-name) (browser/handle-hash event-handler (first args))
             (= :fx/set-hash effect-name) (set! (-> js/window .-location .-hash) (first args))
-            (= :fx/run-sketch effect-name) (race/run-sketch!)
+            (= :fx/run-sketch effect-name) (race/run-sketch! event-handler)
             (= :fx/take-snapshot effect-name) (race/save-image! (first args))
             (= :fx/share effect-name) (apply browser/share! event-handler args)
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))

@@ -98,20 +98,38 @@
 (def darkgrey 120)
 (def black 40)
 
+(defn button-dims [y]
+  (let [w 80
+        h 18]
+    {:button-x (- language-labels-x (- w 5))
+     :button-y (- y h 12)
+     :button-w w
+     :button-h h}))
+
+;; filepath: /Users/pez/Projects/drag-race-visualization/src/pez/race.cljs
 (defn render-languages [{:keys [width] :as draw-state}]
   (q/text-size 14)
-  (doseq [lang (:languages draw-state)]
-    (let [{:keys [language-name logo-image x y runs benchmark-time-str std-dev-str]} lang]
-      (q/fill darkgrey)
-      (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
-      (q/fill offwhite)
-      (q/text language-name language-labels-x y)
-      (q/text-num runs (- language-labels-x 120) y)
-      (q/fill darkgrey)
-      (q/text std-dev-str (- language-labels-x 80) (- y 20))
-      (q/text benchmark-time-str language-labels-x (- y 20))
-      (when-not (:done? lang)
-        (q/image logo-image x y ball-width ball-width)))))
+  (let [paused? (get-in draw-state [:app-state :paused?])]
+    (doseq [lang (:languages draw-state)]
+      (let [{:keys [language-name logo-image y runs benchmark-time-str std-dev-str]} lang]
+        (q/fill darkgrey)
+        (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
+        (q/fill offwhite)
+        (q/text language-name language-labels-x y)
+        (q/text-num runs (- language-labels-x 120) y)
+        (q/fill darkgrey)
+        (q/text std-dev-str (- language-labels-x 80) (- y 20))
+        (when paused?
+          (let [{:keys [button-x button-y button-w button-h]} (button-dims y)]
+            (q/fill 200)
+            (q/stroke-weight 1)
+            (q/stroke black)
+            (q/rect button-x button-y button-w button-h 5)
+            (q/stroke-weight 0))
+          (q/fill black))
+        (q/text benchmark-time-str language-labels-x (- y 20))
+        (when-not (:done? lang)
+          (q/image logo-image (:x lang) y ball-width ball-width))))))
 
 (defn draw! [{:keys [benchmark-title middle-x width display-time-str] :as draw-state}]
   (q/background offwhite)
@@ -139,18 +157,31 @@
                  (when-not filter-champions? "-all")
                  ".png"))))
 
-(defn run-sketch! []
-  ; TODO: Figure out if there's a way to set the current applet with public API
-  #_{:clj-kondo/ignore [:unresolved-namespace]}
+;; filepath: /Users/pez/Projects/drag-race-visualization/src/pez/race.cljs
+;; filepath: /Users/pez/Projects/drag-race-visualization/src/pez/race.cljs
+(defn run-sketch! [event-handler]
   (set! quil.sketch/*applet*
         (q/sketch
          :host "race"
          :size (dims @db/!app-state)
          :renderer :p2d
          :setup (fn [] (setup @db/!app-state))
-         :update (fn [state]
-                   (update-draw-state state @db/!app-state (js/performance.now)))
+         :update (fn [draw-state]
+                   (update-draw-state draw-state @db/!app-state (js/performance.now)))
          :draw draw!
+         :mouse-clicked (fn [draw-state]
+                          (when (get-in draw-state [:app-state :paused?])
+                            (let [mx (q/mouse-x)
+                                  my (q/mouse-y)]
+                              (doseq [lang (:languages draw-state)]
+                                (let [{:keys [button-x button-y button-w button-h]}
+                                      (button-dims (:y lang))]
+                                  (when (and (>= mx button-x)
+                                             (<= mx (+ button-x button-w))
+                                             (>= my button-y)
+                                             (<= my (+ button-y button-h)))
+                                    (event-handler {} [[:ax/set-display-time (:benchmark-time lang)]]))))))
+                          draw-state)
          :middleware [m/fun-mode])))
 
 (defn resize-sketch! [w h]
