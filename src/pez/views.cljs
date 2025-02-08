@@ -154,10 +154,12 @@
         [:i.fas.fa-play]
         [:i.fas.fa-pause])]
      (when paused?
-       [:input {:type :number
+       [:input {:type :text
+                :inputmode :decimal
                 :value manual-display-time
                 :step 1
-                :on {:input [[:ax/set-display-time :event/target.value]]}}])]]
+                :on {:focus [[:ax/select-all :dom/node]]
+                     :input [[:ax/set-display-time :event/target.value]]}}])]]
    [:div.report
     [:section
      [:div#race]]

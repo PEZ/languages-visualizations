@@ -25,3 +25,16 @@
 
       :else
       (event-handler {} [[:ax/set-benchmark :loops]]))))
+
+(defn format-number [number locale]
+  (str (.format (js/Intl.NumberFormat. (name locale))
+                number)))
+
+(defn parse-number [number]
+  (cond
+    (string/blank? number) 0
+    (string? number) (let [normalized-str (-> number
+                                              (clojure.string/replace #"," ".")
+                                              (clojure.string/replace #"[^0-9,.]" ""))]
+                       (parse-double normalized-str))
+    :else number))

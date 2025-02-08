@@ -137,22 +137,24 @@
                                :start-time new-start-time)})
 
           (= :ax/set-display-time action-name)
-          (let [new-display-time (if (number? (first args))
-                                   (first args)
-                                   (parse-double (first args)))]
-            (if (js/isNaN new-display-time)
-              {:new-state state}
-              (if (:paused? state)
-                {:new-state (assoc state :manual-display-time new-display-time)}
-                (let [current-time (js/performance.now)
-                      new-elapsed-ms (race/display-time->elapsed-ms state new-display-time)
-                      time-shift (- new-elapsed-ms (race/t->elapsed-ms state current-time))
-                      new-start-time (+ (- current-time new-elapsed-ms) time-shift)]
-                  {:new-state (assoc state
-                                     :start-time new-start-time)}))))
+          (when-let [dt (first args)]
+            (let [new-display-time (browser/parse-number dt)]
+              (if (js/isNaN new-display-time)
+                {:new-state state}
+                (if (:paused? state)
+                  {:new-state (assoc state :manual-display-time new-display-time)}
+                  (let [current-time (js/performance.now)
+                        new-elapsed-ms (race/display-time->elapsed-ms state new-display-time)
+                        time-shift (- new-elapsed-ms (race/t->elapsed-ms state current-time))
+                        new-start-time (+ (- current-time new-elapsed-ms) time-shift)]
+                    {:new-state (assoc state
+                                       :start-time new-start-time)})))))
 
           (= :ax/assoc action-name)
-          {:new-state (apply assoc state args)})]
+          {:new-state (apply assoc state args)}
+
+          (= :ax/select-all action-name)
+          {:effects [[:fx/select-all (first args)]]})]
 
     (when js/goog.DEBUG
       (js/console.debug "Final new-state:" new-state))
@@ -182,9 +184,10 @@
             (= :fx/take-snapshot effect-name) (race/save-image! (first args))
             (= :fx/share effect-name) (apply browser/share! event-handler args)
             (= :fx/dispatch effect-name) (event-handler (first args) (second args))
+            (= :fx/select-all effect-name) (js/requestAnimationFrame #(.select (first args)))
             (= :fx/fetch-gist effect-name) (-> (str #_"https://corsproxy.io/?url="
-                                                    #_"https://thingproxy.freeboard.io/fetch/"
-                                                    "https://api.allorigins.win/raw?url="
+                                                #_"https://thingproxy.freeboard.io/fetch/"
+                                                "https://api.allorigins.win/raw?url="
                                                     (js/encodeURIComponent (str (first args) "/raw")))
                                                js/fetch
                                                (.then (fn [response]
