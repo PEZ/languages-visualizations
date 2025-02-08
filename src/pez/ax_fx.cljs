@@ -53,20 +53,13 @@
           {:effects [[:fx/take-snapshot state]]}
 
           (= :ax/run-sketch action-name)
-          (let [now (js/performance.now)
-                times (benchmark/benchmark-times state)
+          (let [times (benchmark/benchmark-times state)
                 min-time (apply min times)
-                max-time (apply max times)
-                selected-run (:selected-run state)
-                benchmark-real-time-ms (parse-long (get-in state [:benchmark-runs selected-run :meta :run-ms] "10000"))
-                ratio (when (= "slowest-language" (:min-track-time-choice state))
-                        (/ benchmark-real-time-ms max-time))
                 min-track-time-ms (cond
                                     (= "fastest-language" (:min-track-time-choice state)) min-time
-                                    (= "slowest-language" (:min-track-time-choice state)) (* ratio min-time)
                                     :else (parse-long (:min-track-time-choice state)))
                 start-state (assoc state
-                                   :start-time now
+                                   :start-time (js/performance.now)
                                    :min-time min-time
                                    :min-track-time-ms min-track-time-ms)]
             {:new-state (assoc start-state

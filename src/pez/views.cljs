@@ -94,7 +94,7 @@
     ]))
 
 (defn app [{:keys [benchmark filter-champions?
-                   add-overlaps? min-track-time-ms paused?
+                   add-overlaps? min-track-time-choice paused?
                    manual-display-time] :as app-state}
            active-benchmarks]
   [:article
@@ -126,23 +126,22 @@
       [:i.fas.fa-camera]]
      [:label.benchmark-label
       "ms/track length: "
-      [:select {:value min-track-time-ms
+      [:select {:value (str min-track-time-choice)
                 :on {:change [[:ax/set-min-track-time-choice :event/target.value]]}}
-       [:option {:value 600} "600"]
+       [:option {:value "600"} "600"]
        [:option {:value "fastest-language"} "Execution time"]
-       [:option {:value "slowest-language"} "Benchmark time"]
-       [:option {:value 60000} "60000"]
-       [:option {:value 9600} "9600"]
-       [:option {:value 4800} "4800"]
-       [:option {:value 2400} "2400"]
-       [:option {:value 1200} "1200"]
-       [:option {:value 600} "600"]
-       [:option {:value 450} "450"]
-       [:option {:value 300} "300"]
-       [:option {:value 200} "200"]
-       [:option {:value 150} "150"]
-       [:option {:value 75} "75"]
-       [:option {:value 5} "5"]]]]
+       [:option {:value "60000"} "60000"]
+       [:option {:value "9600"} "9600"]
+       [:option {:value "4800"} "4800"]
+       [:option {:value "2400"} "2400"]
+       [:option {:value "1200"} "1200"]
+       [:option {:value "600"} "600"]
+       [:option {:value "450"} "450"]
+       [:option {:value "300"} "300"]
+       [:option {:value "200"} "200"]
+       [:option {:value "150"} "150"]
+       [:option {:value "75"} "75"]
+       [:option {:value "5"} "5"]]]]
     [:div.benchmark-options
      [:button {:on {:click [(if paused?
                               [:ax/resume-sketch]
