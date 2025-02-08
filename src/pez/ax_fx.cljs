@@ -55,12 +55,14 @@
           (= :ax/run-sketch action-name)
           (let [times (benchmark/benchmark-times state)
                 min-time (apply min times)
+                max-time (apply max times)
                 min-track-time-ms (cond
                                     (= "fastest-language" (:min-track-time-choice state)) min-time
                                     :else (parse-long (:min-track-time-choice state)))
                 start-state (assoc state
                                    :start-time (js/performance.now)
                                    :min-time min-time
+                                   :max-time max-time
                                    :min-track-time-ms min-track-time-ms)]
             {:new-state (assoc start-state
                                :paused? true

@@ -67,7 +67,7 @@
                               })))
                   (:languages draw-state))})))
 
-(defn setup [{:keys [benchmark add-overlaps? min-time] :as app-state}]
+(defn setup [{:keys [benchmark add-overlaps? max-time min-time] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
   (let [arena (arena (q/width) (q/height))]
@@ -83,6 +83,7 @@
                                  (merge lang
                                         {:speed speed
                                          :runs 0
+                                         :speed-ratio (/ max-time min-time mean)
                                          :greeting "Hello, World!"
                                          :benchmark-time mean
                                          :benchmark-time-str (str (-> mean (.toFixed 1)))
@@ -94,8 +95,10 @@
                              (if add-overlaps?
                                (benchmark/add-overlaps app-state)
                                (benchmark/best-languages < app-state)))})))
+
 (def offwhite 245)
 (def darkgrey 120)
+(def lightygrey 200)
 (def black 40)
 
 (defn button-dims [y]
@@ -107,11 +110,13 @@
      :button-h h}))
 
 ;; filepath: /Users/pez/Projects/drag-race-visualization/src/pez/race.cljs
-(defn render-languages [{:keys [width] :as draw-state}]
+(defn render-languages [{:keys [track-length] :as draw-state}]
   (q/text-size 14)
   (let [paused? (get-in draw-state [:app-state :paused?])]
     (doseq [lang (:languages draw-state)]
-      (let [{:keys [language-name logo-image y runs benchmark-time-str std-dev-str]} lang]
+      (let [{:keys [language-name logo-image y runs benchmark-time-str std-dev-str speed]} lang]
+        (q/fill lightygrey)
+        (q/rect (+ language-labels-x 5) (- y 12) (* speed track-length) 24)
         (q/fill darkgrey)
         (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
         (q/fill offwhite)
@@ -121,7 +126,7 @@
         (q/text std-dev-str (- language-labels-x 80) (- y 20))
         (when paused?
           (let [{:keys [button-x button-y button-w button-h]} (button-dims y)]
-            (q/fill 200)
+            (q/fill lightygrey)
             (q/stroke-weight 1)
             (q/stroke black)
             (q/rect button-x button-y button-w button-h 2)

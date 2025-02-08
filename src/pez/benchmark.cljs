@@ -46,7 +46,10 @@
 (defn benchmark-times
   "Extracts the mean benchmark time for the active benchmark"
   [{:keys [benchmark benchmarks]}]
-  (let [benchmarks (filter (comp benchmark second) benchmarks)]
+  (let [active-language-slugs (set (map :language-file-name conf/languages))
+        benchmarks (->> benchmarks
+                        (filter (comp benchmark second))
+                        (filter #(active-language-slugs (first %))))]
     (->> benchmarks
          vals
          (map benchmark)
