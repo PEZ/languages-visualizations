@@ -138,7 +138,7 @@
 
           (= :ax/set-display-time action-name)
           (when-let [dt (first args)]
-            (let [new-display-time (browser/parse-number dt)]
+            (when-let [new-display-time (browser/parse-number dt)]
               (if (js/isNaN new-display-time)
                 {:new-state state}
                 (if (:paused? state)
