@@ -124,7 +124,7 @@
             (q/fill 200)
             (q/stroke-weight 1)
             (q/stroke black)
-            (q/rect button-x button-y button-w button-h 5)
+            (q/rect button-x button-y button-w button-h 2)
             (q/stroke-weight 0))
           (q/fill black))
         (q/text benchmark-time-str language-labels-x (- y 20))
