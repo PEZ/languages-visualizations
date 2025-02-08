@@ -12,7 +12,7 @@
     :logo "images/ada.png"
     :language :ada
     :language-file-name "Ada"}
-   {:language-name "Babashka"
+   #_{:language-name "Babashka"
     :color "#C72E26"
     :logo "images/babashka.png"
     :language :bb
