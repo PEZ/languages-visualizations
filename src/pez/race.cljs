@@ -82,6 +82,7 @@
                                      speed (/ min-time speed-mean)]
                                  (merge lang
                                         {:speed speed
+                                         :color (str (:color lang) "33")
                                          :runs 0
                                          :speed-ratio (/ max-time min-time mean)
                                          :greeting "Hello, World!"
@@ -114,8 +115,8 @@
   (q/text-size 14)
   (let [paused? (get-in draw-state [:app-state :paused?])]
     (doseq [lang (:languages draw-state)]
-      (let [{:keys [language-name logo-image y runs benchmark-time-str std-dev-str speed]} lang]
-        (q/fill lightygrey)
+      (let [{:keys [language-name color logo-image x y runs benchmark-time-str std-dev-str speed]} lang]
+        (q/fill color)
         (q/rect (+ language-labels-x 5) (- y 12) (* speed track-length) 24)
         (q/fill darkgrey)
         (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
@@ -134,7 +135,7 @@
           (q/fill black))
         (q/text benchmark-time-str language-labels-x (- y 20))
         (when-not (:done? lang)
-          (q/image logo-image (:x lang) y ball-width ball-width))))))
+          (q/image logo-image x y ball-width ball-width))))))
 
 (defn draw! [{:keys [benchmark-title middle-x width display-time-str] :as draw-state}]
   (q/background offwhite)

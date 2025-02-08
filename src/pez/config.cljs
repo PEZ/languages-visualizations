@@ -8,238 +8,295 @@
 
 (def languages
   [{:language-name "Ada"
+    :color "#111111"
     :logo "images/ada.png"
     :language :ada
     :language-file-name "Ada"}
-   #_{:language-name "Babashka"
+   {:language-name "Babashka"
+    :color "#C72E26"
     :logo "images/babashka.png"
     :language :bb
     :language-file-name "Babashka"}
    {:language-name "Bun"
+    :color "#F4BFD1"
     :logo "images/bun.png"
     :language :jsBun
     :language-file-name "Bun"}
    {:language-name "Bun Compiled"
+    :color "#F4BFD1"
     :logo "images/bun.png"
     :language :jsBun
     :language-file-name "Bun__Compiled_"}
    {:language-name "C"
+    :color "#7199CD"
     :logo "images/c.png"
     :language :cClangO0
     :language-file-name "C"}
    {:language-name "C#"
+    :color "#745BD7"
     :logo "images/csharp.png"
     :language :csharp
     :language-file-name "C_"}
    {:language-name "C# AOT"
+    :color "#745BD7"
     :logo "images/csharp.png"
     :language :csharp
     :language-file-name "C__AOT"}
    {:language-name "C3"
+    :color "#5052E3"
     :logo "images/c3.png"
     :language :c3
     :language-file-name "C3"}
    {:language :cobol
+    :color "#111111"
     :language-name "COBOL"
     :language-file-name "COBOL"
     :logo "images/Cobol.png"}
    {:language :c++
+    :color "#245798"
     :language-name "CPP"
     :language-file-name "CPP"
     :logo "images/cpp.png"}
    {:language :c++
+    :color "#245798"
     :language-name "C++"
     :language-file-name "C__"
     :logo "images/cpp.png"}
    {:language :clojure
+    :color "#76B145"
     :language-name "Clojure"
     :language-file-name "Clojure"
     :logo "images/clojure.png"}
    {:language :clojure
+    :color "#76B145"
     :language-name "Clojure Native"
     :language-file-name "Clojure_Native"
     :logo "images/clojure.png"}
    {:language-name "Crystal"
+    :color "#111111"
     :logo "images/crystal.png"
     :language :crystal
     :language-file-name "Crystal"}
    {:language-name "D"
+    :color "#A34237"
     :logo "images/d.png"
     :language :d
     :language-file-name "D"}
    {:language-name "Dart"
+    :color "#5AB5F0"
     :logo "images/dart.png"
     :language :dart
     :language-file-name "Dart"}
    {:language-name "Deno"
+    :color "#111111"
     :logo "images/deno.png"
     :language :jsDeno
     :language-file-name "Deno"}
    {:language-name "Deno JIT-less"
+    :color "#111111"
     :logo "images/deno.png"
     :language :jsDeno
     :language-file-name "Deno__jitless_"}
    {:language-name "Elixir"
+    :color "#4D3462"
     :logo "images/elixir.png"
     :language :elixir
     :language-file-name "Elixir"}
    {:language-name "Emacs Lisp Bytecode"
+    :color "#492F65"
     :logo "images/Emacs.png"
     :language :emacs
     :language-file-name "Emacs_Lisp_Bytecode"}
    {:language-name "Emacs Lisp Native"
+    :color "#492F65"
     :logo "images/Emacs.png"
     :language :emacs
     :language-file-name "Emacs_Lisp_Native"}
    {:language-name "F#"
+    :color "#5DB6D7"
     :logo "images/fsharp.png"
     :language :fsharp
     :language-file-name "F_"}
    {:language-name "F# AOT"
+    :color "#5DB6D7"
     :logo "images/fsharp.png"
     :language :fsharp
     :language-file-name "F__AOT"}
    {:language-name "Fortran"
+    :color "#6C4E91"
     :logo "images/fortran.png"
     :language :fortran
     :language-file-name "Fortran"}
    {:language-name "Go"
+    :color "#89CCDB"
     :logo "images/go.png"
     :language :goLang
     :language-file-name "Go"}
    {:language-name "Haskell"
     :logo "images/haskell.png"
+    :color "#443B60"
     :language :haskell
     :language-file-name "Haskell"}
    {:language-name "Haxe"
+    :color "#EC993F"
     :logo "images/haxe.png"
     :language :haxe
     :language-file-name "Haxe"}
    {:language-name "Inko"
+    :color "#6DBC72"
     :logo "images/inko.png"
     :language :inko
     :language-file-name "Inko"}
    {:language-name "Java"
+    :color "#EB9D3D"
     :logo "images/java.png"
     :language :java
     :language-file-name "Java"}
    {:language :java
+    :color "#EB9D3D"
     :language-name "Java Native"
     :language-file-name "Java_Native"
     :logo "images/java.png"}
    {:language-name "Julia"
+    :color "#BB473B"
     :logo "images/julia.png"
     :language :julia
     :language-file-name "Julia"}
    {:language-name "Kotlin"
+    :color "#9F32E4"
     :logo "images/kotlin.png"
     :language :kotlin
     :language-file-name "Kotlin_JVM"}
    {:language-name "Kotlin Native"
+    :color "#9F32E4"
     :logo "images/kotlin.png"
     :language :kotlin
     :language-file-name "Kotlin_Native"}
    {:language-name "Common Lisp"
+    :color "#111111"
     :logo "images/common-lisp.png"
     :language :common-lisp
     :language-file-name "Common_Lisp"}
    {:language-name "Lua"
+    :color "#00007B"
     :logo "images/lua.png"
     :language :lua
     :language-file-name "Lua"}
    {:language-name "LuaJIT"
+    :color "#00007B"
     :logo "images/lua.png"
     :language :lua
     :language-file-name "LuaJIT"}
    {:language-name "Modula 2"
+    :color "#5E9D2F"
     :logo "images/Modula_2.png"
     :language :modula-2
     :language-file-name "Modula_2"}
    {:language-name "Nim"
+    :color "#E8C85C"
     :logo "images/nim.png"
     :language :nim
     :language-file-name "Nim"}
    {:language-name "Node"
+    :color "#76B355"
     :logo "images/node.png"
     :language :jsNode
     :language-file-name "Node"}
    {:language-name "Objective C"
+    :color "#E5663A"
     :logo "images/objc.png"
     :language :objc
     :language-file-name "Objective_C"}
    {:language-name "Odin"
+    :color "#2D69B1"
     :logo "images/odin.png"
     :language :odin
     :language-file-name "Odin"}
    {:language-name "Pascal"
+    :color "#0000F5"
     :logo "images/pascal.png"
     :language :pascal
     :language-file-name "Free_Pascal"}
    {:language-name "PHP"
+    :color "#797CB1"
     :logo "images/php.png"
     :language :php
     :language-file-name "PHP"}
    {:language-name "PHP JIT"
+    :color "#797CB1"
     :logo "images/php.png"
     :language :php
     :language-file-name "PHP_JIT"}
    {:language-name "PyPy"
+    :color "#416C9A"
     :logo "images/python.png"
     :language :python
     :language-file-name "PyPy"}
    {:language-name "Python"
+    :color "#416C9A"
     :logo "images/python.png"
     :language :python
     :language-file-name "Python"}
    {:language-name "Python JIT"
+    :color "#416C9A"
     :logo "images/python.png"
     :language :python
     :language-file-name "Python_JIT"}
    {:language-name "R"
+    :color "#396ABA"
     :logo "images/R.png"
     :language :r
     :language-file-name "R"}
    {:language-name "Racket"
+    :color "#932722"
     :logo "images/Racket.png"
     :language :racket
     :language-file-name "Racket"}
    {:language-name "Ruby"
+    :color "#A22516"
     :logo "images/ruby.png"
     :language :ruby
     :language-file-name "Ruby"}
    {:language-name "Ruby YJIT"
+    :color "#A22516"
     :logo "images/ruby.png"
     :language :ruby
     :language-file-name "Ruby_YJIT"}
    {:language-name "Rust"
+    :color "#E35A28"
     :logo "images/rust.png"
     :language :rust
     :language-file-name "Rust"}
    {:language-name "Scala"
+    :color "#CE4C44"
     :logo "images/scala.png"
     :language :scala
     :language-file-name "Scala"}
    {:language :scala
+    :color "#CE4C44"
     :language-file-name "Scala_Native"
     :language-name "Scala Native"
     :logo "images/scala.png"}
    #_{:language :scala
-    :language-file-name "Bun_Scala_JS"
-    :language-name "Bun Scala JS"
-    :logo "images/scala.png"}
+      :language-file-name "Bun_Scala_JS"
+      :language-name "Bun Scala JS"
+      :logo "images/scala.png"}
    #_{:language :scala
-    :language-file-name "Bun_Scala_JS_Compiled_"
-    :language-name "Bun Scala JS Compiled"
-    :logo "images/scala.png"}
+      :language-file-name "Bun_Scala_JS_Compiled_"
+      :language-name "Bun Scala JS Compiled"
+      :logo "images/scala.png"}
    {:language-name "Swift"
+    :color "#D6783D"
     :logo "images/swift.png"
     :language :swift
     :language-file-name "Swift"}
    {:language-name "V"
+    :color "#586A87"
     :logo "images/V.png"
     :language :v
     :language-file-name "V"}
    {:language-name "Zig"
+    :color "#EBA940"
     :logo "images/zig.png"
     :language :zig
     :language-file-name "Zig"}])
