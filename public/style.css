@@ -1,5 +1,22 @@
+/* Light mode styles (default) */
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #fcfcfc;
+  color: #1e1e1e;
+}
+
+a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+a:visited {
+  color: #771fca;
 }
 
 #app {
@@ -43,9 +60,9 @@ blockquote {
 
 code {
   background-color: #eee;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
   color: rgb(192, 49, 49);
+  padding: 0.25rem 0.25rem;
+  border-radius: 0.1rem;
 }
 
 button.cta {
@@ -57,7 +74,7 @@ button.cta {
   transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
-.cta, .cta a {
+.cta, .cta a, .cta a:visited, .cta a:hover {
   font-size: 1rem;
   color: white;
   text-decoration: none;
@@ -148,5 +165,88 @@ select {
 @media (max-width: 800px) {
   .report section {
     width: calc(100vw - 1rem);
+  }
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+  }
+
+  a {
+    color: #6fa6fd;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+
+  a:visited {
+    color: #c79fe8;
+  }
+
+  blockquote {
+    color: #b0b0b0;
+    border-left: 4px solid #444;
+  }
+
+  code {
+    background-color: #2d2d2d;
+    color: #d19a66;
+  }
+
+  button.cta {
+    background-color: #3b82f6;
+  }
+
+  button.cta:hover {
+    background-color: #2563eb;
+  }
+
+  button.cta:active {
+    background-color: #1d4ed8;
+  }
+
+  button.cta:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  }
+
+  button.cta.secondary {
+    background-color: #6b7280;
+  }
+
+  button.cta.secondary:hover {
+    background-color: #4b5563;
+  }
+
+  button.cta.secondary:active {
+    background-color: #374151;
+  }
+
+  button.cta.secondary:focus {
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.5);
+  }
+
+  .kbd {
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+
+  .info textarea {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+
+  select {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+
+  .meta td {
+    color: #e0e0e0;
   }
 }
