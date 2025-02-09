@@ -59,13 +59,6 @@
    [:h4 "What about start time impact?"]
    [:p "There is no start time included in the results. The benchmarked functions are measured in process, and we only measure the benchmarked functions. Sometimes the measurements are around a function that collects data from the benchmarked function, for correctness check purposes. Care is taken to make this collecting function have as little impact as possible on the results."]
    [:p "An exception to the in-process measurement is the  " [:button {:on {:click [[:ax/set-hash "hello-world"]]}} "hello-world"] " benchmark. For that " [:a {:href "https://github.com/sharkdp/hyperfine"} "Hyperfine"] " is used, running a " [:strong "Hello World"] " program some 20 times. Because the purpose of the hello-world benchmark is to give an idea of the start time for a minimal program."]
-   [:blockquote "Since the benchmark runtimes are only 10 seconds for  a given benchmark, and the benchmark typically is not run in anything like a real-time environment, the ranking results can vary quite a lot between batches when contendants are close. Therefore languages that are roughly the same speed, as determined by an overlap from their standard deviations, will, by default, be rendered as moving at the same speed. It can get a bit misleading if a long string of languages perform at roughly the same speed increasingly, but where the first and last language in the string do not really perform at roughly the same speed, ¯\\_(ツ)_/¯. You can toggle this grouping:"
-    [:label
-     [:input {:type :checkbox
-              :checked add-overlaps?
-              :on {:change [[:ax/toggle-overlaps add-overlaps?]]}}]
-     [:span "Group similar perf"]]]
-
    [:h3 "Loading benchmark run data"]
    [:p "There are two ways to load the visualizer with data from benchmark runs:"]
    [:ol
@@ -79,19 +72,23 @@
     [:button.cta {:on {:click [[:ax/add-benchmark-run csv-input nil]]}}
      "Load CSV"]]
    (benchmark-runs-view app-state)
-   [:h3 "Language selection"]
-   [:p "The selection of languages are the subset of languages that are added to the project for which I have a working toolchain on my benchmarking machine. The languages need to pass the simple output check, and the implementation need to seem compliant (to me). I want to include more languages. Please consider adding languages to the benchmark project. 🙏♥️"]
-   [:h4 "You favorite language is missing?"]
-   [:p "If you lack some language in the visualizations that you know there are implementations for, let me know in an issue " [:a {:href "https://github.com/PEZ/languages-visualizations"} "on the project"] ". If you include instructions on how to get the toolchain installed on a Mac silicon (without any Docker involved) it increases the chances that I get the language included."]
+   [:h3 "You favorite language is missing?"]
+   [:p "The current selection of languages is mainly constrained by which languages have been ported to use the new in-process runner. Please consider helping in " [:a {:href "https://github.com/bddicken/languages/issues/371"} "porting"] " (and addding) languages to the benchmark project.  🙏♥️"]
    [:h3 "Champions mode"]
    [:p "Some languages have several ways to compile and package the executables. I call them “champions” for their language. When " [:strong "Champions"] " mode is enabled ("
-   [:label {:style {:text-wrap :nowrap}}
-    [:input {:type :checkbox
-             :checked filter-champions?
-             :on {:change [[:ax/toggle-champions-mode filter-champions?]]}}]
-    [:span "toggle at will"]]
-    ") only the best champion is selected for a given benchmark. E.g. Clojure is represented by “Clojure” and “Clojure Native”, where the former is running the Clojure program using the " [:code "java"] " command, and the latter is a compiled binary (using GraalVM native-image)."
-    ]))
+    [:label {:style {:text-wrap :nowrap}}
+     [:input {:type :checkbox
+              :checked filter-champions?
+              :on {:change [[:ax/toggle-champions-mode filter-champions?]]}}]
+     [:span "toggle at will"]]
+    ") only the best champion is selected for a given benchmark. E.g. Clojure is represented by “Clojure” and “Clojure Native”, where the former is running the Clojure program using the " [:code "java"] " command, and the latter is a compiled binary (using GraalVM native-image)."]
+   [:h3 "Notes"]
+   [:p "The benchmark typically is not run in anything like a real-time environment. The ranking results can vary quite a lot between batches when contendants are close. Therefore languages that are roughly the same speed, as determined by an overlap from their standard deviations, will, by default, be rendered as moving at the same speed. It can get a bit misleading if a long string of languages perform at roughly the same speed increasingly, but where the first and last language in the string do not really perform at roughly the same speed, ¯\\_(ツ)_/¯. You can toggle this grouping:"
+    [:label
+     [:input {:type :checkbox
+              :checked add-overlaps?
+              :on {:change [[:ax/toggle-overlaps add-overlaps?]]}}]
+     [:span "Group similar perf"]]]))
 
 (defn app [{:keys [benchmark filter-champions?
                    add-overlaps? min-track-time-choice paused?
