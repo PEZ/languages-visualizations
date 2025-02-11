@@ -87,8 +87,8 @@
                                          :speed-ratio (/ max-time min-time mean)
                                          :greeting "Hello, World!"
                                          :benchmark-time mean
-                                         :benchmark-time-str (str (-> mean (.toFixed 1)))
-                                         :std-dev-str (str (-> stddev (.toFixed 1)))
+                                         :benchmark-time-str (str (-> mean (.toFixed 3)))
+                                         :std-dev-str (str (-> stddev (.toFixed 3)))
                                          :x start-line-x
                                          :y (+ 110 (* i 45))
                                          :logo-image (q/load-image (:logo lang))})))
