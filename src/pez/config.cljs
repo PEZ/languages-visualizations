@@ -127,6 +127,11 @@
     :logo "images/fortran.png"
     :language :fortran
     :language-file-name "Fortran"}
+   {:language-name "Gleam"
+    :color "#F3B2EF"
+    :logo "images/Gleam.png"
+    :language :gleam
+    :language-file-name "Gleam"}
    {:language-name "Go"
     :color "#89CCDB"
     :logo "images/go.png"
