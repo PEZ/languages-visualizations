@@ -54,9 +54,9 @@
 
         ;; Update language positions in purely local variables:
         updated-languages
-        (mapv (fn [{:keys [speed] :as lang}]
+        (mapv (fn [{:keys [animation-speed] :as lang}]
                 (let [normalized  (double (/ elapsed-ms (:app/fastest-ui-track-time-ms app-state)))
-                      scaled-time (* normalized speed)
+                      scaled-time (* normalized animation-speed)
                       distance    (* track-length scaled-time)
                       done?       (>= distance track-length)]
                   (merge lang
@@ -71,10 +71,10 @@
         computed-projectiles
         (mapcat
          (fn [lang]
-           (let [speed             (:speed lang)
-                 ms-per-run        (double (/ (:app/fastest-ui-track-time-ms app-state) speed))
+           (let [animation-speed             (:animation-speed lang)
+                 ms-per-run        (double (/ (:app/fastest-ui-track-time-ms app-state) animation-speed))
                  completed-runs    (:runs lang)
-                 projectile-lf     (/ projectile-lifetime speed)
+                 projectile-lf     (/ projectile-lifetime animation-speed)
                  i-min             (long (Math/floor
                                           (max 1 (/ (- elapsed-ms projectile-lf)
                                                     ms-per-run))))
@@ -85,7 +85,7 @@
                  (when (and (>= dt 0)
                             (< dt projectile-lf))
                    (let [fraction       (/ dt projectile-lf)
-                         wave-factor    (* 2 speed)
+                         wave-factor    (* 2 animation-speed)
                          phase          (* i 1.2)
                          wave-amplitude 10
                          wave           (Math/sin (+ (* fraction 2 Math/PI wave-factor)
@@ -126,9 +126,9 @@
             :sketch/languages
             (mapv (fn [i lang]
                     (let [{:keys [mean stddev speed-mean]} (get lang benchmark)
-                          speed (/ min-time speed-mean)]
+                          animation-speed (/ min-time speed-mean)]
                       (merge lang
-                             {:speed             speed
+                             {:animation-speed             animation-speed
                               :bar-color         (str (:color lang) "33")
                               :runs              0
                               :speed-ratio       (/ max-time min-time mean)
@@ -163,11 +163,11 @@
   (let [paused? (:app/paused? app-state)]
     (doseq [lang languages]
       (let [{:keys [language-name bar-color logo-image x y runs
-                    benchmark-time-str std-dev-str speed]} lang]
+                    benchmark-time-str std-dev-str animation-speed]} lang]
         ;; Show the bar only if we haven't started yet:
         (when (<= display-time 0)
           (q/fill bar-color)
-          (q/rect (+ language-labels-x 5) (- y 12) (* speed bar-length) 24))
+          (q/rect (+ language-labels-x 5) (- y 12) (* animation-speed bar-length) 24))
         (q/fill darkgrey)
         (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
         (q/fill offwhite)
