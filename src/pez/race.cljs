@@ -33,15 +33,14 @@
 
 (defn arena [width height]
   (let [logo-finish-line-x (- width half-ball-width 10)
-        track-length (- logo-finish-line-x logo-start-line-x)]
-    {:width width
+        track-length       (- logo-finish-line-x logo-start-line-x)]
+    {:width              width
      :logo-finish-line-x logo-finish-line-x
-     :bar-length (- width start-line-x)
-     :track-length track-length
-     :finish-line-x (+ start-line-x track-length)
-     :middle-x (/ width 2)
-     :middle-y (/ height 2)}))
-
+     :bar-length         (- width start-line-x)
+     :track-length       track-length
+     :finish-line-x      (+ start-line-x track-length)
+     :middle-x           (/ width 2)
+     :middle-y           (/ height 2)}))
 
 (defn update-draw-state [draw-state app-state now]
   (let [arena               (arena (q/width) (q/height))
@@ -53,6 +52,7 @@
                               (t->display-time app-state now))
         elapsed-ms          (display-time->elapsed-ms app-state display-time)
 
+        ;; Update language positions in purely local variables:
         updated-languages
         (mapv (fn [{:keys [speed] :as lang}]
                 (let [normalized  (double (/ elapsed-ms (:app/min-track-time-ms app-state)))
@@ -60,84 +60,89 @@
                       distance    (* track-length scaled-time)
                       done?       (>= distance track-length)]
                   (merge lang
-                         {:runs (long (quot distance track-length))
+                         {:runs  (long (quot distance track-length))
                           :done? done?
-                          :x    (if done?
-                                  (+ logo-start-line-x track-length)
-                                  (+ logo-start-line-x distance))})))
-              (:languages draw-state))
+                          :x     (if done?
+                                   (+ logo-start-line-x track-length)
+                                   (+ logo-start-line-x distance))})))
+              (:sketch/languages draw-state))
 
+        ;; Compute projectiles purely from the time
         computed-projectiles
         (mapcat
          (fn [lang]
-           (let [speed (:speed lang)
-                 ms-per-run (double (/ (:app/min-track-time-ms app-state) speed))
-                 completed-runs (:runs lang)
-                 projectile-lifetime (/ projectile-lifetime speed)
-                 i-min (long (Math/floor
-                              (max 1 (/ (- elapsed-ms projectile-lifetime)
-                                        ms-per-run))))
-                 i-max completed-runs]
+           (let [speed             (:speed lang)
+                 ms-per-run        (double (/ (:app/min-track-time-ms app-state) speed))
+                 completed-runs    (:runs lang)
+                 projectile-lf     (/ projectile-lifetime speed)
+                 i-min             (long (Math/floor
+                                          (max 1 (/ (- elapsed-ms projectile-lf)
+                                                    ms-per-run))))
+                 i-max             completed-runs]
              (for [i (range i-min (inc i-max))]
                (let [run-completion-ms (* i ms-per-run)
-                     dt (- elapsed-ms run-completion-ms)]
+                     dt               (- elapsed-ms run-completion-ms)]
                  (when (and (>= dt 0)
-                            (< dt projectile-lifetime))
-                   (let [dt                  (- elapsed-ms run-completion-ms)
-                         fraction           (/ dt projectile-lifetime)
-                         wave-factor        (* 2 speed)
-                         phase              (* i 1.2)
-                         wave-amplitude     10
-                         wave               (Math/sin (+ (* fraction 2 Math/PI wave-factor)
-                                                         phase))
-                         wave-offset        (* wave wave-amplitude)
-                         x (q/lerp (:finish-line-x arena)
-                                   start-line-x
-                                   fraction)
-                         y (+ (:y lang) wave-offset)]
+                            (< dt projectile-lf))
+                   (let [fraction       (/ dt projectile-lf)
+                         wave-factor    (* 2 speed)
+                         phase          (* i 1.2)
+                         wave-amplitude 10
+                         wave           (Math/sin (+ (* fraction 2 Math/PI wave-factor)
+                                                     phase))
+                         wave-offset    (* wave wave-amplitude)
+                         x              (q/lerp (:finish-line-x arena)
+                                                start-line-x
+                                                fraction)
+                         y              (+ (:y lang) wave-offset)]
                      {:x     x
                       :y     y
                       :color (:color lang)}))))))
-         updated-languages)]
+         updated-languages)
+
+        ;; We'll namespace the arena keys and our new fields as :sketch/*
+        namespaced-arena
+        (into {} (map (fn [[k v]] [(keyword "sketch" (name k)) v]) arena))]
 
     (merge draw-state
-           arena
-           {:t                (t->elapsed-ms app-state now)
-            :display-time     display-time
-            :display-time-str (.toFixed display-time 7)
-            :app-state        app-state
-            :languages        updated-languages
-            :projectiles      (vec (keep identity computed-projectiles))})))
+           namespaced-arena
+           {:sketch/t                (t->elapsed-ms app-state now)
+            :sketch/display-time     display-time
+            :sketch/display-time-str (.toFixed display-time 7)
+            :sketch/app-state        app-state
+            :sketch/languages        updated-languages
+            :sketch/projectiles      (vec (keep identity computed-projectiles))})))
 
 (defn setup [{:keys [app/benchmark app/add-overlaps? app/max-time app/min-time] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
   (let [arena (arena (q/width) (q/height))]
-    (merge arena
-           {:t 0
-            :display-time-str ""
-            :app-state app-state
-            :benchmark benchmark
-            :benchmark-title (benchmark conf/benchmark-names)
-            :languages (mapv (fn [i lang]
-                               (let [{:keys [mean stddev speed-mean]} (get lang benchmark)
-                                     speed (/ min-time speed-mean)]
-                                 (merge lang
-                                        {:speed speed
-                                         :bar-color (str (:color lang) "33")
-                                         :runs 0
-                                         :speed-ratio (/ max-time min-time mean)
-                                         :greeting "Hello, World!"
-                                         :benchmark-time mean
-                                         :benchmark-time-str (str (-> mean (.toFixed 2)))
-                                         :std-dev-str (str (-> stddev (.toFixed 2)))
-                                         :x logo-start-line-x
-                                         :y (+ 110 (* i 45))
-                                         :logo-image (q/load-image (:logo lang))})))
-                             (range)
-                             (if add-overlaps?
-                               (benchmark/add-overlaps app-state)
-                               (benchmark/best-languages < app-state)))})))
+    (merge (into {} (map (fn [[k v]] [(keyword "sketch" (name k)) v]) arena))
+           {:sketch/t              0
+            :sketch/display-time-str ""
+            :sketch/app-state     app-state
+            :sketch/benchmark     benchmark
+            :sketch/benchmark-title (benchmark conf/benchmark-names)
+            :sketch/languages
+            (mapv (fn [i lang]
+                    (let [{:keys [mean stddev speed-mean]} (get lang benchmark)
+                          speed (/ min-time speed-mean)]
+                      (merge lang
+                             {:speed             speed
+                              :bar-color         (str (:color lang) "33")
+                              :runs              0
+                              :speed-ratio       (/ max-time min-time mean)
+                              :greeting          "Hello, World!"
+                              :benchmark-time    mean
+                              :benchmark-time-str (str (-> mean (.toFixed 2)))
+                              :std-dev-str       (str (-> stddev (.toFixed 2)))
+                              :x                 logo-start-line-x
+                              :y                 (+ 110 (* i 45))
+                              :logo-image        (q/load-image (:logo lang))})))
+                  (range)
+                  (if add-overlaps?
+                    (benchmark/add-overlaps app-state)
+                    (benchmark/best-languages < app-state)))})))
 
 (def offwhite 245)
 (def darkgrey 120)
@@ -152,12 +157,14 @@
      :button-w w
      :button-h h}))
 
-(defn render-languages! [{:keys [bar-length display-time] :as draw-state}]
+(defn render-languages!
+  [{:keys [sketch/bar-length sketch/display-time sketch/languages sketch/app-state]}]
   (q/text-size 14)
-  (let [paused? (get-in draw-state [:app-state :paused?])]
-    (doseq [lang (:languages draw-state)]
+  (let [paused? (:app/paused? app-state)]
+    (doseq [lang languages]
       (let [{:keys [language-name bar-color logo-image x y runs
                     benchmark-time-str std-dev-str speed]} lang]
+        ;; Show the bar only if we haven't started yet:
         (when (<= display-time 0)
           (q/fill bar-color)
           (q/rect (+ language-labels-x 5) (- y 12) (* speed bar-length) 24))
@@ -179,13 +186,15 @@
         (q/text benchmark-time-str language-labels-x (- y 20))
         (q/image logo-image x y ball-width ball-width)))))
 
-(defn render-projectiles! [{:keys [projectiles]}]
+(defn render-projectiles!
+  [{:keys [sketch/projectiles]}]
   (doseq [{:keys [x y color]} projectiles]
     (q/fill color)
     (q/no-stroke)
     (q/ellipse (- x 4) y 8 8)))
 
-(defn draw! [{:keys [benchmark-title middle-x width display-time-str] :as draw-state}]
+(defn draw!
+  [{:keys [sketch/benchmark-title sketch/middle-x sketch/width sketch/display-time-str] :as draw-state}]
   (q/background offwhite)
   (q/stroke-weight 0)
   (q/text-align :center)
@@ -222,19 +231,20 @@
          :update (fn [draw-state]
                    (update-draw-state draw-state @db/!app-state (js/performance.now)))
          :draw draw!
-         :mouse-clicked (fn [draw-state]
-                          (when (get-in draw-state [:app-state :paused?])
-                            (let [mx (q/mouse-x)
-                                  my (q/mouse-y)]
-                              (doseq [lang (:languages draw-state)]
-                                (let [{:keys [button-x button-y button-w button-h]}
-                                      (button-dims (:y lang))]
-                                  (when (and (>= mx button-x)
-                                             (<= mx (+ button-x button-w))
-                                             (>= my button-y)
-                                             (<= my (+ button-y button-h)))
-                                    (event-handler {} [[:ax/set-display-time (:benchmark-time lang)]]))))))
-                          draw-state)
+         :mouse-clicked
+         (fn [draw-state]
+           (when (get-in draw-state [:sketch/app-state :app/paused?])
+             (let [mx (q/mouse-x)
+                   my (q/mouse-y)]
+               (doseq [lang (:sketch/languages draw-state)]
+                 (let [{:keys [button-x button-y button-w button-h]}
+                       (button-dims (:y lang))]
+                   (when (and (>= mx button-x)
+                              (<= mx (+ button-x button-w))
+                              (>= my button-y)
+                              (<= my (+ button-y button-h)))
+                     (event-handler {} [[:ax/set-display-time (:benchmark-time lang)]]))))))
+           draw-state)
          :middleware [m/fun-mode])))
 
 (defn resize-sketch! [w h]
