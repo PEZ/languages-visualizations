@@ -11,14 +11,14 @@
   (- t start-time))
 
 (defn t->display-time
-  [{:keys [app/fastest-ui-track-time-ms app/min-time] :as app-state} t]
+  [{:keys [app/fastest-ui-track-time-ms app/fastest-benchmark-time] :as app-state} t]
   (let [elapsed (t->elapsed-ms app-state t)]
     (/ elapsed
-       (/ fastest-ui-track-time-ms min-time))))
+       (/ fastest-ui-track-time-ms fastest-benchmark-time))))
 
 (defn display-time->elapsed-ms
-  [{:keys [app/fastest-ui-track-time-ms app/min-time]} display-time]
-  (* fastest-ui-track-time-ms (/ display-time min-time)))
+  [{:keys [app/fastest-ui-track-time-ms app/fastest-benchmark-time]} display-time]
+  (* fastest-ui-track-time-ms (/ display-time fastest-benchmark-time)))
 
 (def drawing-width 700)
 (def language-labels-x 200)
@@ -113,7 +113,7 @@
             :sketch/languages        updated-languages
             :sketch/projectiles      (vec (keep identity computed-projectiles))})))
 
-(defn setup [{:keys [app/benchmark app/add-overlaps? app/max-time app/min-time] :as app-state}]
+(defn setup [{:keys [app/benchmark app/add-overlaps? app/slowest-benchmark-time app/fastest-benchmark-time] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
   (let [arena (arena (q/width) (q/height))]
@@ -126,12 +126,12 @@
             :sketch/languages
             (mapv (fn [i lang]
                     (let [{:keys [mean stddev speed-mean]} (get lang benchmark)
-                          animation-speed (/ min-time speed-mean)]
+                          animation-speed (/ fastest-benchmark-time speed-mean)]
                       (merge lang
                              {:animation-speed             animation-speed
                               :bar-color         (str (:color lang) "33")
                               :runs              0
-                              :speed-ratio       (/ max-time min-time mean)
+                              :speed-ratio       (/ slowest-benchmark-time fastest-benchmark-time mean)
                               :greeting          "Hello, World!"
                               :benchmark-time    mean
                               :benchmark-time-str (str (-> mean (.toFixed 2)))

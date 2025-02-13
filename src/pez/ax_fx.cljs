@@ -61,8 +61,8 @@
                                     :else (parse-long (:app/min-track-time-choice state)))
                 start-state (assoc state
                                    :app/start-time (js/performance.now)
-                                   :app/min-time min-time
-                                   :app/max-time max-time
+                                   :app/fastest-benchmark-time min-time
+                                   :app/slowest-benchmark-time max-time
                                    :app/fastest-ui-track-time-ms min-track-time-ms)]
             {:new-state (assoc start-state
                                :app/paused? true
