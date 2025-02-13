@@ -66,7 +66,7 @@
                                    :min-track-time-ms min-track-time-ms)]
             {:new-state (assoc start-state
                                :paused? true
-                               :manual-display-time min-time)
+                               :manual-display-time 0)
              :effects [[:fx/run-sketch]]})
 
           (= :ax/set-benchmark action-name)
