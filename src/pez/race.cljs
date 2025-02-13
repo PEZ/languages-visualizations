@@ -49,7 +49,7 @@
     (merge draw-state
            arena
            {:t (t->elapsed-ms app-state now)
-            :display-time-str (.toFixed display-time 1)
+            :display-time-str (.toFixed display-time 7)
             :app-state app-state
             :languages
             (mapv (fn [{:keys [speed] :as lang}]

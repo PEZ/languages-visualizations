@@ -150,12 +150,15 @@
         [:i.fas.fa-play]
         [:i.fas.fa-pause])]
      (when paused?
-       [:input {:type :text
-                :inputmode :decimal
-                :value manual-display-time
-                :step 1
-                :on {:focus [[:ax/select-all :dom/node]]
-                     :input [[:ax/set-display-time :event/target.value]]}}])]]
+       (list
+        [:input {:type :text
+                 :inputmode :decimal
+                 :value manual-display-time
+                 :step 1
+                 :on {:focus [[:ax/select-all :dom/node]]
+                      :input [[:ax/set-display-time :event/target.value]]}}]
+        [:button {:on {:click [[:ax/set-display-time "0"]]}}
+        [:i.fas.fa-backward-step]]))]]
    [:div.report
     [:section
      [:div#race]]
