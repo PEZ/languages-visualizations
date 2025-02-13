@@ -32,10 +32,11 @@
   [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (benchmark/best-languages < app-state))))])
 
 (defn arena [width height]
-  (let [logo-finish-line-x (- width half-ball-width 5)
+  (let [logo-finish-line-x (- width half-ball-width 10)
         track-length (- logo-finish-line-x logo-start-line-x)]
     {:width width
      :logo-finish-line-x logo-finish-line-x
+     :bar-length (- width start-line-x)
      :track-length track-length
      :finish-line-x (+ start-line-x track-length)
      :middle-x (/ width 2)
@@ -149,13 +150,13 @@
      :button-w w
      :button-h h}))
 
-(defn render-languages! [{:keys [track-length] :as draw-state}]
+(defn render-languages! [{:keys [bar-length] :as draw-state}]
   (q/text-size 14)
   (let [paused? (get-in draw-state [:app-state :paused?])]
     (doseq [lang (:languages draw-state)]
       (let [{:keys [language-name bar-color logo-image x y runs benchmark-time-str std-dev-str speed]} lang]
         (q/fill bar-color)
-        (q/rect (+ language-labels-x 5) (- y 12) (* speed track-length) 24)
+        (q/rect (+ language-labels-x 5) (- y 12) (* speed bar-length) 24)
         (q/fill darkgrey)
         (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
         (q/fill offwhite)
