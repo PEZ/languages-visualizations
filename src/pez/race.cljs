@@ -57,13 +57,14 @@
         (mapv (fn [{:keys [speed] :as lang}]
                 (let [normalized  (double (/ elapsed-ms (:min-track-time-ms app-state)))
                       scaled-time (* normalized speed)
-                      distance    (* track-length scaled-time)]
+                      distance    (* track-length scaled-time)
+                      done?       (>= distance track-length)]
                   (merge lang
-                         (if (>= distance track-length)
-                           {:x    (+ logo-start-line-x track-length)
-                            :runs (long (quot distance track-length))}
-                           {:x    (+ logo-start-line-x distance)
-                            :runs (long (quot distance track-length))}))))
+                         {:runs (long (quot distance track-length))
+                          :done? done?
+                          :x    (if done?
+                                  (+ logo-start-line-x track-length)
+                                  (+ logo-start-line-x distance))})))
               (:languages draw-state))
 
         computed-projectiles
@@ -102,6 +103,7 @@
     (merge draw-state
            arena
            {:t                (t->elapsed-ms app-state now)
+            :display-time     display-time
             :display-time-str (.toFixed display-time 7)
             :app-state        app-state
             :languages        updated-languages
@@ -150,13 +152,15 @@
      :button-w w
      :button-h h}))
 
-(defn render-languages! [{:keys [bar-length] :as draw-state}]
+(defn render-languages! [{:keys [bar-length display-time] :as draw-state}]
   (q/text-size 14)
   (let [paused? (get-in draw-state [:app-state :paused?])]
     (doseq [lang (:languages draw-state)]
-      (let [{:keys [language-name bar-color logo-image x y runs benchmark-time-str std-dev-str speed]} lang]
-        (q/fill bar-color)
-        (q/rect (+ language-labels-x 5) (- y 12) (* speed bar-length) 24)
+      (let [{:keys [language-name bar-color logo-image x y runs done?
+                    benchmark-time-str std-dev-str speed]} lang]
+        (when (<= display-time 0)
+          (q/fill bar-color)
+          (q/rect (+ language-labels-x 5) (- y 12) (* speed bar-length) 24))
         (q/fill darkgrey)
         (q/rect 0 (- y 12) (+ language-labels-x 5) 24)
         (q/fill offwhite)
