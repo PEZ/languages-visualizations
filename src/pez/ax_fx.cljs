@@ -63,7 +63,7 @@
                                    :app/start-time (js/performance.now)
                                    :app/min-time min-time
                                    :app/max-time max-time
-                                   :app/min-track-time-ms min-track-time-ms)]
+                                   :app/fastest-ui-track-time-ms min-track-time-ms)]
             {:new-state (assoc start-state
                                :app/paused? true
                                :app/manual-display-time 0)

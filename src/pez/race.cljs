@@ -11,14 +11,14 @@
   (- t start-time))
 
 (defn t->display-time
-  [{:keys [app/min-track-time-ms app/min-time] :as app-state} t]
+  [{:keys [app/fastest-ui-track-time-ms app/min-time] :as app-state} t]
   (let [elapsed (t->elapsed-ms app-state t)]
     (/ elapsed
-       (/ min-track-time-ms min-time))))
+       (/ fastest-ui-track-time-ms min-time))))
 
 (defn display-time->elapsed-ms
-  [{:keys [app/min-track-time-ms app/min-time]} display-time]
-  (* min-track-time-ms (/ display-time min-time)))
+  [{:keys [app/fastest-ui-track-time-ms app/min-time]} display-time]
+  (* fastest-ui-track-time-ms (/ display-time min-time)))
 
 (def drawing-width 700)
 (def language-labels-x 200)
@@ -55,7 +55,7 @@
         ;; Update language positions in purely local variables:
         updated-languages
         (mapv (fn [{:keys [speed] :as lang}]
-                (let [normalized  (double (/ elapsed-ms (:app/min-track-time-ms app-state)))
+                (let [normalized  (double (/ elapsed-ms (:app/fastest-ui-track-time-ms app-state)))
                       scaled-time (* normalized speed)
                       distance    (* track-length scaled-time)
                       done?       (>= distance track-length)]
@@ -72,7 +72,7 @@
         (mapcat
          (fn [lang]
            (let [speed             (:speed lang)
-                 ms-per-run        (double (/ (:app/min-track-time-ms app-state) speed))
+                 ms-per-run        (double (/ (:app/fastest-ui-track-time-ms app-state) speed))
                  completed-runs    (:runs lang)
                  projectile-lf     (/ projectile-lifetime speed)
                  i-min             (long (Math/floor
