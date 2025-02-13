@@ -138,7 +138,8 @@
        [:option {:value "200"} "200"]
        [:option {:value "150"} "150"]
        [:option {:value "75"} "75"]
-       [:option {:value "5"} "5"]]]]
+       [:option {:value "5"} "5"]
+       [:option {:value "1"} "1"]]]]
     [:div.benchmark-options
      [:button {:on {:click [(if paused?
                               [:ax/resume-sketch]
