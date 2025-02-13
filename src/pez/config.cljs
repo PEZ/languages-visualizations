@@ -139,7 +139,7 @@
     :language-file-name "Go"}
    {:language-name "Haskell"
     :logo "images/haskell.png"
-    :color "#443B60"
+    :color "#F3B2EF"
     :language :haskell
     :language-file-name "Haskell"}
    {:language-name "Haxe"
