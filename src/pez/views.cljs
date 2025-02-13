@@ -91,7 +91,7 @@
      [:span "Group similar perf"]]]))
 
 (defn app [{:keys [app/benchmark app/filter-champions?
-                   app/add-overlaps? app/min-track-time-choice app/paused?
+                   app/add-overlaps? app/fastest-ui-track-time-choice app/paused?
                    app/manual-display-time] :as app-state}
            active-benchmarks]
   [:article
@@ -123,7 +123,7 @@
       [:i.fas.fa-camera]]
      [:label.benchmark-label
       "ms/track length: "
-      [:select {:value (str min-track-time-choice)
+      [:select {:value (str fastest-ui-track-time-choice)
                 :on {:change [[:ax/set-min-track-time-choice :event/target.value]]}}
        [:option {:value "600"} "600"]
        [:option {:value "fastest-language"} "Execution time"]

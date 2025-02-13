@@ -57,8 +57,8 @@
                 min-time (apply min times)
                 max-time (apply max times)
                 min-track-time-ms (cond
-                                    (= "fastest-language" (:app/min-track-time-choice state)) min-time
-                                    :else (parse-long (:app/min-track-time-choice state)))
+                                    (= "fastest-language" (:app/fastest-ui-track-time-choice state)) min-time
+                                    :else (parse-long (:app/fastest-ui-track-time-choice state)))
                 start-state (assoc state
                                    :app/start-time (js/performance.now)
                                    :app/fastest-benchmark-time min-time
@@ -74,7 +74,7 @@
            :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
           (= :ax/set-min-track-time-choice action-name)
-          {:new-state (assoc state :app/min-track-time-choice (first args))
+          {:new-state (assoc state :app/fastest-ui-track-time-choice (first args))
            :effects [[:fx/dispatch nil [[:ax/run-sketch]]]]}
 
           (= :ax/toggle-champions-mode action-name)
