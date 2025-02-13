@@ -12,7 +12,7 @@
                           "&url="
                           (js/encodeURIComponent url)))))
 
-(defn handle-hash [event-handler {:keys [benchmarks]}]
+(defn handle-hash [event-handler {:keys [app/benchmarks]}]
   (let [location-hash (-> js/window .-location .-hash)
         benchmark (when (seq location-hash)
                     (keyword (subs location-hash 1)))]

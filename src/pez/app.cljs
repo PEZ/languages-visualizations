@@ -10,7 +10,7 @@
 
 (def app-el (js/document.getElementById "app"))
 
-(defn render-app! [el {:keys [benchmarks] :as state}]
+(defn render-app! [el {:keys [app/benchmarks] :as state}]
   (d/render el (views/app state (benchmark/ordered-active-benchmarks benchmarks))))
 
 (defn ^:dev/after-load start-app! []

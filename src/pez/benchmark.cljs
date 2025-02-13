@@ -45,7 +45,7 @@
 
 (defn benchmark-times
   "Extracts the mean benchmark time for the active benchmark"
-  [{:keys [benchmark benchmarks]}]
+  [{:keys [app/benchmark app/benchmarks]}]
   (let [active-language-slugs (set (map :language-file-name conf/languages))
         benchmarks (->> benchmarks
                         (filter (comp benchmark second))
@@ -57,7 +57,7 @@
 
 (defn- languages
   "Merges benchmark data with language configurations"
-  [{:keys [benchmarks]}]
+  [{:keys [app/benchmarks]}]
   (mapv (fn [{:keys [language-file-name] :as lang}]
           (merge lang
                  (benchmarks language-file-name)))
@@ -72,7 +72,7 @@
 
 (defn best-languages
   "Filters and groups languages based on benchmark data. If `filter-champions?` is true, groups languages by name and selects the fastest implementation for each group."
-  [cmp {:keys [benchmark filter-champions?] :as app-state}]
+  [cmp {:keys [app/benchmark app/filter-champions?] :as app-state}]
   (let [candidates (->> (languages app-state)
                         (filter (fn [lang]
                                   (get-in lang [benchmark :mean])))
@@ -91,7 +91,7 @@
    Overlaps are determined by the standard deviation of the mean values for a language.
    - Adds a `speed-mean`, initializing it to each language's mean,
    - Then updates it to the fastest language's mean, for all languages in any overlapping group."
-  [{:keys [benchmark] :as app-state}]
+  [{:keys [app/benchmark] :as app-state}]
   (let [langs (->> (best-languages > app-state)
                    (filter #(get-in % [benchmark :mean])))
         pairs (partition 2 1 langs)]

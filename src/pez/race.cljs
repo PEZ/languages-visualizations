@@ -7,17 +7,17 @@
    [quil.middleware :as m]))
 
 (defn t->elapsed-ms
-  [{:keys [start-time]} t]
+  [{:keys [app/start-time]} t]
   (- t start-time))
 
 (defn t->display-time
-  [{:keys [min-track-time-ms min-time] :as app-state} t]
+  [{:keys [app/min-track-time-ms app/min-time] :as app-state} t]
   (let [elapsed (t->elapsed-ms app-state t)]
     (/ elapsed
        (/ min-track-time-ms min-time))))
 
 (defn display-time->elapsed-ms
-  [{:keys [min-track-time-ms min-time]} display-time]
+  [{:keys [app/min-track-time-ms app/min-time]} display-time]
   (* min-track-time-ms (/ display-time min-time)))
 
 (def drawing-width 700)
@@ -46,8 +46,8 @@
 (defn update-draw-state [draw-state app-state now]
   (let [arena               (arena (q/width) (q/height))
         track-length        (:track-length arena)
-        paused?             (:paused? app-state)
-        manual-display-time (:manual-display-time app-state)
+        paused?             (:app/paused? app-state)
+        manual-display-time (:app/manual-display-time app-state)
         display-time        (if paused?
                               (or manual-display-time 0)
                               (t->display-time app-state now))
@@ -55,7 +55,7 @@
 
         updated-languages
         (mapv (fn [{:keys [speed] :as lang}]
-                (let [normalized  (double (/ elapsed-ms (:min-track-time-ms app-state)))
+                (let [normalized  (double (/ elapsed-ms (:app/min-track-time-ms app-state)))
                       scaled-time (* normalized speed)
                       distance    (* track-length scaled-time)
                       done?       (>= distance track-length)]
@@ -71,7 +71,7 @@
         (mapcat
          (fn [lang]
            (let [speed (:speed lang)
-                 ms-per-run (double (/ (:min-track-time-ms app-state) speed))
+                 ms-per-run (double (/ (:app/min-track-time-ms app-state) speed))
                  completed-runs (:runs lang)
                  projectile-lifetime (/ projectile-lifetime speed)
                  i-min (long (Math/floor
@@ -109,7 +109,7 @@
             :languages        updated-languages
             :projectiles      (vec (keep identity computed-projectiles))})))
 
-(defn setup [{:keys [benchmark add-overlaps? max-time min-time] :as app-state}]
+(defn setup [{:keys [app/benchmark app/add-overlaps? app/max-time app/min-time] :as app-state}]
   (q/frame-rate 120)
   (q/image-mode :center)
   (let [arena (arena (q/width) (q/height))]
@@ -156,7 +156,7 @@
   (q/text-size 14)
   (let [paused? (get-in draw-state [:app-state :paused?])]
     (doseq [lang (:languages draw-state)]
-      (let [{:keys [language-name bar-color logo-image x y runs done?
+      (let [{:keys [language-name bar-color logo-image x y runs
                     benchmark-time-str std-dev-str speed]} lang]
         (when (<= display-time 0)
           (q/fill bar-color)

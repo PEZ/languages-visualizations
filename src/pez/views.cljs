@@ -3,7 +3,7 @@
    [pez.config :as conf]
    [pez.benchmark-data :as bd]))
 
-(defn- benchmark-runs-view [{:keys [benchmark-runs selected-run meta-visible? gist-loading?]}]
+(defn- benchmark-runs-view [{:keys [app/benchmark-runs app/selected-run app/meta-visible? app/gist-loading?]}]
   (list
    [:div.benchmark-options {:replicant/key "benchmark-runs-view"
                             :style {:max-height "60px"
@@ -19,7 +19,7 @@
      [:option {:value ""
                :selected (= selected-run "")}
       "Legacy run (start times included)"]]
-    [:button.no-bg {:on {:click [[:ax/assoc :meta-visible? (not meta-visible?)]]}}
+    [:button.no-bg {:on {:click [[:ax/assoc :app/meta-visible? (not meta-visible?)]]}}
      [:i.fas.fa-info-circle]]
     (when gist-loading?
       [:span [:i.fas.fa-spinner.fa-spin]])]
@@ -40,7 +40,7 @@
                   (#{:commit_sha :commit-sha} k) [:a {:href (str "https://github.com/bddicken/languages/tree/" v) :target :_blank} v]
                   :else v)]])]]])))
 
-(defn- info-view [{:keys [benchmark/csv-input add-overlaps? filter-champions?] :as app-state}]
+(defn- info-view [{:keys [benchmark/csv-input app/add-overlaps? app/filter-champions?] :as app-state}]
   (list
    [:div.buttons
     [:button.cta [:a {:href "https://github.com/PEZ/languages-visualizations/"
@@ -90,9 +90,9 @@
               :on {:change [[:ax/toggle-overlaps add-overlaps?]]}}]
      [:span "Group similar perf"]]]))
 
-(defn app [{:keys [benchmark filter-champions?
-                   add-overlaps? min-track-time-choice paused?
-                   manual-display-time] :as app-state}
+(defn app [{:keys [app/benchmark app/filter-champions?
+                   app/add-overlaps? app/min-track-time-choice app/paused?
+                   app/manual-display-time] :as app-state}
            active-benchmarks]
   [:article
    [:h1 "Languages"]
