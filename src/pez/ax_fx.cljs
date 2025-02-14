@@ -57,7 +57,7 @@
                 min-time (apply min times)
                 max-time (apply max times)
                 min-track-time-ms (cond
-                                    (= "fastest-language" (:app/fastest-ui-track-time-choice state)) min-time
+                                    (= "fastest-language" (:app/fastest-ui-track-time-choice state)) (max 1 min-time)
                                     :else (parse-long (:app/fastest-ui-track-time-choice state)))
                 start-state (assoc state
                                    :app/start-time (js/performance.now)

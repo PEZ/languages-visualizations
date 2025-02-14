@@ -26,7 +26,7 @@
 (def half-ball-width (/ ball-width 2))
 (def start-line-x (+ language-labels-x 10))
 (def logo-start-line-x (+ start-line-x half-ball-width))
-(def projectile-lifetime 900)
+(def projectile-lifetime 1000)
 
 (defn dims [{:keys [app-el] :as app-state}]
   [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (benchmark/best-languages < app-state))))])
