@@ -26,7 +26,7 @@
 (def half-ball-width (/ ball-width 2))
 (def start-line-x (+ language-labels-x 10))
 (def logo-start-line-x (+ start-line-x half-ball-width))
-(def projectile-lifetime 500)
+(def projectile-lifetime 900)
 
 (defn dims [{:keys [app-el] :as app-state}]
   [(min drawing-width (.-offsetWidth app-el)) (+ 100 (* 45 (count (benchmark/best-languages < app-state))))])
@@ -34,17 +34,17 @@
 (defn arena [width height]
   (let [logo-finish-line-x (- width half-ball-width 10)
         track-length       (- logo-finish-line-x logo-start-line-x)]
-    {:width              width
-     :logo-finish-line-x logo-finish-line-x
-     :bar-length         (- width start-line-x)
-     :track-length       track-length
-     :finish-line-x      (+ start-line-x track-length)
-     :middle-x           (/ width 2)
-     :middle-y           (/ height 2)}))
+    {:sketch/width              width
+     :sketch/logo-finish-line-x logo-finish-line-x
+     :sketch/bar-length         (- width start-line-x)
+     :sketch/track-length       track-length
+     :sketch/finish-line-x      (+ start-line-x track-length)
+     :sketch/middle-x           (/ width 2)
+     :sketch/middle-y           (/ height 2)}))
 
 (defn update-draw-state [draw-state app-state now]
   (let [arena               (arena (q/width) (q/height))
-        track-length        (:track-length arena)
+        track-length        (:sketch/track-length arena)
         paused?             (:app/paused? app-state)
         manual-display-time (:app/manual-display-time app-state)
         display-time        (if paused?
@@ -52,7 +52,6 @@
                               (t->display-time app-state now))
         elapsed-ms          (display-time->elapsed-ms app-state display-time)
 
-        ;; Update language positions in purely local variables:
         updated-languages
         (mapv (fn [{:keys [animation-speed] :as lang}]
                 (let [normalized  (double (/ elapsed-ms (:app/fastest-ui-track-time-ms app-state)))
@@ -67,7 +66,6 @@
                                    (+ logo-start-line-x distance))})))
               (:sketch/languages draw-state))
 
-        ;; Compute projectiles purely from the time
         computed-projectiles
         (mapcat
          (fn [lang]
@@ -85,27 +83,23 @@
                  (when (and (>= dt 0)
                             (< dt projectile-lf))
                    (let [fraction       (/ dt projectile-lf)
-                         wave-factor    (* 2 animation-speed)
-                         phase          (* i 1.2)
+                         wave-factor    (* 3 animation-speed)
+                         phase          (* 1 i animation-speed)
                          wave-amplitude 10
                          wave           (Math/sin (+ (* fraction 2 Math/PI wave-factor)
                                                      phase))
                          wave-offset    (* wave wave-amplitude)
-                         x              (q/lerp (:finish-line-x arena)
+                         x              (q/lerp (:sketch/finish-line-x arena)
                                                 start-line-x
                                                 fraction)
                          y              (+ (:y lang) wave-offset)]
                      {:x     x
                       :y     y
                       :color (:color lang)}))))))
-         updated-languages)
-
-        ;; We'll namespace the arena keys and our new fields as :sketch/*
-        namespaced-arena
-        (into {} (map (fn [[k v]] [(keyword "sketch" (name k)) v]) arena))]
+         updated-languages)]
 
     (merge draw-state
-           namespaced-arena
+           arena
            {:sketch/t                (t->elapsed-ms app-state now)
             :sketch/display-time     display-time
             :sketch/display-time-str (.toFixed display-time 7)
