@@ -92,7 +92,7 @@
 
 (defn app [{:keys [app/benchmark app/filter-champions?
                    app/add-overlaps? app/fastest-ui-track-time-choice app/paused?
-                   app/manual-display-time] :as app-state}
+                   app/manual-display-time app/bounce-logos?] :as app-state}
            active-benchmarks]
   [:article
    [:h1 "Languages"]
@@ -126,7 +126,8 @@
       [:select {:value (str fastest-ui-track-time-choice)
                 :on {:change [[:ax/set-min-track-time-choice :event/target.value]]}}
        [:option {:value "600"} "600"]
-       [:option {:value "fastest-language"} "Execution time"]
+       (when bounce-logos?
+         [:option {:value "fastest-language"} "Execution time"])
        [:option {:value "60000"} "60000"]
        [:option {:value "9600"} "9600"]
        [:option {:value "4800"} "4800"]
@@ -141,6 +142,11 @@
        [:option {:value "5"} "5"]
        [:option {:value "1"} "1"]]]]
     [:div.benchmark-options
+     [:label.benchmark-label
+      [:input {:type :checkbox
+               :checked bounce-logos?
+               :on {:change [[:ax/assoc :app/bounce-logos? (not bounce-logos?)]]}}]
+      [:span "Bounce?"]]
      [:button {:on {:click [(if paused?
                               [:ax/resume-sketch]
                               [:ax/pause-sketch])]}

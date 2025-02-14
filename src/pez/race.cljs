@@ -51,6 +51,7 @@
                               (or manual-display-time 0)
                               (t->display-time app-state now))
         elapsed-ms          (display-time->elapsed-ms app-state display-time)
+        bounce-logos?       (:app/bounce-logos? app-state)
 
         updated-languages
         (mapv (fn [{:keys [animation-speed] :as lang}]
@@ -61,42 +62,48 @@
                   (merge lang
                          {:runs  (long (quot distance track-length))
                           :done? done?
-                          :x     (if done?
+                          :x     (if (and (not bounce-logos?)
+                                          done?)
                                    (+ logo-start-line-x track-length)
-                                   (+ logo-start-line-x distance))})))
+                                   (+ logo-start-line-x
+                                      (let [loop-dist (mod distance (* 2 track-length))]
+                                        (if (> loop-dist track-length)
+                                          (- (* 2 track-length) loop-dist)
+                                          loop-dist))))})))
               (:sketch/languages draw-state))
 
         computed-projectiles
-        (mapcat
-         (fn [lang]
-           (let [animation-speed             (:animation-speed lang)
-                 ms-per-run        (double (/ (:app/fastest-ui-track-time-ms app-state) animation-speed))
-                 completed-runs    (:runs lang)
-                 projectile-lf     (/ projectile-lifetime animation-speed)
-                 i-min             (long (Math/floor
-                                          (max 1 (/ (- elapsed-ms projectile-lf)
-                                                    ms-per-run))))
-                 i-max             completed-runs]
-             (for [i (range i-min (inc i-max))]
-               (let [run-completion-ms (* i ms-per-run)
-                     dt               (- elapsed-ms run-completion-ms)]
-                 (when (and (>= dt 0)
-                            (< dt projectile-lf))
-                   (let [fraction       (/ dt projectile-lf)
-                         wave-factor    (* 3 animation-speed)
-                         phase          (* 1 i animation-speed)
-                         wave-amplitude 10
-                         wave           (Math/sin (+ (* fraction 2 Math/PI wave-factor)
-                                                     phase))
-                         wave-offset    (* wave wave-amplitude)
-                         x              (q/lerp (:sketch/finish-line-x arena)
-                                                start-line-x
-                                                fraction)
-                         y              (+ (:y lang) wave-offset)]
-                     {:x     x
-                      :y     y
-                      :color (:color lang)}))))))
-         updated-languages)]
+        (when-not bounce-logos?
+          (mapcat
+           (fn [lang]
+             (let [animation-speed             (:animation-speed lang)
+                   ms-per-run        (double (/ (:app/fastest-ui-track-time-ms app-state) animation-speed))
+                   completed-runs    (:runs lang)
+                   projectile-lf     (/ projectile-lifetime animation-speed)
+                   i-min             (long (Math/floor
+                                            (max 1 (/ (- elapsed-ms projectile-lf)
+                                                      ms-per-run))))
+                   i-max             completed-runs]
+               (for [i (range i-min (inc i-max))]
+                 (let [run-completion-ms (* i ms-per-run)
+                       dt               (- elapsed-ms run-completion-ms)]
+                   (when (and (>= dt 0)
+                              (< dt projectile-lf))
+                     (let [fraction       (/ dt projectile-lf)
+                           wave-factor    (* 3 animation-speed)
+                           phase          (* 1 i animation-speed)
+                           wave-amplitude 10
+                           wave           (Math/sin (+ (* fraction 2 Math/PI wave-factor)
+                                                       phase))
+                           wave-offset    (* wave wave-amplitude)
+                           x              (q/lerp (:sketch/finish-line-x arena)
+                                                  start-line-x
+                                                  fraction)
+                           y              (+ (:y lang) wave-offset)]
+                       {:x     x
+                        :y     y
+                        :color (:color lang)}))))))
+           updated-languages))]
 
     (merge draw-state
            arena
@@ -188,7 +195,7 @@
     (q/ellipse (- x 4) y 8 8)))
 
 (defn draw!
-  [{:keys [sketch/benchmark-title sketch/middle-x sketch/width sketch/display-time-str] :as draw-state}]
+  [{:keys [sketch/benchmark-title sketch/middle-x sketch/width sketch/display-time-str sketch/app-state] :as draw-state}]
   (q/background offwhite)
   (q/stroke-weight 0)
   (q/text-align :center)
@@ -204,7 +211,8 @@
   (q/text "±" (- language-labels-x 80) 65)
   (q/text "ms" language-labels-x 65)
   (q/text display-time-str (- width 5) 65)
-  (render-projectiles! draw-state)
+  (when-not (:app/bounce-logos? app-state)
+    (render-projectiles! draw-state))
   (render-languages! draw-state))
 
 (defn save-image! [{:keys [benchmark filter-champions?]}]
